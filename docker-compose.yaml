@@ -1,0 +1,16 @@
+version: '2.9'
+
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: 'Dockerfile'
+    ports:
+      - '3000:3000'
+  database:
+    image: 'postgres'
+    ports:
+      - '4321:5432'
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=123
