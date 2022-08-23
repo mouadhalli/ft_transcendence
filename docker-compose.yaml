@@ -9,8 +9,11 @@ services:
       - '3000:3000'
   database:
     image: 'postgres'
-    ports:
-      - '4321:5432'
     environment:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=123
+    volumes:
+      - data:/var/lib/postgresql/data
+
+volumes:
+  data:
