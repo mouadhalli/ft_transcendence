@@ -1,6 +1,8 @@
-import { Controller, UseGuards, Post, Body, Req, HttpException, HttpStatus, } from '@nestjs/common';
+import { Controller, UseGuards, Post, Body, Req, HttpException, HttpStatus, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
+import { FortyTwoAuthGuard } from './guards/42.auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RegisterInput, UserDto } from 'src/dto/User.dto';
 import { User } from '../user/decorators/user.decorator'
 
@@ -22,5 +24,15 @@ export class AuthController {
         if (password !== confirmPassword) 
             throw new HttpException({message: ["passwords doesn't match"]} , HttpStatus.BAD_REQUEST)
         await this.authService.saveUser(userInput)
+    }
+
+    @Get('42')
+    @UseGuards(FortyTwoAuthGuard)
+    FortyTwoAuth() {}
+
+    @Get('42/redirect')
+    @UseGuards(FortyTwoAuthGuard)
+    async FortyTwoAuthRedirect(@User() user: any) {
+        return user
     }
 }

@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { AuthController } from './auth.controller';
+import { FortyTwoStrategy } from './strategies/42.strategy'
 
 const jwtFactory = {
   useFactory: async (configService: ConfigService) => ({
@@ -24,7 +25,7 @@ const jwtFactory = {
     PassportModule,
     JwtModule.registerAsync(jwtFactory),
   ],
-  providers: [AuthService, LocalStrategy, JwtStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy, FortyTwoStrategy],
   // exports: [AuthService],
   controllers: [AuthController],
 })

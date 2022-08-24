@@ -3,7 +3,7 @@ version: '2.9'
 services:
   server:
     build:
-      context: ./server
+      context: ./backend
       dockerfile: 'Dockerfile'
     ports:
       - '3000:3000'
