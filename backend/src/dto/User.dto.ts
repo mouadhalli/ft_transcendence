@@ -1,4 +1,4 @@
-import {IsEmail, Length, Min, IsNotEmpty, MinLength, Matches} from 'class-validator'
+import {IsNumber, IsString, IsNotEmpty, IsAlphanumeric, IsEmail, IsUrl} from 'class-validator'
 
 /*
 There are few special tokens you can use in your messages:
@@ -10,34 +10,56 @@ $constraint1, $constraint2, ... $constraintN - constraints defined by specific v
 */
 
 
-export class RegisterInput {
-    @IsNotEmpty()
-    @Length(6, 30)
-    username: string
+// export class RegisterInput {
+//     @IsNotEmpty()
+//     @Length(6, 30)
+//     username: string
 
+//     @IsNotEmpty()
+//     @IsEmail()
+//     email: string
+
+//     @IsNotEmpty()
+//     @MinLength(8)
+//     // @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {message: 'password too weak'})
+//     password: string
+
+//     @IsNotEmpty()
+//     confirmPassword: string
+
+// }
+
+// export class LoginInput {
+//     @IsNotEmpty()
+//     username: string
+    
+//     @IsNotEmpty()
+//     password: string
+// }
+
+// export interface UserDto {
+//     id: number
+//     username: string
+// }
+
+export class UserDto {
+    @IsNumber()
+    id?: number;
+
+    @IsString()
+    @IsNotEmpty()
+    @IsAlphanumeric()
+    username?: string;
+
+    @IsString()
     @IsNotEmpty()
     @IsEmail()
-    email: string
+    email?: string;
 
+    @IsString()
+    displayName?: string;
+
+    @IsUrl() // also handles IsString case
     @IsNotEmpty()
-    @MinLength(8)
-    // @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {message: 'password too weak'})
-    password: string
-
-    @IsNotEmpty()
-    confirmPassword: string
-
-}
-
-export class LoginInput {
-    @IsNotEmpty()
-    username: string
-    
-    @IsNotEmpty()
-    password: string
-}
-
-export interface UserDto {
-    id: number
-    username: string
+    imageUrl?: string;
 }

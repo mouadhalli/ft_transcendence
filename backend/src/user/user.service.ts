@@ -2,12 +2,13 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UserEntity } from './user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { UserDto } from 'src/dto/User.dto';
 
 
 @Injectable()
 export class UserService {
   constructor(@InjectRepository(UserEntity)
-  private usersRepository: Repository<UserEntity>) {}
+    private usersRepository: Repository<UserEntity>) {}
 
   async findAll(): Promise<UserEntity[]> {
     return await this.usersRepository.find();
@@ -20,37 +21,29 @@ export class UserService {
     })
   }
 
-  async findByUsername(username: string): Promise<UserEntity> {
-    const User = await this.usersRepository.findOneBy({ username });
-    return User
+  async findUser(id: number): Promise<UserDto> {
+    const user = await this.usersRepository.findOneBy({ id });
+    return user
   }
 
-  async findById(id: string): Promise<UserEntity> {
-    const User = await this.usersRepository.findOneBy({ id });
-    return User
-  }
+  // async findByUsernameOrEmail(username: string, email: string) {
+  //   const Users = await this.usersRepository.find({
+  //     select: { username: true, email: true },
+  //     where: [
+  //       { username: username },
+  //       { email: email }
+  //     ]
+  //   })
+  //   return Users
+  // }
 
-  async remove(id: string): Promise<void> {
-    await this.usersRepository.delete(id);
-  }
-
-  async findByUsernameOrEmail(username: string, email: string) {
-    const Users = await this.usersRepository.find({
-      select: { username: true, email: true },
-      where: [
-        { username: username },
-        { email: email }
-      ]
+  async saveUser(userData: UserDto): Promise<UserDto> {
+    let newUser: UserEntity = this.usersRepository.create(userData)
+    
+    newUser = await this.usersRepository.save(newUser).catch(error => {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
     })
-    return Users
-  }
-
-  async addOne(userData) {
-    const newUser = this.usersRepository.create(userData)
-
-    await this.usersRepository.save(newUser).catch(err => {
-      throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR)
-    })
+    return newUser
   }
 
 }

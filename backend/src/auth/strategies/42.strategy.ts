@@ -11,8 +11,11 @@ export class FortyTwoStrategy extends PassportStrategy(Strategy) {
             clientSecret:configService.get('FORTYTWO_APP_SECRET'),
             callbackURL: "http://localhost:3000/auth/42/redirect",
             profileFields: {
+                'id': function (obj) { return String(obj.id); },
+                'username': 'login',
                 'displayName': 'displayname',
-                'imageUrl': 'image_url'
+                'imageUrl': 'image_url',
+                'email': 'email',
             }
         })
     }
@@ -23,11 +26,12 @@ export class FortyTwoStrategy extends PassportStrategy(Strategy) {
         profile: any,
         cb: VerifyCallback
     ):Promise<any> {
-        // console.log(profile)
-        const {displayName, imageUrl} = profile
         const user = {
-            username: displayName,
-            image: imageUrl
+            id: profile.id,
+            username: profile.username,
+            displayName: profile.displayName,
+            email: profile.email,
+            imageUrl: profile.imageUrl
         }
         cb(null, user)
     }

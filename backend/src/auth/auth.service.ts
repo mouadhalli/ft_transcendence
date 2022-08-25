@@ -1,8 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
-import { RegisterInput, UserDto } from 'src/dto/User.dto';
-import * as bcrypt from 'bcryptjs'
+import { UserDto } from 'src/dto/User.dto';
 
 @Injectable()
 export class AuthService {
@@ -11,50 +10,27 @@ export class AuthService {
         private jwtService: JwtService
     ) {}
 
-    async isValidUser(username: string, password: string): Promise<any> {
-        const user = await this.userService.findByUsername(username);
-        if (user && await bcrypt.compare(password, user.password))
-            return user
-        return null
-    }
-
-    issuToken(payload: UserDto) {
+    issueJwtToken(userData: UserDto) {
+        const payload = {
+            id: userData.id,
+            username: userData.username,
+        }
         return this.jwtService.sign(payload)
     }
 
-    async isInputDataInUse(userData: RegisterInput) {
-        const { username, email} = userData
-        const DataInUse = await this.userService.findByUsernameOrEmail(username, email)
-        DataInUse.forEach( data => {
-            let errorMessage: string
-            if (data.username === username)
-                errorMessage = 'username already in use'
-            else
-                errorMessage = 'email already in use'
-            throw new HttpException({message: [errorMessage]}, HttpStatus.BAD_REQUEST)
-        })
-    }
-
-    async saveUser(userData: RegisterInput) {
-        await this.userService.addOne(userData)
-    }
-
-    async saveFortyTwoUser(userData: any) {
-        const newUser = {
-            username: userData.username,
-            email: `${userData.username}@gmail.com`,
-            password: userData.username
+    async logUserIn(userData: UserDto) {
+        let user: UserDto
+        let redirectUrl: string
+        user = await this.userService.findUser(userData.id)
+        if (!user) { // first auth -> save user then redirect him to chose a displayName && 2fa
+            user = await this.userService.saveUser(userData)
+            redirectUrl = "http://localhost:8080/complete-Auth"
         }
-        const UserAlreadyExist = this.userService.findByUsername(newUser.username)
-        if (!UserAlreadyExist) {
-            await this.userService.addOne(newUser)
+        else // loggin
+            redirectUrl = "http://localhost:8080/"
+        return {
+            redirectUrl: redirectUrl,
+            jwtToken: this.issueJwtToken(user)
         }
-        const User = await this.userService.findByUsername(newUser.username)
-        const user:UserDto = {
-            id: parseInt(User.id),
-            username: User.username
-        }
-        const token = this.issuToken(user)
-        return token
     }
 }

@@ -5,7 +5,7 @@ import { UsersModule } from '../user/user.module';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { LocalStrategy } from './strategies/local.strategy';
+// import { LocalStrategy } from './strategies/local.strategy';
 import { AuthController } from './auth.controller';
 import { FortyTwoStrategy } from './strategies/42.strategy'
 
@@ -25,7 +25,8 @@ const jwtFactory = {
     PassportModule,
     JwtModule.registerAsync(jwtFactory),
   ],
-  providers: [AuthService, LocalStrategy, JwtStrategy, FortyTwoStrategy],
+  providers: [AuthService, JwtStrategy, FortyTwoStrategy],
+
   // exports: [AuthService],
   controllers: [AuthController],
 })

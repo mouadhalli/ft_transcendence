@@ -1,23 +1,45 @@
-import {Entity, PrimaryGeneratedColumn, Column, BeforeInsert} from 'typeorm'
-import * as bcrypt from 'bcryptjs'
+import {Entity, PrimaryColumn, Column} from 'typeorm'
+// import * as bcrypt from 'bcryptjs'
 @Entity('user')
 export class UserEntity {
 
-    @PrimaryGeneratedColumn('uuid')
-    id: string;  
+    @PrimaryColumn({ type: "int" })
+    id: number;
 
-    @Column({unique: true})
+    @Column({
+        type: 'varchar',
+        length: 12,
+        default: '',
+        unique: true
+    })
     username: string;
 
-    @Column({unique: true})
+    @Column({
+        type: 'varchar',
+        length: 100,
+        default: '',
+        unique: true
+    })
     email: string;
 
-    @Column()
-    password: string;
+    @Column({
+        type: 'varchar',
+        length: 20,
+        default: '',
+        unique: true
+    })
+    displayName: string;
 
-    @BeforeInsert()
-    async hashPassword() {
-        this.password = await bcrypt.hash(this.password, 10);  
-    }
+    @Column({ default: '' })
+    imageUrl: string;
+
+    @Column({ default: false })
+    is2faEnabled: boolean;
+
+/* in typescript:
+    ? = optional = we can create a user without the optional collumn = allowed to be undefined
+    ! = telling Typescript to not warn you that you didn't initialize it */
+    @Column({ nullable: true })
+    twoFactorSecret?: string;
 
 }

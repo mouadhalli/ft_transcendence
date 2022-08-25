@@ -1,30 +1,15 @@
 import { Controller, UseGuards, Post, Body, Req, HttpException, HttpStatus, Get, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LocalAuthGuard } from './guards/local-auth.guard';
+// import { LocalAuthGuard } from './guards/local-auth.guard';
 import { FortyTwoAuthGuard } from './guards/42.auth.guard';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { RegisterInput, UserDto } from 'src/dto/User.dto';
+// import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { UserDto } from 'src/dto/User.dto';
 import { User } from '../user/decorators/user.decorator'
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
     constructor(private authService:AuthService) {}
-
-    @UseGuards(LocalAuthGuard)
-    @Post('login')
-    loginLocal(@User() user: UserDto) {
-        const token = this.authService.issuToken(user)
-        return { access_token: token }
-    }
-  
-    @Post('register')
-    async register(@Body() userInput: RegisterInput) {
-        const {password, confirmPassword} = userInput
-        await this.authService.isInputDataInUse(userInput)
-        if (password !== confirmPassword) 
-            throw new HttpException({message: ["passwords doesn't match"]} , HttpStatus.BAD_REQUEST)
-        await this.authService.saveUser(userInput)
-    }
 
     @Get('42')
     @UseGuards(FortyTwoAuthGuard)
@@ -32,9 +17,9 @@ export class AuthController {
 
     @Get('42/redirect')
     @UseGuards(FortyTwoAuthGuard)
-    async FortyTwoAuthRedirect(@User() user: any, @Res() res: any) {
-        const token = await this.authService.saveFortyTwoUser(user)
-        res.cookie('accessToken', token);
-        return res.redirect("http://localhost:8080/home")
+    async FortyTwoAuthRedirect(@User() user: UserDto, @Res() res: any) {
+        const {redirectUrl, jwtToken} = await this.authService.logUserIn(user)
+        return res.cookie('accessToken', jwtToken).redirect(redirectUrl)
     }
+
 }
