@@ -38,4 +38,23 @@ export class AuthService {
     async saveUser(userData: RegisterInput) {
         await this.userService.addOne(userData)
     }
+
+    async saveFortyTwoUser(userData: any) {
+        const newUser = {
+            username: userData.username,
+            email: `${userData.username}@gmail.com`,
+            password: userData.username
+        }
+        const UserAlreadyExist = this.userService.findByUsername(newUser.username)
+        if (!UserAlreadyExist) {
+            await this.userService.addOne(newUser)
+        }
+        const User = await this.userService.findByUsername(newUser.username)
+        const user:UserDto = {
+            id: parseInt(User.id),
+            username: User.username
+        }
+        const token = this.issuToken(user)
+        return token
+    }
 }

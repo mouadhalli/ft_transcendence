@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Post, Body, Req, HttpException, HttpStatus, Get } from '@nestjs/common';
+import { Controller, UseGuards, Post, Body, Req, HttpException, HttpStatus, Get, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { FortyTwoAuthGuard } from './guards/42.auth.guard';
@@ -32,7 +32,9 @@ export class AuthController {
 
     @Get('42/redirect')
     @UseGuards(FortyTwoAuthGuard)
-    async FortyTwoAuthRedirect(@User() user: any) {
-        return user
+    async FortyTwoAuthRedirect(@User() user: any, @Res() res: any) {
+        const token = await this.authService.saveFortyTwoUser(user)
+        res.cookie('accessToken', token);
+        return res.redirect("http://localhost:8080/home")
     }
 }
