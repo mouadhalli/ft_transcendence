@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserDto } from 'src/dto/User.dto';
 
+type File = Express.Multer.File;
 
 @Injectable()
 export class UserService {
@@ -44,6 +45,16 @@ export class UserService {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
     })
     return newUser
+  }
+
+  async updateProfile(id: number, newUsername: string, imgUrl: string): Promise<UserDto> {
+    let user = await this.findUser( id );
+    user.username = newUsername ? newUsername : user.username
+    user.imageUrl = imgUrl
+    user = await this.usersRepository.save(user).catch(error => {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+    })
+    return user
   }
 
 }

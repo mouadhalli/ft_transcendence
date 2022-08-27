@@ -24,7 +24,7 @@ export class AuthService {
         user = await this.userService.findUser(userData.id)
         if (!user) { // first auth -> save user then redirect him to chose a displayName && 2fa
             user = await this.userService.saveUser(userData)
-            redirectUrl = "http://localhost:8080/complete-Auth"
+            redirectUrl = "http://localhost:8080/register"
         }
         else // loggin
             redirectUrl = "http://localhost:8080/"
