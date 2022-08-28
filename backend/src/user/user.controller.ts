@@ -1,11 +1,10 @@
-import { Controller, Get, Delete, UseGuards, Patch, UseInterceptors, UploadedFile, HttpCode, Body, Param, Res } from '@nestjs/common';
+import { Controller, Get, Delete, UseGuards, Patch, UseInterceptors, UploadedFile, HttpCode, Body, Param, Res, HttpException, HttpStatus } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UserDto } from 'src/dto/User.dto';
 import { User } from './decorators/user.decorator';
 import { UserService } from './user.service';
 import { multerOptions } from '../config/mutler.conf'
-import { readFileSync } from 'fs'
 
 type File = Express.Multer.File;
 
@@ -40,10 +39,5 @@ export class UserController {
       @UploadedFile() file: File): Promise<UserDto> {
         const imgUrl = `http://localhost:3000/${file.path}`
         return await this.userService.updateProfile(userId, username, imgUrl)
-    }
-
-    @Get('uploads/:filename')
-    sendImage(@Param("filename") filename, @Res() res) {
-      res.sendFile(filename, {root: 'uploads'});
     }
 }
