@@ -27,6 +27,6 @@ export class TwofaService {
         return authenticator.verify({
           token: twofaCode,
           secret: twofaSecret,
-        });
-      }
+      });
+    }
 }

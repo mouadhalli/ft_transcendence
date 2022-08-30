@@ -37,7 +37,9 @@ export class UserController {
       @User("id") userId: number,
       @Body('username') username: string,
       @UploadedFile() file: File): Promise<UserDto> {
-        const imgUrl = `http://localhost:3000/${file.path}`
+        let imgUrl = ''
+        if (file)
+          imgUrl = `http://localhost:3000/${file.path}`
         return await this.userService.updateProfile(userId, username, imgUrl)
     }
 }

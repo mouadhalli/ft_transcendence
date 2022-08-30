@@ -49,8 +49,10 @@ export class UserService {
 
   async updateProfile(id: number, newUsername: string, imgUrl: string): Promise<UserDto> {
     let user = await this.findUser( id );
-    user.username = newUsername ? newUsername : user.username
-    user.imageUrl = imgUrl
+    if (newUsername)
+      user.username = newUsername
+    if (imgUrl.length)
+      user.imageUrl = imgUrl
     user = await this.usersRepository.save(user).catch(error => {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
     })
