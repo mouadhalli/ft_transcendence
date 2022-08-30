@@ -22,7 +22,7 @@ export class UserService {
     })
   }
 
-  async findUser(id: number): Promise<UserDto> {
+  async findUser(id: number): Promise<UserEntity> {
     const user = await this.usersRepository.findOneBy({ id });
     return user
   }
@@ -56,5 +56,28 @@ export class UserService {
     })
     return user
   }
+
+  async set2faState(userId: number, state: boolean): Promise<UserDto> {
+    let user = await this.findUser( userId )
+    if (!user)
+      throw new HttpException('user not found', HttpStatus.NOT_FOUND)
+    user.is2faEnabled = state
+    user = await this.usersRepository.save(user).catch(error => {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+    })
+    return user
+  }
+
+  async Set2faSecret(userId: number, secret: string): Promise<UserDto> {
+    let user = await this.findUser( userId )
+    if (!user)
+      throw new HttpException('user not found', HttpStatus.NOT_FOUND)
+    user.twoFactorSecret = secret
+    user = await this.usersRepository.save(user).catch(error => {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+    })
+    return user
+  }
+
 
 }

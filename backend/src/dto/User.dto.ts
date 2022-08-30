@@ -21,7 +21,7 @@ $constraint1, $constraint2, ... $constraintN - constraints defined by specific v
 
 //     @IsNotEmpty()
 //     @MinLength(8)
-//     // @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {message: 'password too weak'})
+//     // @Matches(/((=.*\d)|(=.*\W+))(![.\n])(=.*[A-Z])(=.*[a-z]).*$/, {message: 'password too weak'})
 //     password: string
 
 //     @IsNotEmpty()
@@ -44,22 +44,26 @@ $constraint1, $constraint2, ... $constraintN - constraints defined by specific v
 
 export class UserDto {
     @IsNumber()
-    id?: number;
+    id: number
 
     @IsString()
     @IsNotEmpty()
     @IsAlphanumeric()
-    username?: string;
+    username: string
 
     @IsString()
     @IsNotEmpty()
     @IsEmail()
-    email?: string;
+    email: string
 
     @IsString()
-    displayName?: string;
+    displayName: string
 
     @IsUrl() // also handles IsString case
     @IsNotEmpty()
-    imageUrl?: string;
+    imageUrl: string
+
+    is2faEnabled: boolean
+
+    twoFactorSecret?: string
 }

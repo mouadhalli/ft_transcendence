@@ -6,7 +6,7 @@ import { User } from './decorators/user.decorator';
 import { UserService } from './user.service';
 import { multerOptions } from '../config/mutler.conf'
 
-type File = Express.Multer.File;
+type File = Express.Multer.File
 
 @Controller('user')
 export class UserController {
