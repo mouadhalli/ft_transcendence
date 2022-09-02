@@ -3,6 +3,8 @@ import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserDto } from 'src/dto/User.dto';
 
+import { twoFactorState, jwtPayload } from '../dto/jwt.dto'
+
 @Injectable()
 export class AuthService {
     constructor(
@@ -10,10 +12,12 @@ export class AuthService {
         private jwtService: JwtService
     ) {}
 
-    issueJwtToken(userData: UserDto) {
-        const payload = {
+    issueJwtToken(userData: UserDto, twofaStatus: twoFactorState = twoFactorState.notconfirmed) {
+
+        const payload: jwtPayload = {
             id: userData.id,
             username: userData.username,
+            twofa: twofaStatus
         }
         return this.jwtService.sign(payload)
     }
@@ -21,16 +25,20 @@ export class AuthService {
     async logUserIn(userData: UserDto) {
         let user: UserDto
         let redirectUrl: string
+        let twofaStatus: twoFactorState
         user = await this.userService.findUser(userData.id)
         if (!user) { // first auth -> save user then redirect him to chose a displayName && 2fa
             user = await this.userService.saveUser(userData)
             redirectUrl = "http://localhost:8080/register"
+            twofaStatus = twoFactorState.notactive
         }
+        else if (user && user.is2faEnabled)
+            redirectUrl = "http://localhost:8000/2fa-verification"
         else // loggin
             redirectUrl = "http://localhost:8080/"
         return {
             redirectUrl: redirectUrl,
-            jwtToken: this.issueJwtToken(user)
+            jwtToken: this.issueJwtToken(user, twofaStatus)
         }
     }
 }

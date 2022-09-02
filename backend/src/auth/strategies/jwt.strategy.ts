@@ -4,6 +4,8 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user/user.service';
 import { UserDto } from 'src/dto/User.dto';
+import { twoFactorState } from '../../dto/jwt.dto'
+
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -18,8 +20,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(jwtPayload: any) {
+    let authorized = true
     const user: UserDto = await this.userService.findUser(jwtPayload.id)
-    if (!user)
+    if ((user && jwtPayload.twofa === twoFactorState.notconfirmed)
+    || (user?.is2faEnabled === true && jwtPayload.twofa === twoFactorState.notactive))
+      authorized = false
+    
+    if (!user || authorized === false)
       throw new HttpException('unauthorized', HttpStatus.UNAUTHORIZED)
     return user
   }

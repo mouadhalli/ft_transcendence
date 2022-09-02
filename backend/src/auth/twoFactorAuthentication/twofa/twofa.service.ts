@@ -23,10 +23,10 @@ export class TwofaService {
         return otpauthUrl
     }
 
-    isTwoFactorCodeValid(twofaSecret: string, twofaCode: string) {
-        return authenticator.verify({
-          token: twofaCode,
-          secret: twofaSecret,
-      });
-    }
+    // isTwoFactorCodeValid(twofaSecret: string, twofaCode: string) {
+    //     return authenticator.verify({
+    //       token: twofaCode,
+    //       secret: twofaSecret,
+    //   })
+    // }
 }

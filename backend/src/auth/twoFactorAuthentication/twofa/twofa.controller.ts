@@ -3,31 +3,36 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UserDto } from 'src/dto/User.dto';
 import { User } from 'src/user/decorators/user.decorator';
 import { TwofaService } from './twofa.service';
-import { toDataURL } from 'qrcode';
-import { HttpErrorByCode } from '@nestjs/common/utils/http-error-by-code.util';
+import { toFileStream, toDataURL } from 'qrcode';
+import { authenticator } from 'otplib';
+import { AuthService } from 'src/auth/auth.service';
+import { twoFactorState } from 'src/dto/jwt.dto';
 
 @Controller('2fa')
 export class TwofaController {
-    constructor( private twofaservice: TwofaService ) {}
+    constructor(
+        private twofaservice: TwofaService,
+        private authService: AuthService
+    ) {}
 
     @Get('generate')
     @HttpCode(200)
     @UseGuards(JwtAuthGuard)
     async enableTwoFactorAuth(@User('id') userId: number, @Res() res) {
         const otpauthUrl = await this.twofaservice.generate2faSecret(userId);
-        return toDataURL(otpauthUrl)
+        // return toDataURL(otpauthUrl)
+        return toFileStream(res, otpauthUrl)
     }
 
-    @Post('authenticate')
-    @HttpCode(200)
+    @Post('verify')
     @UseGuards(JwtAuthGuard)
-    async authenticate(@User() user: UserDto , @Body('code') twofaCode: string ) {
-        const is2faEnabled = user.is2faEnabled
-        const isValid = this.twofaservice.isTwoFactorCodeValid(user.twoFactorSecret, twofaCode)
-        if (isValid === false)
-            throw new UnauthorizedException('invalid code')
-        if (is2faEnabled === false)
+    async enable2fa(@User() user: UserDto , @Body('code') twofaCode: string, @Res({ passthrough: true }) res ) {
+        const isValidCode = authenticator.verify({ token: twofaCode,secret: user.twoFactorSecret })
+        if (isValidCode === false)
+            return {valid: false}
+        if (user.is2faEnabled === false)
             await this.twofaservice.turnTwofaOnOff(user.id, true)
-        return true
-    }
+        const token = this.authService.issueJwtToken(user, twoFactorState.confirmed)
+        res.status(200).cookie('accessToken', token).send({valid: true})
+    }    
 }
