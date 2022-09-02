@@ -7,8 +7,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthController } from './auth.controller';
 import { FortyTwoStrategy } from './strategies/42.strategy'
-import { TwofaController } from './twoFactorAuthentication/twofa/twofa.controller';
-import { TwofaService } from './twoFactorAuthentication/twofa/twofa.service';
+import { TwofaController } from './twoFactorAuthentication/twofa.controller';
+import { TwofaService } from './twoFactorAuthentication/twofa.service';
 
 const jwtFactory = {
   useFactory: async (configService: ConfigService) => ({

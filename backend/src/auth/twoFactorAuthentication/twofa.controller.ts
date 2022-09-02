@@ -18,10 +18,10 @@ export class TwofaController {
     @Get('generate')
     @HttpCode(200)
     @UseGuards(JwtAuthGuard)
-    async enableTwoFactorAuth(@User('id') userId: number, @Res() res) {
+    async enableTwoFactorAuth(@User('id') userId: number, @Res({ passthrough: true }) res) {
         const otpauthUrl = await this.twofaservice.generate2faSecret(userId);
-        // return toDataURL(otpauthUrl)
-        return toFileStream(res, otpauthUrl)
+        return toDataURL(otpauthUrl)
+        // return toFileStream(res, otpauthUrl)
     }
 
     @Post('verify')
