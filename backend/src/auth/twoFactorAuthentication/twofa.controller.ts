@@ -18,10 +18,10 @@ export class TwofaController {
     @Get('generate')
     @HttpCode(200)
     @UseGuards(JwtAuthGuard)
-    async enableTwoFactorAuth(@User('id') userId: number, @Res({ passthrough: true }) res) {
+    async enableTwoFactorAuth(@User('id') userId: number, @Res() res) {
         const otpauthUrl = await this.twofaservice.generate2faSecret(userId);
-        return toDataURL(otpauthUrl)
-        // return toFileStream(res, otpauthUrl)
+        // return toDataURL(otpauthUrl)
+        return toFileStream(res, otpauthUrl)
     }
 
     @Post('verify')
@@ -32,10 +32,9 @@ export class TwofaController {
             if (user.is2faEnabled === false)
                 await this.twofaservice.turnTwofaOnOff(user.id, true)
             const token = this.authService.issueJwtToken(user, twoFactorState.confirmed)
-            res.status(200).cookie('accessToken', token)
+            res.status(200).json({valid: isValidCode, accessToken: token})
         }
         else
-            res.status(401)
-        res.send({valid: isValidCode})
-    }    
+            res.status(401).json({valid: isValidCode})
+    }
 }
