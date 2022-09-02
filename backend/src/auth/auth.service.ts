@@ -17,7 +17,7 @@ export class AuthService {
         const payload: jwtPayload = {
             id: userData.id,
             username: userData.username,
-            twofa: twofaStatus
+            twofaState: twofaStatus
         }
         return this.jwtService.sign(payload)
     }
@@ -25,16 +25,17 @@ export class AuthService {
     async logUserIn(userData: UserDto) {
         let user: UserDto
         let redirectUrl: string
-        let twofaStatus: twoFactorState
+        let twofaStatus: twoFactorState = twoFactorState.notactive
         user = await this.userService.findUser(userData.id)
         if (!user) { // first auth -> save user then redirect him to chose a displayName && 2fa
             user = await this.userService.saveUser(userData)
             redirectUrl = "http://localhost:8080/register"
-            twofaStatus = twoFactorState.notactive
         }
-        else if (user && user.is2faEnabled)
+        else if (user && user.is2faEnabled) {
             redirectUrl = "http://localhost:8000/2fa-verification"
-        else // loggin
+            twofaStatus = twoFactorState.notconfirmed
+        }
+        else// loggin
             redirectUrl = "http://localhost:8080/"
         return {
             redirectUrl: redirectUrl,

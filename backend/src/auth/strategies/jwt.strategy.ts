@@ -22,7 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(jwtPayload: any) {
     let authorized = true
     const user: UserDto = await this.userService.findUser(jwtPayload.id)
-    if ((user && jwtPayload.twofa === twoFactorState.notconfirmed)
+    if ((user && jwtPayload.twofaState === twoFactorState.notconfirmed)
     || (user?.is2faEnabled === true && jwtPayload.twofa === twoFactorState.notactive))
       authorized = false
     
