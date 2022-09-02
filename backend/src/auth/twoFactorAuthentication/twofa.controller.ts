@@ -28,11 +28,14 @@ export class TwofaController {
     @UseGuards(JwtAuthGuard)
     async enable2fa(@User() user: UserDto , @Body('code') twofaCode: string, @Res({ passthrough: true }) res ) {
         const isValidCode = authenticator.verify({ token: twofaCode,secret: user.twoFactorSecret })
-        if (isValidCode === false)
-            return {valid: false}
-        if (user.is2faEnabled === false)
-            await this.twofaservice.turnTwofaOnOff(user.id, true)
-        const token = this.authService.issueJwtToken(user, twoFactorState.confirmed)
-        res.status(200).cookie('accessToken', token).send({valid: true})
+        if (isValidCode === true){
+            if (user.is2faEnabled === false)
+                await this.twofaservice.turnTwofaOnOff(user.id, true)
+            const token = this.authService.issueJwtToken(user, twoFactorState.confirmed)
+            res.status(200).cookie('accessToken', token)
+        }
+        else
+            res.status(401)
+        res.send({valid: isValidCode})
     }    
 }

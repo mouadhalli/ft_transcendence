@@ -32,7 +32,7 @@ export class AuthService {
             redirectUrl = "http://localhost:8080/register"
         }
         else if (user && user.is2faEnabled) {
-            redirectUrl = "http://localhost:8000/2fa-verification"
+            redirectUrl = "http://localhost:8080/2fa-verification"
             twofaStatus = twoFactorState.notconfirmed
         }
         else// loggin
