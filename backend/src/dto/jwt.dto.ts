@@ -1,7 +1,7 @@
 export enum twoFactorState {
-    "notactive",
-    "confirmed",
-    "notconfirmed"
+    NOT_ACTIVE = "not_active",
+    CONFIRMED = "confirmed",
+    NOT_CONFIRMED = "not_confirmed"
 }
 
 export interface jwtPayload {

@@ -16,9 +16,9 @@ export class TwofaController {
     ) {}
 
     @Get('generate')
-    @HttpCode(200)
     @UseGuards(JwtAuthGuard)
-    async enableTwoFactorAuth(@User('id') userId: number, @Res() res) {
+    @HttpCode(200)
+    async generateQrCode(@User('id') userId: number, @Res() res) {
         const otpauthUrl = await this.twofaservice.generate2faSecret(userId);
         // return toDataURL(otpauthUrl)
         return toFileStream(res, otpauthUrl)
@@ -26,15 +26,18 @@ export class TwofaController {
 
     @Post('verify')
     @UseGuards(JwtAuthGuard)
-    async enable2fa(@User() user: UserDto , @Body('code') twofaCode: string, @Res({ passthrough: true }) res ) {
-        const isValidCode = authenticator.verify({ token: twofaCode,secret: user.twoFactorSecret })
-        if (isValidCode === true){
-            if (user.is2faEnabled === false)
-                await this.twofaservice.turnTwofaOnOff(user.id, true)
-            const token = this.authService.issueJwtToken(user, twoFactorState.confirmed)
-            res.status(200).json({valid: isValidCode, accessToken: token})
-        }
-        else
-            res.status(401).json({valid: isValidCode})
+    @HttpCode(200)
+    async verifyCode( @User() user: UserDto, @Body('code') code: string ) {
+
+        if (!user.twoFactorSecret)
+            throw new UnauthorizedException("user 2fa is not active")
+        else if ( authenticator.verify({ token: code ,secret: user.twoFactorSecret })  === false)
+            throw new UnauthorizedException({message: "unvalid 2fa code", valid: false})
+
+        if (user.is2faEnabled === false)
+            await this.twofaservice.turnTwofaOnOff(user.id, true)
+
+        const token = this.authService.issueJwtToken(user, twoFactorState.CONFIRMED)
+        return {message: "valid 2fa code", valid: true, accessToken: token }
     }
 }

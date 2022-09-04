@@ -12,7 +12,7 @@ export class AuthService {
         private jwtService: JwtService
     ) {}
 
-    issueJwtToken(userData: UserDto, twofaStatus: twoFactorState = twoFactorState.notconfirmed) {
+    issueJwtToken(userData: UserDto, twofaStatus: twoFactorState = twoFactorState.NOT_CONFIRMED) {
 
         const payload: jwtPayload = {
             id: userData.id,
@@ -25,17 +25,17 @@ export class AuthService {
     async logUserIn(userData: UserDto) {
         let user: UserDto
         let redirectUrl: string
-        let twofaStatus: twoFactorState = twoFactorState.notactive
+        let twofaStatus: twoFactorState = twoFactorState.NOT_ACTIVE
         user = await this.userService.findUser(userData.id)
-        if (!user) { // first auth -> save user then redirect him to chose a displayName && 2fa
+        if (!user) { // first auth -> save user then redirect him to chose a displayName && 2fa state
             user = await this.userService.saveUser(userData)
             redirectUrl = "http://localhost:8080/register"
         }
-        else if (user && user.is2faEnabled) {
+        else if (user && user.is2faEnabled) { // user already have an account and an active 2fa
             redirectUrl = "http://localhost:8080/2fa-verification"
-            twofaStatus = twoFactorState.notconfirmed
+            twofaStatus = twoFactorState.NOT_CONFIRMED
         }
-        else// loggin
+        else// user already have an account and an unactive 2fa
             redirectUrl = "http://localhost:8080/"
         return {
             redirectUrl: redirectUrl,
