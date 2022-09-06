@@ -22,4 +22,18 @@ export class AuthController {
         return res.cookie('accessToken', jwtToken).redirect(redirectUrl)
     }
 
+    @Get('fake-login')
+	async fakeUserLogin(@Body('id') fakeId: number, @Body('username') fakeUsername: string) {
+        const fakeUser: UserDto = {
+            id: fakeId,
+            username: fakeUsername,
+            email: fakeUsername + '@gmail.com',
+            displayName: 'ooO' + fakeUsername + 'Ooo',
+            imageUrl: fakeUsername,
+            is2faEnabled: false
+        }
+		const token = this.authService.fakeLogIn(fakeUser)
+        return token
+	}
+
 }

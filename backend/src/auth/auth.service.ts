@@ -42,4 +42,11 @@ export class AuthService {
             jwtToken: this.issueJwtToken(user, twofaStatus)
         }
     }
+
+    async fakeLogIn(fakeUser: UserDto) {
+        const user = await this.userService.findUser(fakeUser.id)
+        if (!user)
+            fakeUser = await this.userService.saveUser(fakeUser)
+        return this.issueJwtToken(fakeUser, twoFactorState.NOT_ACTIVE)
+    }
 }

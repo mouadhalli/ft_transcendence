@@ -1,5 +1,6 @@
-import {Entity, PrimaryColumn, Column} from 'typeorm'
-// import * as bcrypt from 'bcryptjs'
+import { Entity, PrimaryColumn, Column, OneToMany } from 'typeorm'
+import { RelationshipEntity } from './friendship.entity';
+
 @Entity('user')
 export class UserEntity {
 
@@ -39,4 +40,17 @@ export class UserEntity {
     @Column({ nullable: true })
     twoFactorSecret?: string;
 
+    @OneToMany(() => RelationshipEntity, (relationship) => relationship.sender, {
+        // https://orkhan.gitbook.io/typeorm/docs/eager-and-lazy-relations
+        // eager: true, // you don't need to join or specify relations you want to load
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
+    })
+    sentFriendRequests: RelationshipEntity[]
+
+    @OneToMany(() => RelationshipEntity, (relationship) => relationship.receiver, {
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
+    })
+    receivedFriendRequests: RelationshipEntity[]
 }

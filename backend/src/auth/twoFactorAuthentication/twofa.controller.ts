@@ -9,6 +9,7 @@ import { AuthService } from 'src/auth/auth.service';
 import { twoFactorState } from 'src/dto/jwt.dto';
 
 @Controller('2fa')
+@UseGuards(JwtAuthGuard)
 export class TwofaController {
     constructor(
         private twofaservice: TwofaService,
@@ -16,7 +17,6 @@ export class TwofaController {
     ) {}
 
     @Get('generate')
-    @UseGuards(JwtAuthGuard)
     @HttpCode(200)
     async generateQrCode(@User('id') userId: number, @Res() res) {
         const otpauthUrl = await this.twofaservice.generate2faSecret(userId);
@@ -25,7 +25,6 @@ export class TwofaController {
     }
 
     @Post('verify')
-    @UseGuards(JwtAuthGuard)
     @HttpCode(200)
     async verifyCode( @User() user: UserDto, @Body('code') code: string ) {
 
