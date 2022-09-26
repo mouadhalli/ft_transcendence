@@ -2,14 +2,15 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserDto } from 'src/dto/User.dto';
-
 import { twoFactorState, jwtPayload } from '../dto/jwt.dto'
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
     constructor(
         private userService: UserService,
-        private jwtService: JwtService
+        private jwtService: JwtService,
+        private configService: ConfigService
     ) {}
 
     issueJwtToken(userData: UserDto, twofaStatus: twoFactorState = twoFactorState.NOT_CONFIRMED) {
@@ -48,5 +49,22 @@ export class AuthService {
         if (!user)
             fakeUser = await this.userService.saveUser(fakeUser)
         return this.issueJwtToken(fakeUser, twoFactorState.NOT_ACTIVE)
+    }
+
+    async verifyTokenAndExtractUser(jwtToken: string): Promise<UserDto> {
+        try {
+            if (!jwtToken)
+                return null
+            const { id }: jwtPayload = this.jwtService.verify(
+                jwtToken,
+                {secret: this.configService.get('JWT_SECRET')}
+            )
+            if (!id)
+                return null
+            return await this.userService.findUser(id)
+
+        } catch(error) {
+            return null
+        }
     }
 }

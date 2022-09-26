@@ -27,6 +27,7 @@ const jwtFactory = {
     JwtModule.registerAsync(jwtFactory),
   ],
   providers: [AuthService, JwtStrategy, FortyTwoStrategy, TwofaService],
+  exports: [AuthService],
   controllers: [AuthController, TwofaController],
 })
 export class AuthModule {}

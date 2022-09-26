@@ -1,7 +1,8 @@
+import { ChannelMembershipEntity } from 'src/chat/entities/channelMember.entity';
 import { Entity, PrimaryColumn, Column, OneToMany } from 'typeorm'
 import { RelationshipEntity } from './friendship.entity';
 
-@Entity('user')
+@Entity('users_table')
 export class UserEntity {
 
     @PrimaryColumn({ type: "int" })
@@ -53,4 +54,10 @@ export class UserEntity {
         onDelete: 'CASCADE'
     })
     receivedFriendRequests: RelationshipEntity[]
+
+    @OneToMany(() => ChannelMembershipEntity, (membership) => membership.member, {
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
+    })
+    channel_memberships: ChannelMembershipEntity[]
 }

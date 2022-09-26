@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Post, Body, Req, HttpException, HttpStatus, Get, Res } from '@nestjs/common';
+import { Controller, UseGuards, Post, Body, Req, HttpException, HttpStatus, Get, Res, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 // import { LocalAuthGuard } from './guards/local-auth.guard';
 import { FortyTwoAuthGuard } from './guards/42.auth.guard';
@@ -24,6 +24,8 @@ export class AuthController {
 
     @Get('fake-login')
 	async fakeUserLogin(@Body('id') fakeId: number, @Body('username') fakeUsername: string) {
+        if (!fakeId || !fakeUsername)
+            throw new BadRequestException('missing credentials')
         const fakeUser: UserDto = {
             id: fakeId,
             username: fakeUsername,

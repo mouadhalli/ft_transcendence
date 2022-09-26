@@ -7,7 +7,7 @@ export enum Relationship_State {
     BLOCKED = "blocked"
 }
 
-@Entity('relationship')
+@Entity('relationship_table')
 export class RelationshipEntity {
 
     @PrimaryGeneratedColumn()

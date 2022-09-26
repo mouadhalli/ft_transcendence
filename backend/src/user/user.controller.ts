@@ -106,15 +106,19 @@ export class UserController {
 		return await this.userService.getUserWithRelations(myid)
     }
 
-	@Get(':id')
+	@Get('profile/:id')
 	@UseGuards(JwtAuthGuard)
 	@HttpCode(200)
     async userProfile(@Param('id') userId: number) {
+		if (!userId)
+			throw new BadRequestException('user id not found')
 		const user = await this.userService.getUserWithRelations(userId)
 		if (!user)
 			throw new NotFoundException('user profile not found')
 		return user
     }
+
+
 
 
 	@Get('all-users')
@@ -126,12 +130,6 @@ export class UserController {
 	async deleteUsers() {
 		await this.userService.DeleteAll()
     	return {message: "successfully deleted all Users"}
-    }
-
-    @Get('profile')
-    @UseGuards(JwtAuthGuard)
-    async myProfile(@User() user: UserDto) {
-    	return user
     }
 
 	@Patch('update')

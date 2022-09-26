@@ -43,8 +43,8 @@ $constraint1, $constraint2, ... $constraintN - constraints defined by specific v
 // }
 
 export class UserDto {
-    @IsNumber()
-    id: number
+	@IsNumber()
+	id: number
 
     @IsString()
     @IsNotEmpty()
