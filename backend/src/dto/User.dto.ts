@@ -1,4 +1,4 @@
-import {IsNumber, IsString, IsNotEmpty, IsAlphanumeric, IsEmail, IsUrl} from 'class-validator'
+import {IsNumber, IsString, IsNotEmpty, IsAlphanumeric, IsEmail, IsUrl, IsOptional} from 'class-validator'
 
 /*
 There are few special tokens you can use in your messages:
@@ -43,27 +43,32 @@ $constraint1, $constraint2, ... $constraintN - constraints defined by specific v
 // }
 
 export class UserDto {
+    @IsNotEmpty()
 	@IsNumber()
 	id: number
 
-    @IsString()
     @IsNotEmpty()
+    @IsString()
     @IsAlphanumeric()
     username: string
 
-    @IsString()
+    // @IsString()
     @IsNotEmpty()
-    @IsEmail()
+    @IsEmail() // handle isString
     email: string
 
+    @IsNotEmpty()
     @IsString()
     displayName: string
 
-    @IsUrl() // also handles IsString case
     @IsNotEmpty()
+    @IsUrl() // also handles IsString case
     imageUrl: string
 
     is2faEnabled: boolean
 
+    @IsOptional()
+    @IsNotEmpty()
+    @IsString()
     twoFactorSecret?: string
 }

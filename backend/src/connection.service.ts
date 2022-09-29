@@ -21,6 +21,11 @@ export class GatewayConnectionService {
 		private authservice: AuthService
 	) {}
 
+/*
+	To Do:
+		- need to double check if one user can have multiple sockets
+		  if he opens multiple tabs
+*/
 	private ConnectedSockets = new Map<string, Connection>();
 
     async authenticateSocket(userToken: string): Promise<UserDto> {
@@ -36,6 +41,18 @@ export class GatewayConnectionService {
 			return
 
 		return this.ConnectedSockets.get(socketId).status
+	}
+
+	getUserConectionStatus(userId: number) {
+
+		if (!userId)
+			return
+		
+		this.ConnectedSockets.forEach(connection => {
+			if (connection.user_id === userId)
+				return connection
+		})
+		
 	}
 
 	getSocketUserId(socketId: string) {
@@ -61,7 +78,7 @@ export class GatewayConnectionService {
 
 	updateSocketConectionStatus(socketId: string, status: ConnectionStatus) {
 
-		if (!socketId && !status)
+		if (!socketId || !status)
 			return
 
 		let connection: Connection = this.ConnectedSockets.get(socketId)

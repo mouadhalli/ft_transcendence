@@ -4,10 +4,10 @@ import { ChannelMembershipEntity } from "./channelMember.entity"
 import { MessageEntity } from "./message.entity"
 
 export enum Channel_Type {
-    PRIVATE = 'private',    // private direct channel or group channel accessible on invite only
+    PRIVATE = 'private',    // private groupe channel accessible on invite only
     PUBLIC = 'public',      // public  groupe channel without a password
     PROTECTED = 'protected', // public groupe channel protected with a password
-    DIRECT = 'direct'        // I need to think more about this
+    DIRECT = 'direct'        // this type of channels isn't done yet
 }
 
 @Entity('channel_table')
@@ -18,6 +18,7 @@ export class ChannelEntity {
 
     @Column({
         type: 'varchar',
+        unique: true,
         default: '',
     })
     name: string

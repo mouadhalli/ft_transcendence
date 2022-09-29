@@ -1,5 +1,7 @@
 import {IsNumber, IsString, IsNotEmpty, IsAlphanumeric, IsEmail, IsUrl, IsOptional} from 'class-validator'
+import { UserDto } from 'src/dto/User.dto'
 import { Channel_Type } from '../entities/channel.entity'
+import { Channel_Member_Role, Channel_Member_State } from '../entities/channelMember.entity'
 
 
 export class ChannelDto {
@@ -21,11 +23,24 @@ export class ChannelDto {
     @IsOptional()
     @IsNotEmpty()
     @IsUrl() // also handles IsString case
-    @IsNotEmpty()
     img_path?: string
 
     @IsNotEmpty()
     @IsString()
     type: Channel_Type
+
+}
+
+export class MembershipDto {
+
+    id: number
+
+    member: UserDto
+
+    channel: ChannelDto
+
+    role: Channel_Member_Role
+    
+    state: Channel_Member_State
 
 }

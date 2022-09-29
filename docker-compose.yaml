@@ -9,6 +9,8 @@ services:
       - '3000:3000'
   database:
     image: 'postgres'
+    ports:
+      - '4444:5432' # 4444 because i have PG locally so 5432 already in use
     environment:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=123

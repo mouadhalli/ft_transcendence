@@ -2,11 +2,15 @@ import { BadRequestException, Injectable, InternalServerErrorException } from "@
 import { InjectRepository } from "@nestjs/typeorm";
 import { Not, Repository } from "typeorm";
 import { ChannelEntity, Channel_Type } from "../entities/channel.entity"
-import { ChannelMembershipEntity, Channel_Member_State } from "../entities/channelMember.entity";
-import { ChannelDto } from "./channel.dto";
+import { ChannelMembershipEntity, Channel_Member_Role, Channel_Member_State } from "../entities/channelMember.entity";
+import { ChannelDto, MembershipDto } from "./channel.dto";
 // import { UserService } from "src/user/user.service";
 import { MessageService } from "../message/message.service"
 import * as bcrypt from "bcryptjs";
+import { UserService } from "src/user/user.service";
+import { UserEntity } from "src/user/entities/user.entity";
+import { WsException } from "@nestjs/websockets";
+import { UserDto } from "src/dto/User.dto";
 
 @Injectable()
 export class ChannelService {
@@ -15,20 +19,21 @@ export class ChannelService {
         @InjectRepository(ChannelEntity)
             private channelRepository: Repository<ChannelEntity>,
         @InjectRepository(ChannelMembershipEntity)
-            private channelMemberRepository: Repository<ChannelMembershipEntity>,
-        // private userService: UserService
+            private membershipsRepository: Repository<ChannelMembershipEntity>,
+        private userService: UserService
         // private messageService: MessageService
     ) {}
 
-    async test() {
-        return this.channelRepository.find({
-            
-        })
-    }
+/*
+    TO DO:
+        - Protect async operations from failing
+        - make a new file(memberships.service) for ChannelMembershipEntity operations      
+        
+*/
 
-    async createChannel(creator_it: number, data: ChannelDto): Promise<ChannelEntity>  {
+    async createChannel(creator: UserDto, data: ChannelDto) {
         try {
-            const newChannel: ChannelEntity = this.channelRepository.create({
+            let newChannel: ChannelEntity = this.channelRepository.create({
                 name: data.name,
                 type: data.type,
             })
@@ -38,17 +43,21 @@ export class ChannelService {
             if (data.img_path)
                 newChannel.img_path = data.img_path
 
-            // TO DO: - create an owner membership for the creator
-            return await this.channelRepository.save(newChannel)
+            newChannel = await this.channelRepository.save(newChannel)
+            return await this.membershipsRepository.save({
+                member: creator,
+                channel: newChannel,
+                role: Channel_Member_Role.OWNER
+            })
 
         } catch (error) {
             throw new InternalServerErrorException(error)
         }
     }
 
-    async findOneChannel(channel_id: number): Promise<ChannelEntity> {
+    async findOneChannel(channelId: number): Promise<ChannelEntity> {
         try{
-            return await this.channelRepository.findOneBy({id: channel_id})
+            return await this.channelRepository.findOneBy({id: channelId})
         } catch (error) {
             throw new InternalServerErrorException(error)
         }
@@ -62,22 +71,22 @@ export class ChannelService {
         }
     }
 
-    async deleteChannel(channel_id: number): Promise<ChannelEntity> {
+    async deleteChannel(channelId: number) {
         try{
             // TO DO: - only the owner is allowed to delete his channel
-            const channel: ChannelEntity = await this.findOneChannel(channel_id)
+            const channel: ChannelEntity = await this.findOneChannel(channelId)
             return await this.channelRepository.remove(channel)
         } catch (error) {
             throw new InternalServerErrorException(error)
         }
     }
 
-    async turnChannelPrivate(channel_id: number): Promise<ChannelEntity> {
+    async turnChannelPrivate(channelId: number): Promise<ChannelEntity> {
         try{
 
             // TO DO: - only an admin or an owner is allowed to change channel type
 
-            const channel: ChannelEntity = await this.findOneChannel(channel_id)
+            const channel: ChannelEntity = await this.findOneChannel(channelId)
 
             if (!channel)
                 throw new BadRequestException("channel not found")
@@ -93,11 +102,11 @@ export class ChannelService {
         }
     }
 
-    async turnChannelPublic(channel_id: number): Promise<ChannelEntity> {
+    async turnChannelPublic(channelId: number): Promise<ChannelEntity> {
         try{
             // TO DO: - only an admin or an owner is allowed to change channel type
 
-            const channel: ChannelEntity = await this.findOneChannel(channel_id)
+            const channel: ChannelEntity = await this.findOneChannel(channelId)
 
             if (!channel)
                 throw new BadRequestException("channel not found")
@@ -113,11 +122,11 @@ export class ChannelService {
         }
     }
 
-    async turnChannelProtected(channel_id: number, password: string): Promise<ChannelEntity> {
+    async turnChannelProtected(channelId: number, password: string): Promise<ChannelEntity> {
         try{
             // TO DO: - only an admin or an owner is allowed to change channel type
 
-            const channel: ChannelEntity = await this.findOneChannel(channel_id)
+            const channel: ChannelEntity = await this.findOneChannel(channelId)
 
             if (!channel)
                 throw new BadRequestException("channel not found")
@@ -135,22 +144,22 @@ export class ChannelService {
 
     }
     
-    async findChannelMembers(channel_id: number): Promise<ChannelMembershipEntity[]> {
+    async findChannelMembers(channelId: number): Promise<ChannelMembershipEntity[]> {
 
         // TO DO: filter current user blocked users from channel memberships
 
-        if (!await this.findOneChannel(channel_id))
+        if (!await this.findOneChannel(channelId))
             throw new BadRequestException("channel not found")
         
-        return await this.channelMemberRepository.find({
+        return await this.membershipsRepository.find({
             where: {
-                channel: {id: channel_id}
+                channel: {id: channelId}
             },
             // select: //maybe ?
         })
     }
 
-    async findAllPublic() {
+    async findAllPublic(): Promise<ChannelEntity[]> {
         return await this.channelRepository.find({
             where: {
                 type: Channel_Type.PUBLIC
@@ -159,7 +168,7 @@ export class ChannelService {
         })
     }
 
-    async findAllProtected() {
+    async findAllProtected(): Promise<ChannelEntity[]> {
         return await this.channelRepository.find({
             where: {
                 type: Channel_Type.PROTECTED
@@ -168,11 +177,11 @@ export class ChannelService {
         })
     }
 
-    async findJoinedChannels(user_id: number) {
-        // return await this.channelMemberRepository.find({
+    async findJoinedChannels(userId: number): Promise<ChannelEntity[]> {
+        // return await this.membershipsRepository.find({
         //     relations: ['channel'],
         //     where: {
-        //         member: {id: user_id},
+        //         member: {id: userId},
         //         state: Not(Channel_Member_State.BANNED)
         //     },
         //     select: ['channel']
@@ -183,31 +192,85 @@ export class ChannelService {
         return await this.channelRepository.find({
             where: {
                 members: {
-                    id: user_id,
+                    id: userId,
                     state: Not(Channel_Member_State.BANNED)
                 },
             },
         })
     }
 
-    async findNonJoinedChannels(user_id: number) {
+    async findNonJoinedChannels(userId: number): Promise<ChannelEntity[]> {
 
-        // return await this.channelRepository.find({
-        //     where: {
-        //         members: {
-        //             id: Not(user_id),
-        //         },
-        //     },
-        // })
+        return await this.channelRepository.find({
+            where: {
+                members: {
+                    id: Not(userId),
+                },
+            },
+        })
 
         // alternative way
 
-        return await this.channelMemberRepository.find({
-            relations: ['channel'],
+        // return await this.membershipsRepository.find({
+        //     relations: ['channel'],
+        //     where: {
+        //         member: {id: Not(userId)}
+        //     },
+        //     select: ['channel']
+        // })
+    }
+
+    async findMembership(member: UserDto, channel: ChannelDto): Promise<ChannelMembershipEntity> {
+        return await this.membershipsRepository.findOne({
             where: {
-                member: {id: Not(user_id)}
-            },
-            select: ['channel']
+                member: member,
+                channel: channel
+            }
         })
+    }
+
+    async createMembership (
+        user: UserDto,
+        channel: ChannelDto,
+        member_role: Channel_Member_Role ) : Promise<ChannelMembershipEntity>
+        {
+        try {
+            return await this.membershipsRepository.save({
+                member: user,
+                channel: channel,
+                role: member_role
+            })
+
+        } catch (error) {
+            throw new WsException("internal server error")
+        }
+    }
+
+    async deleteMembership(member: UserDto, channel: ChannelDto): Promise<ChannelMembershipEntity> {
+        let membership: ChannelMembershipEntity = await this.findMembership(
+            member,
+            channel
+        )
+
+        return await this.membershipsRepository.remove(membership)
+    }
+
+    async findChannelAdminMembership(channel: ChannelDto): Promise<ChannelMembershipEntity> {
+        return await this.membershipsRepository.findOne({
+            where: {
+                channel: channel,
+                role: Channel_Member_Role.ADMIN
+            },
+        })
+    }
+
+    async changeChannelOwner(channel: ChannelDto): Promise<ChannelMembershipEntity> {
+        let adminMembership: ChannelMembershipEntity = await this.findChannelAdminMembership(channel)
+
+        if (!adminMembership)
+            await this.deleteChannel(channel.id)
+
+        adminMembership.role = Channel_Member_Role.OWNER
+        return await this.membershipsRepository.save(adminMembership)
     }
 }

@@ -1,9 +1,9 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { UserEntity } from "src/user/entities/user.entity";
+import { WsException } from "@nestjs/websockets";
+import { UserDto } from "src/dto/User.dto";
 import { Repository } from "typeorm";
 import { ChannelDto } from "../channel/channel.dto";
-import { ChannelEntity } from "../entities/channel.entity";
 import { MessageEntity } from "../entities/message.entity";
 import { MessageDto } from "./message.dto";
 
@@ -26,7 +26,7 @@ export class MessageService {
         })
     }
 
-    async createMessage(author: UserEntity, channel: ChannelEntity, content: string) {
+    async saveMessage(author: UserDto, channel: ChannelDto, content: string): Promise<MessageEntity> {
         try {
 
             // const message: MessageEntity = this.messageRepository.create({
@@ -42,7 +42,7 @@ export class MessageService {
             })
 
         } catch(error) {
-            throw new InternalServerErrorException(error)
+            throw new WsException("internal server error")
         }
     }
 }

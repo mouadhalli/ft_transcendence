@@ -9,6 +9,13 @@ import {
 import { Server, Socket } from 'socket.io';
 import { GatewayConnectionService, ConnectionStatus } from './connection.service';
 import { UserDto } from './dto/User.dto';
+import { Relationship_State } from './user/entities/friendship.entity';
+import { UserService } from './user/user.service';
+
+/*
+	To Do:
+		- when a user change his connection status needs to update all his friends
+*/
 
 @WebSocketGateway({
 	cors: '*'
@@ -16,7 +23,8 @@ import { UserDto } from './dto/User.dto';
 export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 	
 	constructor(
-		private connectionService: GatewayConnectionService
+		private connectionService: GatewayConnectionService,
+		private userService: UserService
 	){}
 		
 	private logger: Logger = new Logger('AppGateway')
@@ -49,5 +57,17 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 	logoutSocket(@ConnectedSocket()socket: Socket) {
 		this.connectionService.removeSocketConnection(socket.id)
 		socket.disconnect()
+	}
+
+	@SubscribeMessage('frineds-status')
+	async getFriendsConnectionStatus(@ConnectedSocket()socket: Socket) {
+		const userId: number = this.connectionService.getSocketUserId(socket.id)
+		const frineds = await this.userService.findUserRelationships(userId, 0, 999, Relationship_State.FRIENDS)
+
+		const result = frineds.map(friend => {
+			return this.connectionService.getUserConectionStatus(friend.id)
+		})
+
+		socket.emit('friends-status', result)
 	}
 }
