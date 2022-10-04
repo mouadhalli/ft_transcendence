@@ -10,6 +10,7 @@ import * as bcrypt from "bcryptjs";
 import { ChannelDto, MembershipDto } from './channel/channel.dto';
 import { UserDto } from 'src/dto/User.dto';
 import { MessageDto } from './message/message.dto';
+import { ChannelEntity } from "./entities/channel.entity"
 
  
 @Injectable()
@@ -44,7 +45,7 @@ export class ChatService {
 
     async leaveChannel(userId: number, payload: any) {
         const member: UserDto = await this.userService.findUser(userId)
-        const channel: ChannelDto = await this.channelService.findOneChannel(payload.channelId)
+        const channel: ChannelEntity = await this.channelService.findOneChannel(payload.channelId)
         const membership: MembershipDto = await this.channelService.findMembership(member, channel)
 
         if (!member || !channel || !membership)
@@ -53,7 +54,7 @@ export class ChatService {
         await this.channelService.deleteMembership(member, channel)
     
         if (membership.role === 'owner')
-            await this.channelService.changeChannelOwner(channel)
+            await this.channelService.changeChannelOwner(channel.id)
 
         return channel
     }

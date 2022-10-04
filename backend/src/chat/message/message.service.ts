@@ -1,9 +1,10 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { WsException } from "@nestjs/websockets";
 import { UserDto } from "src/dto/User.dto";
 import { Repository } from "typeorm";
 import { ChannelDto } from "../channel/channel.dto";
+import { ChannelService } from "../channel/channel.service";
 import { MessageEntity } from "../entities/message.entity";
 import { MessageDto } from "./message.dto";
 
@@ -12,11 +13,18 @@ export class MessageService {
 
     constructor(
         @InjectRepository(MessageEntity)
-            private messageRepository: Repository<MessageEntity>
+            private messageRepository: Repository<MessageEntity>,
+        private channelService: ChannelService
     ) {}
 
-    async findChannelMessages(channel: ChannelDto): Promise<MessageEntity[]> {
+    async findChannelMessages(channelId: number): Promise<MessageEntity[]> {
         // TO DO: - filter blocked users messages
+    
+        const channel = await this.channelService.findOneChannel(channelId)
+
+        if (!channel)
+            throw new BadRequestException('channel not found')
+
         return await this.messageRepository.find({
             relations: ['author', 'channel'],
             where: {

@@ -1,7 +1,6 @@
 import { Controller, Get, Delete, UseGuards, Patch, UseInterceptors, UploadedFile, HttpCode, Body, Param, Res, HttpException, HttpStatus, Post, BadRequestException, Query, NotFoundException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { UserDto } from 'src/dto/User.dto';
 import { User } from './decorators/user.decorator';
 import { UserService } from './user.service';
 import { multerOptions } from '../config/mutler.conf'
@@ -19,9 +18,9 @@ export class UserController {
 	@HttpCode(201)
 	async sendFriendRequest(
 		@User('id') userId: number,
-		@Body('target-id') friendId: number ) {
-			if (userId === friendId)
-				throw new BadRequestException("invalid friend id")
+		@Body('target_id') friendId: number ) {
+			if (!friendId || userId === friendId)
+				throw new BadRequestException("invalid target id")
 			return await this.userService.addFriend(userId, friendId)
 	}
 
@@ -30,8 +29,8 @@ export class UserController {
 	@HttpCode(201)
 	async acceptFriendRequest(
 		@User('id') userId: number,
-		@Body('target-id') friendId: number ) {
-			if (userId === friendId)
+		@Body('target_id') friendId: number ) {
+			if (!friendId || userId === friendId)
 				throw new BadRequestException("invalid friend id")
 			return await this.userService.updateRelationship(userId, friendId, Relationship_State.FRIENDS)
 	}
@@ -41,7 +40,7 @@ export class UserController {
 	@HttpCode(201)
 	async removeFromFriends(
 		@User('id') userId: number,
-		@Body('target-id') friendId: number ) {
+		@Body('target_id') friendId: number ) {
 			if (userId === friendId)
 				throw new BadRequestException("invalid friend id")
 			return await this.userService.removeRelationship(userId, friendId)
@@ -52,7 +51,7 @@ export class UserController {
 	@HttpCode(201)
 	async BlockUser(
 		@User('id') userId: number,
-		@Body('target-id') friendId: number ) {
+		@Body('target_id') friendId: number ) {
 			if (userId === friendId)
 				throw new BadRequestException("invalid friend id")
 			return await this.userService.updateRelationship(userId, friendId, Relationship_State.BLOCKED)
@@ -63,7 +62,7 @@ export class UserController {
 	@HttpCode(201)
 	async unblock(
 		@User('id') userId: number,
-		@Body('target-id') friendId: number ) {
+		@Body('target_id') friendId: number ) {
 			if (userId === friendId)
 				throw new BadRequestException("invalid friend id")
 			return await this.userService.removeRelationship(userId, friendId)
@@ -75,8 +74,9 @@ export class UserController {
 	async getFriends(
 		@User('id') userId,
 		@Query('index') index: number,
-		@Query('amount') amount: number) {
-			return await this.userService.findUserRelationships(userId, index, amount, Relationship_State.FRIENDS)
+		@Query('amount') amount: number
+	) {
+		return await this.userService.findUserRelationships(userId, index, amount, Relationship_State.FRIENDS)
 	}
 
 	@Get('block-list')
@@ -102,8 +102,9 @@ export class UserController {
 	@Get('me')
 	@UseGuards(JwtAuthGuard)
 	@HttpCode(200)
-    async me(@User('id') myid: number) {
-		return await this.userService.getUserWithRelations(myid)
+    async me(@User('id') userId: number) {
+		// return await this.userService.getUserWithRelations(userId)
+		return await this.userService.findUser(userId)
     }
 
 	@Get('profile/:id')
@@ -118,15 +119,16 @@ export class UserController {
 		return user
     }
 
-
-
-
 	@Get('all-users')
+	// @UseGuards(JwtAuthGuard)
+	@HttpCode(200)
     async getAllUsers() {
 		return await this.userService.findAll()
     }
 
     @Delete('all-users')
+	// @UseGuards(JwtAuthGuard)
+	@HttpCode(202)
 	async deleteUsers() {
 		await this.userService.DeleteAll()
     	return {message: "successfully deleted all Users"}
@@ -139,7 +141,7 @@ export class UserController {
 	async updateProfile(
 		@User('id') userId: number,
 		@Body('username') username: string,
-		@UploadedFile() file: File): Promise<UserDto> {
+		@UploadedFile() file: File) {
 			let imgUrl = ''
 	    	if (file)
 				imgUrl = `http://localhost:3000/${file.path}`

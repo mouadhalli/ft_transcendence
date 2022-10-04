@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, ParseIntPipe } from '@nestjs/common';
 import {
   SubscribeMessage, WebSocketGateway,
   OnGatewayInit, WebSocketServer,
@@ -26,6 +26,9 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 		private connectionService: GatewayConnectionService,
 		private userService: UserService
 	){}
+
+	@WebSocketServer()
+	server: Server;
 		
 	private logger: Logger = new Logger('AppGateway')
 
@@ -33,41 +36,59 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 		this.logger.log('App Gateway inisialized')
 	}
 
-	async handleConnection(socket: Socket, ...args: any[]) {
-		try {
-			// const userToken: string = socket.handshake.auth.token
-			// extracting token from headers because postmane don't support auth
-			const userToken: any = socket.handshake.headers.token
-			const user: UserDto = await this.connectionService.authenticateSocket(userToken)
+		async handleConnection(socket: Socket, ...args: any[]) {
+			try {
+				// this.server.sockets.sockets.forEach(element => {
+				// 	console.log(element.id)
+				// });
+				this.logger.log(socket.id + ' connected')
+				// const userToken: string = socket.handshake.auth.token
+				// extracting token from headers because postmane don't support auth
+				const userToken: any = socket.handshake.headers.token
+				const { id } = await this.connectionService.getUserFromToken(userToken)
+				this.connectionService.saveSocketConnection(socket.id, id)
+				socket.join(String(id))
+			} catch(error) {
+				socket.disconnect()
+				socket._error(error)
+			}
+	}
 
-			this.connectionService.saveSocketConnection(socket.id, user)
-			this.logger.log(socket.id + ' connected')
-		} catch(error) {
-			console.log(error)
+	async handleDisconnect(socket: Socket) {
+		try {
+			this.logger.log(socket.id + ' disconnected')
+			const userToken: any = socket.handshake.headers.token
+			const { id } = await this.connectionService.getUserFromToken(userToken)
+			this.connectionService.removeSocketConnection(id, socket.id)
+		} catch (error) {
+			// console.log(error)
+			socket._error(error)
+			// socket.disconnect()
+		}
+	}
+
+	@SubscribeMessage('logout')
+	async logoutSocket(@ConnectedSocket() socket: Socket) {
+		try {
+			const userToken: any = socket.handshake.headers.token
+			const { id } = await this.connectionService.getUserFromToken(userToken)
+			this.connectionService.removeConnection(id)
+			this.server.to(String(id)).disconnectSockets()
+		}
+		catch (error) {
+			// console.log(error)
 			socket._error(error)
 		}
 	}
 
-	handleDisconnect(socket: Socket) {
-		this.connectionService.updateSocketConectionStatus(socket.id, ConnectionStatus.OFFLINE)
-		this.logger.log(socket.id + ' disconnected')
-	}
-
-	@SubscribeMessage('logout')
-	logoutSocket(@ConnectedSocket()socket: Socket) {
-		this.connectionService.removeSocketConnection(socket.id)
-		socket.disconnect()
-	}
-
 	@SubscribeMessage('frineds-status')
-	async getFriendsConnectionStatus(@ConnectedSocket()socket: Socket) {
-		const userId: number = this.connectionService.getSocketUserId(socket.id)
+	async getFriendsConnectionStatus(@ConnectedSocket() socket: Socket, @MessageBody(ParseIntPipe) userId: number) {
 		const frineds = await this.userService.findUserRelationships(userId, 0, 999, Relationship_State.FRIENDS)
 
-		const result = frineds.map(friend => {
-			return this.connectionService.getUserConectionStatus(friend.id)
+		const friendsConnectionStatus = frineds.map(friend => {
+			const FriendStatus = this.connectionService.getUserConectionStatus(friend.id)
+			return {friendId: friend.id, status: FriendStatus}
 		})
-
-		socket.emit('friends-status', result)
+		socket.to(String(userId)).emit('friends-status', friendsConnectionStatus)
 	}
 }

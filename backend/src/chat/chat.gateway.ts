@@ -33,7 +33,7 @@ export class ChatGateway {
 
 	@SubscribeMessage('join_channel')
 	async joinChannelEvent(@ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
-		const userId: number = this.connectionService.getSocketUserId(socket.id)
+		const { userId } = payload
 		const channel: ChannelDto = await this.chatService.joinChannel(userId, payload)
 		socket.join(channel.name)
 		socket.broadcast.to(channel.name).emit('receive_message', userId + " joined")
@@ -41,7 +41,7 @@ export class ChatGateway {
 
 	@SubscribeMessage('leave_channel')
 	async leaveChannelEvent(@ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
-		const userId: number = this.connectionService.getSocketUserId(socket.id)
+		const { userId } = payload
 		const channel: ChannelDto = await this.chatService.leaveChannel(userId, payload)
 		socket.leave(channel.name)
 		socket.broadcast.to(channel.name).emit('receive_message', socket.id + " left")
@@ -49,7 +49,7 @@ export class ChatGateway {
 
 	@SubscribeMessage('send_message')
 	async receiveMessageEvent( @ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
-		const userId: number = this.connectionService.getSocketUserId(socket.id)
+		const { userId } = payload
 		const {channel, message} = await this.chatService.sendMessage(userId, payload)
 		socket.broadcast.to(channel.name).emit('receive_message', message)
 	}

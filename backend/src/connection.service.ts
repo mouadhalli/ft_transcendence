@@ -10,7 +10,7 @@ export enum ConnectionStatus {
 }
 
 export class Connection {
-    user_id: number
+    sockets: String[]
     status: ConnectionStatus
 }
 
@@ -23,77 +23,102 @@ export class GatewayConnectionService {
 
 /*
 	To Do:
-		- need to double check if one user can have multiple sockets
+	YES	- need to double check if one user can have multiple sockets
 		  if he opens multiple tabs
 */
-	private ConnectedSockets = new Map<string, Connection>();
+	private ConnectedSockets = new Map<number, Connection>();
 
-    async authenticateSocket(userToken: string): Promise<UserDto> {
+    async getUserFromToken(userToken: string): Promise<UserDto> {
 		const user: UserDto =  await this.authservice.verifyTokenAndExtractUser(userToken)
 		if (!user)
 			throw new WsException('unauthorized');
 		return user
     }
 
-	getSocketConectionStatus(socketId: string) {
+	// getSocketConectionStatus(socketId: string) {
 
-		if (!socketId)
-			return
+	// 	if (!socketId)
+	// 		return
 
-		return this.ConnectedSockets.get(socketId).status
-	}
+	// 	return this.ConnectedSockets.get(socketId).status
+	// }
 
 	getUserConectionStatus(userId: number) {
 
 		if (!userId)
 			return
 		
-		this.ConnectedSockets.forEach(connection => {
-			if (connection.user_id === userId)
-				return connection
-		})
-		
+		const friendConnection: Connection = this.ConnectedSockets.get(userId)
+		return friendConnection ? friendConnection.status : ConnectionStatus.OFFLINE
 	}
 
-	getSocketUserId(socketId: string) {
+	// getSocketUserId(socketId: string) {
 
-		if (!socketId)
+	// 	if (!socketId)
+	// 		return
+
+	// 	return this.ConnectedSockets.get(socketId).user_id
+	// }
+
+	saveSocketConnection(socketId: string, userId: number) {
+
+		if (!socketId || !userId)
 			return
 
-		return this.ConnectedSockets.get(socketId).user_id
-	}
-
-	saveSocketConnection(socketId: string, user: UserDto) {
-
-		if (!socketId || !user)
-			return
-		const userConnection: Connection = {
-			user_id: user.id,
-			status: ConnectionStatus.ONLINE
+		let userConnection: Connection = this.ConnectedSockets.get(userId)
+		if (!userConnection) {
+			userConnection = {
+				sockets: [socketId],
+				status: ConnectionStatus.ONLINE
+			}
 		}
-
-		this.ConnectedSockets.set(socketId, userConnection)
-
-	}
-
-	updateSocketConectionStatus(socketId: string, status: ConnectionStatus) {
-
-		if (!socketId || !status)
-			return
-
-		let connection: Connection = this.ConnectedSockets.get(socketId)
-		connection.status = status
-		this.ConnectedSockets.set(socketId, connection)
+		else
+			userConnection.sockets.push(socketId)
+		this.ConnectedSockets.set(userId, userConnection)
 
 	}
 
-	removeSocketConnection(socketId: string) {
+	// updateSocketConectionStatus(userId: number, status: ConnectionStatus) {
 
-		if (!socketId)
+	// 	if (!userId || !status)
+	// 		return
+
+	// 	let connection: Connection = this.ConnectedSockets.get(userId)
+
+	// 	if (!connection)
+	// 		return
+		
+			
+
+	// }
+
+	removeSocketConnection(userId: number, socketId: string) {
+
+		if (!userId)
 			return
 
-		this.ConnectedSockets.delete(socketId)
+		let UserConnection: Connection = this.ConnectedSockets.get(userId)
+		if (!UserConnection)
+			return
+		let { sockets } = UserConnection
+		const index: number = sockets.indexOf(socketId)
+		if (index != -1)
+			sockets.splice(index)
+		if (!sockets.length)
+			this.ConnectedSockets.delete(userId)
+		else {
+			UserConnection = {
+				sockets: sockets,
+				status: ConnectionStatus.OFFLINE
+			}
+			this.ConnectedSockets.set(userId, UserConnection)
+		}
+	}
 
+	removeConnection(userId: number) {
+		if (!userId)
+			return
+		this.ConnectedSockets.delete(userId)
 	}
 
 }

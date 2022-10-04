@@ -3,11 +3,12 @@ import { UserDto } from 'src/dto/User.dto'
 import { Channel_Type } from '../entities/channel.entity'
 import { Channel_Member_Role, Channel_Member_State } from '../entities/channelMember.entity'
 
+import {PartialType} from '@nestjs/swagger'
+
 
 export class ChannelDto {
 
-    // @IsNumber()
-    id: number
+    // id: number
 
     @IsNotEmpty()
     @IsString()
@@ -20,10 +21,10 @@ export class ChannelDto {
     @IsAlphanumeric()
     password?: string
 
-    @IsOptional()
-    @IsNotEmpty()
-    @IsUrl() // also handles IsString case
-    img_path?: string
+    // @IsOptional()
+    // @IsNotEmpty()
+    // @IsUrl() // also handles IsString case
+    // img_path: string
 
     @IsNotEmpty()
     @IsString()
@@ -44,3 +45,6 @@ export class MembershipDto {
     state: Channel_Member_State
 
 }
+
+// Makes a copy of the ChannelDto with all fields Optional, Useful when updating
+export class UpdateChannelDto extends PartialType(ChannelDto) {}

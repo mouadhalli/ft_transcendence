@@ -34,7 +34,7 @@ export class ChannelEntity {
         nullable: true
         // default: ''
     })
-    img_path?: string
+    img_path: string
 
     @Column({
         type: 'enum',

@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UserDto } from 'src/dto/User.dto';
 import { twoFactorState, jwtPayload } from '../dto/jwt.dto'
 import { ConfigService } from '@nestjs/config';
+import { UserEntity } from 'src/user/entities/user.entity';
 
 @Injectable()
 export class AuthService {

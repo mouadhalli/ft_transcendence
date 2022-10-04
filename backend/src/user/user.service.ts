@@ -14,10 +14,14 @@ export class UserService {
 			private relationshipRepository: Repository<RelationshipEntity>
 	) {}
 
-	async findUserRelationships(userId: number, index: number, amount: number, type: Relationship_State) {
-	
+	async findUserRelationships(
+		userId: number,
+		index: number,
+		amount: number,
+		type: Relationship_State
+	) {
 		const skip: number = index | 0
-		const take : number = amount | 5
+		const take : number = amount | 10
 		const result = await this.relationshipRepository.find(
 			{
 				where: [
@@ -46,14 +50,15 @@ export class UserService {
 		return relationship
 	}
 
-	async updateRelationship(userId: number, friendId: number, type: Relationship_State) {
+	async updateRelationship(userId: number, friendId: number, state: Relationship_State) {
 		let Relationship = await this.findRelationship(userId, friendId)
 
-		if (!Relationship && type === Relationship_State.FRIENDS)
+		if (!Relationship /* && state === Relationship_State.FRIENDS */)
 			throw new BadRequestException("Relationship not found")
+		if (Relationship.state === state)
+			return Relationship
 
-		Relationship.state = type
-
+		Relationship.state = state
 		Relationship = await this.relationshipRepository.save(Relationship).catch(error => {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
 		})
@@ -70,17 +75,19 @@ export class UserService {
 		await this.relationshipRepository.remove(Relationship)
 	}
 
-	async addFriend(userId: number, friendId: number) {
-
-		let Friendship = await this.findRelationship(userId, friendId)
+	async addFriend(senderId: number, targetId: number) {
+		let Friendship = await this.findRelationship(senderId, targetId)
 
 		if (Friendship)
 			throw new BadRequestException("User already Friend")
 		
-		const User = await this.findUser(userId)
-		const Friend = await this.findUser(friendId)
+		const sender = await this.findUser(senderId)
+		const receiver = await this.findUser(targetId)
 
-		Friendship = this.relationshipRepository.create({sender: User, receiver: Friend})
+		if (!sender || !receiver)
+			throw new BadRequestException("Users not found")
+
+		Friendship = this.relationshipRepository.create({sender: sender, receiver: receiver})
 		
 		Friendship = await this.relationshipRepository.save(Friendship).catch(error => {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
@@ -113,7 +120,7 @@ export class UserService {
 		return user
 	}
 
-	async saveUser(userData: UserDto): Promise<UserDto> {
+	async saveUser(userData: UserDto) {
 		let newUser: UserEntity = this.usersRepository.create(userData)
 		newUser = await this.usersRepository.save(newUser).catch(error => {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
@@ -121,10 +128,13 @@ export class UserService {
 		return newUser
 	}
 
-	async updateProfile(id: number, newUsername: string, imgUrl: string): Promise<UserDto> {
+	async updateProfile(id: number, newUsername: string, imgUrl: string) {
 		let user = await this.findUser( id );
-		if (newUsername)
+		if (newUsername) {
+			if (await this.usersRepository.findOneBy({username: newUsername}))
+				throw new BadRequestException('username already in user')
 			user.username = newUsername
+		}
 		if (imgUrl.length)
 			user.imageUrl = imgUrl
 		user = await this.usersRepository.save(user).catch(error => {
@@ -133,7 +143,7 @@ export class UserService {
 		return user
 	}
 
-	async set2faState(userId: number, state: boolean): Promise<UserDto> {
+	async set2faState(userId: number, state: boolean) {
 		let user = await this.findUser( userId )
 		if (!user)
 			throw new HttpException('user not found', HttpStatus.NOT_FOUND)
@@ -144,7 +154,7 @@ export class UserService {
 		return user
 	}
 
-	async Set2faSecret(userId: number, secret: string): Promise<UserDto> {
+	async Set2faSecret(userId: number, secret: string) {
 		let user = await this.findUser( userId )
 		if (!user)
 			throw new HttpException('user not found', HttpStatus.NOT_FOUND)

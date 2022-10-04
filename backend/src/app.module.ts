@@ -14,8 +14,8 @@ import { GatewayConnectionService } from './connection.service';
 	imports: [
 		ConfigModule.forRoot({ isGlobal: true }),
 		TypeOrmModule.forRootAsync(typeormConfig),
-		AuthModule,
 		UsersModule,
+		AuthModule,
 		ChatModule,
 		gameModule
 	],
