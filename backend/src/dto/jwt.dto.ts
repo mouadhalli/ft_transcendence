@@ -6,6 +6,6 @@ export enum twoFactorState {
 
 export interface jwtPayload {
     id: number,
-    username: string,
+    displayName: string,
     twofaState: twoFactorState
 }

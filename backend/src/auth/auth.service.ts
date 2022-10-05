@@ -18,7 +18,7 @@ export class AuthService {
 
         const payload: jwtPayload = {
             id: userData.id,
-            username: userData.username,
+            displayName: userData.displayName,
             twofaState: twofaStatus
         }
         return this.jwtService.sign(payload)

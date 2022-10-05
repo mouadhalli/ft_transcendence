@@ -24,7 +24,7 @@ export class ChannelDto {
     // @IsOptional()
     // @IsNotEmpty()
     // @IsUrl() // also handles IsString case
-    // img_path: string
+    // imgPath: string
 
     @IsNotEmpty()
     @IsString()

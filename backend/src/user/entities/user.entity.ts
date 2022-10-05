@@ -1,6 +1,6 @@
 import { ChannelMembershipEntity } from 'src/chat/entities/channelMember.entity';
 import { Entity, PrimaryColumn, Column, OneToMany } from 'typeorm'
-import { RelationshipEntity } from './friendship.entity';
+import { RelationshipEntity } from './relationship.entity';
 
 @Entity('users_table')
 export class UserEntity {
@@ -30,7 +30,7 @@ export class UserEntity {
     displayName: string;
 
     @Column({ default: '' })
-    imageUrl: string;
+    imgPath: string;
 
     @Column({ default: false })
     is2faEnabled: boolean;

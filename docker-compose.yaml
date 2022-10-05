@@ -1,16 +1,16 @@
 version: '2.9'
 
 services:
-  server:
-    build:
-      context: ./backend
-      dockerfile: 'Dockerfile'
-    ports:
-      - '3000:3000'
+  # server:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: 'Dockerfile'
+  #   ports:
+  #     - '3000:3000'
   database:
     image: 'postgres'
     ports:
-      - '4444:5432' # 4444 because i have PG locally so 5432 already in use
+      - '5432:5432'
     environment:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=123

@@ -40,8 +40,8 @@ export class ChannelService {
 
             if (newChannel.type === "protected" && data.password)
                 newChannel.password = await bcrypt.hash(data.password, 10)
-            // if (data.img_path)
-            //     newChannel.img_path = data.img_path
+            // if (data.imgPath)
+            //     newChannel.imgPath = data.imgPath
 
             newChannel = await this.channelRepository.save(newChannel)
             return await this.membershipsRepository.save({
@@ -146,7 +146,7 @@ export class ChannelService {
         }
     }
 
-    async updateChannel(channelId: number, data: UpdateChannelDto) {
+    async updateChannel(channelId: number, data: UpdateChannelDto, imgPath: string) {
 
         if (data.type === 'private')
             await this.turnChannelPrivate(channelId)
@@ -157,6 +157,8 @@ export class ChannelService {
         
         if (data.name)
             await this.channelRepository.update(channelId, {name: data.name})
+        if (imgPath)
+            await this.channelRepository.update(channelId, {imgPath: imgPath})
     }
     
     async findChannelMembers(channelId: number): Promise<ChannelMembershipEntity[]> {

@@ -23,19 +23,24 @@ export class AuthController {
     }
 
     @Get('fake-login')
-	async fakeUserLogin(@Body('id') fakeId: number, @Body('username') fakeUsername: string) {
-        if (!fakeId || !fakeUsername)
+	async fakeUserLogin(
+        @Body('id') fakeId: number,
+        @Body('displayName') displayName: string,
+        @Res() res: any
+    ) {
+        if (!fakeId || !displayName)
             throw new BadRequestException('missing credentials')
         const fakeUser: UserDto = {
             id: fakeId,
-            username: fakeUsername,
-            email: fakeUsername + '@gmail.com',
-            displayName: 'ooO' + fakeUsername + 'Ooo',
-            imageUrl: fakeUsername,
+            username: displayName,
+            email: displayName + '@gmail.com',
+            displayName: 'ooO' + displayName + 'Ooo',
+            imgPath: displayName,
             is2faEnabled: false
         }
-		const token = this.authService.fakeLogIn(fakeUser)
-        return token
+		return await this.authService.fakeLogIn(fakeUser)
+        // const {redirectUrl, jwtToken} = await this.authService.logUserIn(fakeUser)
+        // return res.cookie('accessToken', jwtToken).redirect(redirectUrl)
 	}
 
 }

@@ -1,10 +1,14 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query, UseGuards, Patch, ParseIntPipe } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query, UseGuards, Patch, ParseIntPipe, UseInterceptors, UploadedFile } from "@nestjs/common";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { UserDto } from "src/dto/User.dto";
 import { User } from "src/user/decorators/user.decorator";
 import { Channel_Member_Role, Channel_Member_State } from "../entities/channelMember.entity";
 import { ChannelDto, UpdateChannelDto } from "./channel.dto";
 import { ChannelService } from "./channel.service";
+
+import { FileInterceptor } from '@nestjs/platform-express';
+import { multerOptions } from '../../config/mutler.conf'
+type File = Express.Multer.File
 
 @Controller('channel')
 export class ChannelController {
@@ -86,12 +90,16 @@ export class ChannelController {
     @Patch(':channel_id')
     @UseGuards(JwtAuthGuard)
     @HttpCode(201)
+	@UseInterceptors(FileInterceptor('file', multerOptions))
     async updateChannel(
         @Param('channel_id', ParseIntPipe) channelId: number,
-        @Body() data: UpdateChannelDto
-        // upload image ??
+        @Body() data: UpdateChannelDto,
+        @UploadedFile() file: File
     ) {
-        await this.channelService.updateChannel(channelId, data)
+        let imgPath = ''
+        if (file)
+            imgPath = `http://localhost:3000/${file.path}`
+        await this.channelService.updateChannel(channelId, data, imgPath)
         return await this.channelService.findOneChannel(channelId)
     }
 

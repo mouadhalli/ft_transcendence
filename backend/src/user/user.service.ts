@@ -3,7 +3,7 @@ import { UserEntity } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserDto } from 'src/dto/User.dto';
-import { RelationshipEntity, Relationship_State } from './entities/friendship.entity';
+import { RelationshipEntity, Relationship_State } from './entities/relationship.entity';
 
 @Injectable()
 export class UserService {
@@ -128,19 +128,20 @@ export class UserService {
 		return newUser
 	}
 
-	async updateProfile(id: number, newUsername: string, imgUrl: string) {
+	async updateProfile(id: number, displayName: string, imgPath: string) {
 		let user = await this.findUser( id );
-		if (newUsername) {
-			if (await this.usersRepository.findOneBy({username: newUsername}))
-				throw new BadRequestException('username already in user')
-			user.username = newUsername
+		if (displayName) {
+			if (await this.usersRepository.findOneBy({displayName: displayName}))
+				throw new BadRequestException('displayName already in user')
+			user.displayName = displayName
 		}
-		if (imgUrl.length)
-			user.imageUrl = imgUrl
-		user = await this.usersRepository.save(user).catch(error => {
-			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
-		})
-		return user
+		if (imgPath)
+			user.imgPath = imgPath
+		return await this.saveUser(user)
+		// user = await this.usersRepository.save(user).catch(error => {
+		// 	throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+		// })
+		// return user
 	}
 
 	async set2faState(userId: number, state: boolean) {

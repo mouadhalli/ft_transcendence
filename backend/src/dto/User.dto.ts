@@ -59,11 +59,12 @@ export class UserDto {
 
     @IsNotEmpty()
     @IsString()
+    @IsAlphanumeric()
     displayName: string
 
     @IsNotEmpty()
     @IsUrl() // also handles IsString case
-    imageUrl: string
+    imgPath: string
 
     is2faEnabled: boolean
 

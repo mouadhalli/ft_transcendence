@@ -4,7 +4,7 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { User } from './decorators/user.decorator';
 import { UserService } from './user.service';
 import { multerOptions } from '../config/mutler.conf'
-import { Relationship_State } from './entities/friendship.entity';
+import { Relationship_State } from './entities/relationship.entity';
 
 type File = Express.Multer.File
 
@@ -136,15 +136,15 @@ export class UserController {
 
 	@Patch('update')
 	@UseGuards(JwtAuthGuard)
-	@HttpCode(200)
+	@HttpCode(201)
 	@UseInterceptors(FileInterceptor('file', multerOptions))
 	async updateProfile(
 		@User('id') userId: number,
-		@Body('username') username: string,
+		@Body('displayName') displayName: string,
 		@UploadedFile() file: File) {
-			let imgUrl = ''
+			let imgPath = ''
 	    	if (file)
-				imgUrl = `http://localhost:3000/${file.path}`
-			return await this.userService.updateProfile(userId, username, imgUrl)
+				imgPath = `http://localhost:3000/${file.path}`
+			return await this.userService.updateProfile(userId, displayName, imgPath)
 	}
 }

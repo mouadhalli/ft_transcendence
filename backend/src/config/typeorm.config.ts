@@ -1,7 +1,7 @@
 import { TypeOrmModuleAsyncOptions } from "@nestjs/typeorm";
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserEntity } from "src/user/entities/user.entity";
-import { RelationshipEntity } from "src/user/entities/friendship.entity";
+import { RelationshipEntity } from "src/user/entities/relationship.entity";
 import { ChannelEntity } from "src/chat/entities/channel.entity";
 import { ChannelMembershipEntity } from "src/chat/entities/channelMember.entity";
 import { MessageEntity } from "src/chat/entities/message.entity";

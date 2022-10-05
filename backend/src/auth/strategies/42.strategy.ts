@@ -7,14 +7,14 @@ import { Strategy, VerifyCallback } from 'passport-42';
 export class FortyTwoStrategy extends PassportStrategy(Strategy) {
     constructor(private configService: ConfigService) {
         super({
-            clientID:configService.get('FORTYTWO_APP_ID'),
-            clientSecret:configService.get('FORTYTWO_APP_SECRET'),
+            clientID: configService.get('FORTYTWO_APP_ID'),
+            clientSecret: configService.get('FORTYTWO_APP_SECRET'),
             callbackURL: "http://localhost:3000/auth/42/redirect",
             profileFields: {
                 'id': function (obj) { return String(obj.id); },
                 'username': 'login',
                 'displayName': 'displayname',
-                'imageUrl': 'image_url',
+                'imgPath': 'image_url',
                 'email': 'email',
             }
         })
@@ -31,7 +31,7 @@ export class FortyTwoStrategy extends PassportStrategy(Strategy) {
             username: profile.username,
             displayName: profile.displayName,
             email: profile.email,
-            imageUrl: profile.imageUrl
+            imgPath: profile.imgPath
         }
         cb(null, user)
     }
