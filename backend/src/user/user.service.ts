@@ -58,9 +58,10 @@ export class UserService {
 
 		if (!Relationship /* && state === Relationship_State.FRIENDS */)
 			throw new BadRequestException("Relationship not found")
+		if (state === 'friends' && Relationship.sender.id === userId)
+			throw new BadRequestException("maaa7chmtiiich")
 		if (Relationship.state === state)
 			return Relationship
-
 		Relationship.state = state
 		Relationship = await this.relationshipRepository.save(Relationship).catch(error => {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
@@ -169,6 +170,21 @@ export class UserService {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
 		})
 		return user
+	}
+
+	async findReceivedFriendRequests(userId: number) {
+		const requests = await this.relationshipRepository.find({
+			relations: ['sender'],
+			where: {
+				receiver: {id: userId},
+				state: Relationship_State.PENDING
+			},
+			select: ['sender', 'id']
+		})
+		return requests.map((request) => {
+			const {id, displayName} = request.sender
+			return {id: id, displayName: displayName}
+		})
 	}
 
 }

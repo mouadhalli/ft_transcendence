@@ -128,6 +128,13 @@ export class UserController {
 		return {userData, relationship_state: state, imSender: imSender}
     }
 
+	@Get('received-requests')
+	@UseGuards(JwtAuthGuard)
+	@HttpCode(200)
+    async getReceivedFriendRequests(@User('id') userId: number) {
+		return await this.userService.findReceivedFriendRequests(userId)
+    }
+
 	@Get('all-users')
 	// @UseGuards(JwtAuthGuard)
 	@HttpCode(200)
