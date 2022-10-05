@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user/user.service';
 import { UserDto } from 'src/dto/User.dto';
 import { twoFactorState } from '../../dto/jwt.dto'
+import { UserEntity } from 'src/user/entities/user.entity';
 
 
 @Injectable()
@@ -20,7 +21,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(jwtPayload: any) {
-    const user: UserDto = await this.userService.findUser(jwtPayload.id)
+    const user: UserEntity = await this.userService.findUser(jwtPayload.id)
 
     // if (user) {
     //   console.log("user: 2fa state -> ", user.is2faEnabled)

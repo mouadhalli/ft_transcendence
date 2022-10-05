@@ -25,7 +25,7 @@ export class AuthService {
     }
 
     async logUserIn(userData: UserDto) {
-        let user: UserDto
+        let user: UserEntity
         let redirectUrl: string
         let twofaStatus: twoFactorState = twoFactorState.NOT_ACTIVE
         user = await this.userService.findUser(userData.id)

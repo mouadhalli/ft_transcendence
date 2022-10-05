@@ -22,12 +22,12 @@ export class AuthController {
         return res.cookie('accessToken', jwtToken).redirect(redirectUrl)
     }
 
-    @Get('fake-login')
-	async fakeUserLogin(
+    @Post('fake-login')
+    async fakeUserLogin(
         @Body('id') fakeId: number,
         @Body('displayName') displayName: string,
-        @Res() res: any
     ) {
+        console.log(fakeId, displayName)
         if (!fakeId || !displayName)
             throw new BadRequestException('missing credentials')
         const fakeUser: UserDto = {
@@ -36,11 +36,9 @@ export class AuthController {
             email: displayName + '@gmail.com',
             displayName: 'ooO' + displayName + 'Ooo',
             imgPath: displayName,
-            is2faEnabled: false
+            // is2faEnabled: false
         }
-		return await this.authService.fakeLogIn(fakeUser)
-        // const {redirectUrl, jwtToken} = await this.authService.logUserIn(fakeUser)
-        // return res.cookie('accessToken', jwtToken).redirect(redirectUrl)
-	}
+        return await this.authService.fakeLogIn(fakeUser)
+    }
 
 }

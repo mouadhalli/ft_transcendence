@@ -7,6 +7,7 @@ import { toFileStream, toDataURL } from 'qrcode';
 import { authenticator } from 'otplib';
 import { AuthService } from 'src/auth/auth.service';
 import { twoFactorState } from 'src/dto/jwt.dto';
+import { UserEntity } from 'src/user/entities/user.entity';
 
 @Controller('2fa')
 @UseGuards(JwtAuthGuard)
@@ -26,7 +27,7 @@ export class TwofaController {
 
     @Post('verify')
     @HttpCode(200)
-    async verifyCode( @User() user: UserDto, @Body('code') code: string ) {
+    async verifyCode( @User() user: UserEntity, @Body('code') code: string ) {
 
         if (!user.twoFactorSecret)
             throw new UnauthorizedException("user 2fa is not active")

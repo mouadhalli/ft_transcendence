@@ -1,10 +1,11 @@
-import { Controller, Get, Delete, UseGuards, Patch, UseInterceptors, UploadedFile, HttpCode, Body, Param, Res, HttpException, HttpStatus, Post, BadRequestException, Query, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Delete, UseGuards, Patch, UseInterceptors, UploadedFile, HttpCode, Body, Param, Res, HttpException, HttpStatus, Post, BadRequestException, Query, NotFoundException, ParseIntPipe } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { User } from './decorators/user.decorator';
 import { UserService } from './user.service';
 import { multerOptions } from '../config/mutler.conf'
 import { Relationship_State } from './entities/relationship.entity';
+import { UserDto } from 'src/dto/User.dto';
 
 type File = Express.Multer.File
 
@@ -21,7 +22,8 @@ export class UserController {
 		@Body('target_id') friendId: number ) {
 			if (!friendId || userId === friendId)
 				throw new BadRequestException("invalid target id")
-			return await this.userService.addFriend(userId, friendId)
+			await this.userService.addFriend(userId, friendId)
+			return "friend request sent"
 	}
 
 	@Post('accept-friend')
@@ -32,7 +34,8 @@ export class UserController {
 		@Body('target_id') friendId: number ) {
 			if (!friendId || userId === friendId)
 				throw new BadRequestException("invalid friend id")
-			return await this.userService.updateRelationship(userId, friendId, Relationship_State.FRIENDS)
+			await this.userService.updateRelationship(userId, friendId, Relationship_State.FRIENDS)
+			return "friend Request accepted"
 	}
 
 	@Post('remove-friend')
@@ -43,7 +46,8 @@ export class UserController {
 		@Body('target_id') friendId: number ) {
 			if (userId === friendId)
 				throw new BadRequestException("invalid friend id")
-			return await this.userService.removeRelationship(userId, friendId)
+			await this.userService.removeRelationship(userId, friendId)
+			return "friendship removed"
 	}
 
 	@Post('block-user')
@@ -54,7 +58,8 @@ export class UserController {
 		@Body('target_id') friendId: number ) {
 			if (userId === friendId)
 				throw new BadRequestException("invalid friend id")
-			return await this.userService.updateRelationship(userId, friendId, Relationship_State.BLOCKED)
+			await this.userService.updateRelationship(userId, friendId, Relationship_State.BLOCKED)
+			return "user blocked"
 	}
 
 	@Post('unblock-user')
@@ -65,7 +70,8 @@ export class UserController {
 		@Body('target_id') friendId: number ) {
 			if (userId === friendId)
 				throw new BadRequestException("invalid friend id")
-			return await this.userService.removeRelationship(userId, friendId)
+			await this.userService.removeRelationship(userId, friendId)
+			return "user unblocked"
 	}
 
 	@Get('friends')
@@ -104,19 +110,22 @@ export class UserController {
 	@HttpCode(200)
     async me(@User('id') userId: number) {
 		// return await this.userService.getUserWithRelations(userId)
-		return await this.userService.findUser(userId)
+		const { is2faEnabled, twoFactorSecret, email, ...otherData } = await this.userService.findUser(userId)
+		return otherData
     }
 
 	@Get('profile/:id')
 	@UseGuards(JwtAuthGuard)
 	@HttpCode(200)
-    async userProfile(@Param('id') userId: number) {
-		if (!userId)
+    async userProfile(@User('id') userId: number, @Param('id', ParseIntPipe) targetId: number) {
+		if (!targetId)
 			throw new BadRequestException('user id not found')
-		const user = await this.userService.getUserWithRelations(userId)
-		if (!user)
+		const {is2faEnabled, twoFactorSecret, ...userData} = await this.userService.findUser(targetId)
+		if (!userData)
 			throw new NotFoundException('user profile not found')
-		return user
+		const { state, sender } = await this.userService.findRelationship(userId, userData.id)
+		const imSender = sender.id === userId ? true : false
+		return {userData, relationship_state: state, imSender: imSender}
     }
 
 	@Get('all-users')

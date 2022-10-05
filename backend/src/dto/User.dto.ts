@@ -66,10 +66,10 @@ export class UserDto {
     @IsUrl() // also handles IsString case
     imgPath: string
 
-    is2faEnabled: boolean
+    // is2faEnabled: boolean
 
-    @IsOptional()
-    @IsNotEmpty()
-    @IsString()
-    twoFactorSecret?: string
+    // @IsOptional()
+    // @IsNotEmpty()
+    // @IsString()
+    // twoFactorSecret?: string
 }

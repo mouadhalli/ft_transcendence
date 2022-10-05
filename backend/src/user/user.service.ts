@@ -35,7 +35,10 @@ export class UserService {
 		)
 		return result.map(relationship => {
 				const {sender, receiver} = relationship
-				return sender.id !== userId ? sender : receiver
+				// const {is2faEnabled, twoFactorSecret, ...others} = sender.id !== userId ? sender : receiver
+				const result = sender.id !== userId ? sender : receiver
+				const {is2faEnabled, twoFactorSecret, ...friendData}  = result
+				return friendData
 		})
 	}
 
@@ -129,15 +132,17 @@ export class UserService {
 	}
 
 	async updateProfile(id: number, displayName: string, imgPath: string) {
-		let user = await this.findUser( id );
+		let user: UserDto = await this.findUser( id );
 		if (displayName) {
-			if (await this.usersRepository.findOneBy({displayName: displayName}))
+			const duplicate: UserDto = await this.usersRepository.findOneBy({displayName: displayName})
+			if (duplicate && duplicate.id != id)
 				throw new BadRequestException('displayName already in user')
 			user.displayName = displayName
 		}
 		if (imgPath)
 			user.imgPath = imgPath
-		return await this.saveUser(user)
+		const {is2faEnabled, twoFactorSecret, ...userData} = await this.saveUser(user)
+		return userData
 		// user = await this.usersRepository.save(user).catch(error => {
 		// 	throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
 		// })
