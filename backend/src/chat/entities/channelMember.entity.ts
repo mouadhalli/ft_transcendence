@@ -20,7 +20,7 @@ export class ChannelMembershipEntity {
     @PrimaryGeneratedColumn()
     id: number
 
-    @ManyToOne(() => UserEntity, (member) => member.channel_memberships, {
+    @ManyToOne(() => UserEntity, (member) => member.id, {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
     })

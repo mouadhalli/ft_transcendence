@@ -109,9 +109,7 @@ export class UserController {
 	@UseGuards(JwtAuthGuard)
 	@HttpCode(200)
     async me(@User('id') userId: number) {
-		// return await this.userService.getUserWithRelations(userId)
-		const { is2faEnabled, twoFactorSecret, email, ...otherData } = await this.userService.findUser(userId)
-		return otherData
+		return await this.userService.findUser(userId)
     }
 
 	@Get('profile/:id')
@@ -120,12 +118,12 @@ export class UserController {
     async userProfile(@User('id') userId: number, @Param('id', ParseIntPipe) targetId: number) {
 		if (!targetId)
 			throw new BadRequestException('user id not found')
-		const {is2faEnabled, twoFactorSecret, ...userData} = await this.userService.findUser(targetId)
-		if (!userData)
+		const profile: UserDto = await this.userService.findUser(targetId)
+		if (!profile)
 			throw new NotFoundException('user profile not found')
-		const { state, sender } = await this.userService.findRelationship(userId, userData.id)
+		const { state, sender } = await this.userService.findRelationship(userId, profile.id)
 		const imSender = sender.id === userId ? true : false
-		return {userData, relationship_state: state, imSender: imSender}
+		return {profile, relationship_state: state, imSender: imSender}
     }
 
 	@Get('received-requests')

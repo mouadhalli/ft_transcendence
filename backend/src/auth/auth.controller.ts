@@ -27,7 +27,6 @@ export class AuthController {
         @Body('id') fakeId: number,
         @Body('displayName') displayName: string,
     ) {
-        console.log(fakeId, displayName)
         if (!fakeId || !displayName)
             throw new BadRequestException('missing credentials')
         const fakeUser: UserDto = {

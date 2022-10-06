@@ -20,11 +20,11 @@ export class RelationshipEntity {
     })
     state: Relationship_State;
 
-    @ManyToOne(() => UserEntity, (user) => user.sentFriendRequests, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @ManyToOne(() => UserEntity, (user) => user.id, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'sender_id' }) // reference id by default
     sender: UserEntity;
 
-    @ManyToOne(() => UserEntity, (user) => user.receivedFriendRequests, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @ManyToOne(() => UserEntity, (user) => user.id, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: "receiver_id" })
     receiver: UserEntity;
 

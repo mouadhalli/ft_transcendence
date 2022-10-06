@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { UserEntity } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -35,10 +35,10 @@ export class UserService {
 		)
 		return result.map(relationship => {
 				const {sender, receiver} = relationship
-				// const {is2faEnabled, twoFactorSecret, ...others} = sender.id !== userId ? sender : receiver
-				const result = sender.id !== userId ? sender : receiver
-				const {is2faEnabled, twoFactorSecret, ...friendData}  = result
-				return friendData
+				return sender.id !== userId ? sender : receiver
+				// const result = sender.id !== userId ? sender : receiver
+				// const {is2faEnabled, twoFactorSecret, ...friendData}  = result
+				// return friendData
 		})
 	}
 
@@ -59,7 +59,7 @@ export class UserService {
 		if (!Relationship /* && state === Relationship_State.FRIENDS */)
 			throw new BadRequestException("Relationship not found")
 		if (state === 'friends' && Relationship.sender.id === userId)
-			throw new BadRequestException("maaa7chmtiiich")
+			throw new BadRequestException("only the receiver can accept the friendship")
 		if (Relationship.state === state)
 			return Relationship
 		Relationship.state = state
@@ -76,7 +76,9 @@ export class UserService {
 		if (!Relationship)
 			throw new BadRequestException("relationship not found")
 		
-		await this.relationshipRepository.remove(Relationship)
+		await this.relationshipRepository.remove(Relationship).catch((error) => {
+			throw new InternalServerErrorException(error.message)
+		})
 	}
 
 	async addFriend(senderId: number, targetId: number) {
@@ -142,12 +144,7 @@ export class UserService {
 		}
 		if (imgPath)
 			user.imgPath = imgPath
-		const {is2faEnabled, twoFactorSecret, ...userData} = await this.saveUser(user)
-		return userData
-		// user = await this.usersRepository.save(user).catch(error => {
-		// 	throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
-		// })
-		// return user
+		return await this.saveUser(user)
 	}
 
 	async set2faState(userId: number, state: boolean) {
@@ -174,17 +171,19 @@ export class UserService {
 
 	async findReceivedFriendRequests(userId: number) {
 		const requests = await this.relationshipRepository.find({
-			relations: ['sender'],
+			relations: {sender: true},
+			select: {
+				sender: {
+					id: true,
+					displayName: true
+				}
+			},
 			where: {
 				receiver: {id: userId},
 				state: Relationship_State.PENDING
 			},
-			select: ['sender', 'id']
 		})
-		return requests.map((request) => {
-			const {id, displayName} = request.sender
-			return {id: id, displayName: displayName}
-		})
+		return requests.map(request => request.sender)
 	}
 
 }
