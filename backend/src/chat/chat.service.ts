@@ -49,7 +49,7 @@ export class ChatService {
         const membership: MembershipDto = await this.channelService.findMembership(member, channel)
 
         if (!member || !channel || !membership)
-            throw new WsException("ressources not found")
+            throw new WsException("ressource not found")
     
         await this.channelService.deleteMembership(member, channel)
     

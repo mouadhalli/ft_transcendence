@@ -25,7 +25,8 @@ export class ChannelEntity {
 
     @Column({
         type: 'varchar',
-        nullable: true
+        nullable: true,
+        select: false
     })
     password?: string
 

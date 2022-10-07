@@ -121,9 +121,13 @@ export class UserController {
 		const profile: UserDto = await this.userService.findUser(targetId)
 		if (!profile)
 			throw new NotFoundException('user profile not found')
-		const { state, sender } = await this.userService.findRelationship(userId, profile.id)
-		const imSender = sender.id === userId ? true : false
-		return {profile, relationship_state: state, imSender: imSender}
+		const relationship = await this.userService.findRelationship(userId, profile.id)
+		if (relationship) {
+			const {state, sender} = relationship
+			const imSender = sender.id === userId ? true : false
+			return {profile, relationship_state: state, imSender: imSender}
+		}
+		return { profile }
     }
 
 	@Get('received-requests')

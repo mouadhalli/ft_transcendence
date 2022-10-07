@@ -59,7 +59,7 @@ export class ChannelService {
         try{
             // return await this.channelRepository.findOneBy({id: channelId})
             return await this.channelRepository.findOne({
-                relations: ['members'],
+                // relations: ['members'],
                 where: {id: channelId}
             })
         } catch (error) {
@@ -165,8 +165,8 @@ export class ChannelService {
 
         // TO DO: filter current user blocked users from channel memberships
 
-        if (!await this.findOneChannel(channelId))
-            throw new BadRequestException("channel not found")
+        // if (!await this.findOneChannel(channelId))
+        //     throw new BadRequestException("channel not found")
         
         return await this.membershipsRepository.find({
             where: {
