@@ -1,4 +1,4 @@
-import { Controller, Get, Delete, UseGuards, Patch, UseInterceptors, UploadedFile, HttpCode, Body, Param, Res, HttpException, HttpStatus, Post, BadRequestException, Query, NotFoundException, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Delete, UseGuards, Patch, UseInterceptors, UploadedFile, HttpCode, Body, Param, Res, HttpException, HttpStatus, Post, BadRequestException, Query, NotFoundException, ParseIntPipe, ValidationPipe } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { User } from './decorators/user.decorator';
@@ -6,6 +6,7 @@ import { UserService } from './user.service';
 import { multerOptions } from '../config/mutler.conf'
 import { Relationship_State } from './entities/relationship.entity';
 import { UserDto } from 'src/dto/User.dto';
+import { FindQueryString } from 'src/dto/validation.dto';
 
 type File = Express.Multer.File
 
@@ -13,6 +14,16 @@ type File = Express.Multer.File
 export class UserController {
 
 	constructor( private userService: UserService ) {}
+
+	@Get('search')
+	@UseGuards(JwtAuthGuard)
+	@HttpCode(201)
+	async searchUsers(
+		@User('id') userId: number,
+		@Query() { username }: FindQueryString
+	) {
+		return await this.userService.findUsersByUsernameLike(String(username))
+	}
 
 	@Post('add-friend')
 	@UseGuards(JwtAuthGuard)

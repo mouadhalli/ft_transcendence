@@ -48,22 +48,20 @@ export class UserDto {
 	id: number
 
     @IsNotEmpty()
-    @IsString()
     @IsAlphanumeric()
     username: string
 
     // @IsString()
     @IsNotEmpty()
-    @IsEmail() // handle isString
+    @IsEmail()
     email: string
 
     @IsNotEmpty()
-    @IsString()
     @IsAlphanumeric()
     displayName: string
 
     @IsNotEmpty()
-    @IsUrl() // also handles IsString case
+    @IsUrl()
     imgPath: string
 
     // is2faEnabled: boolean
