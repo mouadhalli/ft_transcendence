@@ -25,7 +25,8 @@ export class UserService {
 			select: {
 				sender: {
 					id: true,
-					displayName: true
+					displayName: true,
+					imgPath: true
 				}
 			}
 		})
