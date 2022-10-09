@@ -11,6 +11,7 @@ import { UserService } from "src/user/user.service";
 import { UserEntity } from "src/user/entities/user.entity";
 import { WsException } from "@nestjs/websockets";
 import { UserDto } from "src/dto/User.dto";
+import { Relationship_State } from "src/user/entities/relationship.entity";
 
 @Injectable()
 export class ChannelService {
@@ -30,6 +31,33 @@ export class ChannelService {
         - make a new file(memberships.service) for ChannelMembershipEntity operations      
         
 */
+
+    async addUserToChannel(user: UserDto, targetId: number, channelId: number) {
+
+        const channel: ChannelEntity = await this.findOneChannel(channelId)
+        if (!channel)
+            throw new BadRequestException('channel not found')
+        
+        if (channel.type === 'direct')
+            throw new BadRequestException('cannot add members to a direct channel')
+
+        if (!await this.findMembership(user, channel))
+            throw new BadRequestException(`${user.displayName} is not a member of this channel`)
+
+        const target: UserEntity = await this.userService.findUser(targetId)
+        if (!target)
+            throw new BadRequestException('target not found')
+        
+        const isFriends: Relationship_State = (await this.userService.findRelationship(user.id, targetId)).state
+        if (isFriends !== 'friends')
+            throw new BadRequestException('user can only add his friends to channel')
+
+        if (await this.findMembership(target, channel))
+            throw new BadRequestException(`${target.displayName} is already a member of this channel`)
+
+        await this.createMembership(target, channel, Channel_Member_Role.MEMBER)
+
+    }
 
     async createChannel(creator: UserDto, data: ChannelDto) {
         try {

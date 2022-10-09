@@ -25,8 +25,8 @@ export class UserService {
 			select: {
 				sender: {
 					id: true,
-					displayName: true,
-					imgPath: true
+					// displayName: true,
+					// imgPath: true
 				}
 			}
 		})
@@ -40,7 +40,8 @@ export class UserService {
 			},
 			select: {
 				id: true,
-				displayName: true
+				displayName: true,
+				imgPath: true
 			}
 		})
 		if (!users.length)

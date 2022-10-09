@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query, UseGuards, Patch, ParseIntPipe, UseInterceptors, UploadedFile } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query, UseGuards, Patch, ParseIntPipe, UseInterceptors, UploadedFile, BadRequestException } from "@nestjs/common";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { UserDto } from "src/dto/User.dto";
 import { User } from "src/user/decorators/user.decorator";
@@ -25,6 +25,21 @@ export class ChannelController {
     ) {
         return await this.channelService.findAllChannels(index, amount)
     }
+
+        // @UseGuards(JwtAuthGuard)
+	@HttpCode(201)
+    @Post('add-member')
+    async addFriendToChannel(
+        @User() user: UserDto,
+        @Body('target_id', ParseIntPipe) targetId: number,
+        @Body('channel_id', ParseIntPipe) channelId: number
+    ) {
+        if (user.id === targetId)
+            throw new BadRequestException('user cannot add himseld')
+        await this.channelService.addUserToChannel(user, targetId, channelId)
+        return 'target added successfully'
+    }
+
 
     @Post('create')
     // @UseGuards(JwtAuthGuard)
