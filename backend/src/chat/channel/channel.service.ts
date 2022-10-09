@@ -59,7 +59,7 @@ export class ChannelService {
 
     }
 
-    async createChannel(creator: UserDto, data: ChannelDto) {
+    async createChannel(creator: UserDto, data: ChannelDto, imgPath: string) {
         try {
 
             if (await this.channelRepository.findOneBy({name: data.name}))
@@ -68,7 +68,8 @@ export class ChannelService {
             
             let newChannel: ChannelEntity = this.channelRepository.create({
                 name: data.name,
-                type: data.type
+                type: data.type,
+                imgPath: imgPath
             })
 
             if (data.type === 'protected') {

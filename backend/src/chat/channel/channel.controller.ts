@@ -44,8 +44,16 @@ export class ChannelController {
     @Post('create')
     // @UseGuards(JwtAuthGuard)
 	@HttpCode(201)
-    async createChannel(@User() creator: UserDto, @Body() channelData: ChannelDto) {
-        return await this.channelService.createChannel(creator, channelData)
+    async createChannel(@
+        User() creator: UserDto,
+        @Body() channelData: ChannelDto,
+        @UploadedFile() file: File
+    ) {
+        // let imgPath = ''
+        if (channelData.type !== 'direct' && !file)
+            throw new BadRequestException('please upload an image')
+        const imgPath = `http://localhost:3000/${file.path}`
+        return await this.channelService.createChannel(creator, channelData, imgPath)
     }
 
     // @Get('all')
