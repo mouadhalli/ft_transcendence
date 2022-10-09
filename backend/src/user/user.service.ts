@@ -15,12 +15,48 @@ export class UserService {
 	) {}
 
 
-	async findUsersByDisplayNameLike(displayname: string) {
-		return this.usersRepository.find({
+	async getUsersWhoBlockedMe(userId: number) {
+		const result: RelationshipEntity[] = await this.relationshipRepository.find({
+			relations: ['sender'],
 			where: {
-				displayName: ILike(`%${displayname}%`)
+				receiver: {id: userId},
+				state: Relationship_State.BLOCKED
+			},
+			select: {
+				sender: {
+					id: true,
+					displayName: true
+				}
 			}
 		})
+		return result.map( relationship => relationship.sender )
+	}
+
+	async findUsersByDisplayNameLike(userId: number, displayname: string) {
+		const users: UserEntity[] = await this.usersRepository.find({
+			where: {
+				displayName: ILike(`%${displayname}%`),
+			},
+			select: {
+				id: true,
+				displayName: true
+			}
+		})
+		if (!users.length)
+			return
+
+		const UserstoHide: UserEntity[] = await this.getUsersWhoBlockedMe(userId)
+
+		if (!UserstoHide.length)
+			return users
+	
+		return users.filter((user) => {
+			const found = UserstoHide.findIndex((userToHide) => userToHide.id === user.id)
+			if (found === -1)
+				return user
+			return false
+		})
+
 	}
 
 	async findUserRelationships(
@@ -45,9 +81,6 @@ export class UserService {
 		return result.map(relationship => {
 				const {sender, receiver} = relationship
 				return sender.id !== userId ? sender : receiver
-				// const result = sender.id !== userId ? sender : receiver
-				// const {is2faEnabled, twoFactorSecret, ...friendData}  = result
-				// return friendData
 		})
 	}
 
@@ -62,16 +95,33 @@ export class UserService {
 		return relationship
 	}
 
-	async updateRelationship(userId: number, friendId: number, state: Relationship_State) {
+	// async updateRelationship(userId: number, friendId: number, state: Relationship_State) {
+	// 	let Relationship = await this.findRelationship(userId, friendId)
+
+	// 	if (!Relationship && state === Relationship_State.FRIENDS)
+	// 		throw new BadRequestException("Relationship not found")
+	// 	if (state === 'friends' && Relationship.sender.id === userId)
+	// 		throw new BadRequestException("only the receiver can accept the friendship")
+	// 	if (Relationship.state === state)
+	// 		return Relationship
+	// 	Relationship.state = state
+	// 	Relationship = await this.relationshipRepository.save(Relationship).catch(error => {
+	// 		throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+	// 	})
+	// 	return Relationship
+	// }
+
+	async acceptFriendship(userId: number, friendId: number) {
 		let Relationship = await this.findRelationship(userId, friendId)
 
-		if (!Relationship /* && state === Relationship_State.FRIENDS */)
-			throw new BadRequestException("Relationship not found")
-		if (state === 'friends' && Relationship.sender.id === userId)
+		if (!Relationship)
+			throw new BadRequestException("users are not friends")
+		if (Relationship.sender.id === userId)
 			throw new BadRequestException("only the receiver can accept the friendship")
-		if (Relationship.state === state)
+		if (Relationship.state === 'friends')
 			return Relationship
-		Relationship.state = state
+
+		Relationship.state = Relationship_State.FRIENDS
 		Relationship = await this.relationshipRepository.save(Relationship).catch(error => {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
 		})
@@ -109,6 +159,35 @@ export class UserService {
 		})
 		
 		return Friendship
+	}
+
+	async blockUser(senderId: number, targetId: number) {
+		let relationship = await this.findRelationship(senderId, targetId)
+
+		if (relationship) {
+
+			if (relationship.state === 'blocked' && relationship.receiver.id === senderId)
+				return
+			if (relationship.state === 'blocked')
+				return relationship
+
+			relationship.state = Relationship_State.BLOCKED
+		}
+		else {
+
+			if (!await this.findUser(targetId))
+				throw new BadRequestException("User not found")
+
+			relationship = this.relationshipRepository.create({
+				sender: {id: senderId},
+				receiver: {id: targetId},
+				state: Relationship_State.BLOCKED
+			})
+		}
+	
+		return await this.relationshipRepository.save(relationship).catch(error => {
+			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+		})
 	}
 
 	async findAll(): Promise<UserEntity[]> {

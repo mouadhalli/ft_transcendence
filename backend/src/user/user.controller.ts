@@ -22,7 +22,7 @@ export class UserController {
 		@User('id') userId: number,
 		@Query() { q }: FindQueryString
 	) {
-		return await this.userService.findUsersByDisplayNameLike(q)
+		return await this.userService.findUsersByDisplayNameLike(userId, q)
 	}
 
 	@Post('add-friend')
@@ -45,7 +45,7 @@ export class UserController {
 		@Body('target_id') friendId: number ) {
 			if (!friendId || userId === friendId)
 				throw new BadRequestException("invalid friend id")
-			await this.userService.updateRelationship(userId, friendId, Relationship_State.FRIENDS)
+			await this.userService.acceptFriendship(userId, friendId)
 			return "friend Request accepted"
 	}
 
@@ -69,7 +69,7 @@ export class UserController {
 		@Body('target_id') friendId: number ) {
 			if (userId === friendId)
 				throw new BadRequestException("invalid friend id")
-			await this.userService.updateRelationship(userId, friendId, Relationship_State.BLOCKED)
+			await this.userService.blockUser(userId, friendId)
 			return "user blocked"
 	}
 
