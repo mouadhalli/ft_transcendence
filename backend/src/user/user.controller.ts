@@ -20,9 +20,9 @@ export class UserController {
 	@HttpCode(201)
 	async searchUsers(
 		@User('id') userId: number,
-		@Query() { username }: FindQueryString
+		@Query() { q }: FindQueryString
 	) {
-		return await this.userService.findUsersByUsernameLike(String(username))
+		return await this.userService.findUsersByDisplayNameLike(q)
 	}
 
 	@Post('add-friend')

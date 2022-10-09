@@ -1,9 +1,9 @@
-import { IsAlphanumeric, IsOptional } from 'class-validator';
+import { IsAlphanumeric, IsOptional, Max, MaxLength, Min } from 'class-validator';
 
 export class FindQueryString {
 
-    @IsOptional()
+    @IsOptional()   
     @IsAlphanumeric()
-    username: string;
-
+    @MaxLength(10)
+    q: string;
 }

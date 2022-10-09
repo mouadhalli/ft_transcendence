@@ -1,7 +1,7 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { UserEntity } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
+import { ILike, Like, Repository } from 'typeorm';
 import { UserDto } from 'src/dto/User.dto';
 import { RelationshipEntity, Relationship_State } from './entities/relationship.entity';
 
@@ -15,10 +15,10 @@ export class UserService {
 	) {}
 
 
-	async findUsersByUsernameLike(username: string) {
+	async findUsersByDisplayNameLike(displayname: string) {
 		return this.usersRepository.find({
 			where: {
-				username: Like(`%${username}%`)
+				displayName: ILike(`%${displayname}%`)
 			}
 		})
 	}
