@@ -80,11 +80,7 @@ export class ChannelService {
 
             newChannel = await this.channelRepository.save(newChannel)
     
-            return await this.membershipsRepository.save({
-                member: creator,
-                channel: newChannel,
-                role: Channel_Member_Role.OWNER
-            })
+            this.createMembership(creator, newChannel, Channel_Member_Role.OWNER)
 
         } catch (error) {
             throw new InternalServerErrorException(error)
@@ -103,21 +99,18 @@ export class ChannelService {
         }
     }
 
-    async findAllChannels(index: number, amount: number): Promise<ChannelEntity[]> {
+    async findAllChannels(userId: number, index: number, amount: number): Promise<ChannelEntity[]> {
         const skip: number = index | 0
 		const take : number = amount | 10
-        try{
-            return await this.channelRepository.find({
-                where: [
-                    {type: Channel_Type.PUBLIC},
-                    {type: Channel_Type.PROTECTED},
-                ],
-                skip: skip,
-                take: take
-            })
-        } catch (error) {
-            throw new InternalServerErrorException(error)
-        }
+
+        return await this.channelRepository.find({
+            where: [
+                {type: Channel_Type.PUBLIC, members: {id: Not(userId)}},
+                {type: Channel_Type.PROTECTED, members: {id: Not(userId)}},
+            ],
+            skip: skip,
+            take: take
+        })
     }
 
     async turnChannelPrivate(channelId: number): Promise<ChannelEntity> {

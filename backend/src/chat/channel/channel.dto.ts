@@ -11,13 +11,13 @@ export class ChannelDto {
     // id: number
 
     @IsNotEmpty()
-    @IsString()
+    // @IsString()
     @IsAlphanumeric()
     name: string
 
     @IsOptional()
     @IsNotEmpty()
-    @IsString()
+    // @IsString()
     @IsAlphanumeric()
     password?: string
 

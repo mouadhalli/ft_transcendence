@@ -15,20 +15,20 @@ export class ChannelController {
 
     constructor( private channelService: ChannelService ) {}
 
-    // @UseGuards(JwtAuthGuard)
-	@HttpCode(200)
     @Get()
+    @UseGuards(JwtAuthGuard)
+	@HttpCode(200)
     async getPublicAndProtectedChannels(
-        // @User() user: UserDto,
+        @User('id') userId: number,
         @Query('index') index: number,
 		@Query('amount') amount: number
     ) {
-        return await this.channelService.findAllChannels(index, amount)
+        return await this.channelService.findAllChannels(userId, index, amount)
     }
 
-        // @UseGuards(JwtAuthGuard)
-	@HttpCode(201)
     @Post('add-member')
+    @UseGuards(JwtAuthGuard)
+	@HttpCode(201)
     async addFriendToChannel(
         @User() user: UserDto,
         @Body('target_id', ParseIntPipe) targetId: number,
@@ -42,14 +42,13 @@ export class ChannelController {
 
 
     @Post('create')
-    // @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard)
 	@HttpCode(201)
     async createChannel(@
         User() creator: UserDto,
         @Body() channelData: ChannelDto,
         @UploadedFile() file: File
     ) {
-        // let imgPath = ''
         if (channelData.type !== 'direct' && !file)
             throw new BadRequestException('please upload an image')
         const imgPath = `http://localhost:3000/${file.path}`
