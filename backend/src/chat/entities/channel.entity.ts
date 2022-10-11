@@ -1,5 +1,6 @@
 import { UserEntity } from "src/user/entities/user.entity"
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm"
+import { AfterUpdate, BeforeUpdate, Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm"
+import { RelationCountAttribute } from "typeorm/query-builder/relation-count/RelationCountAttribute"
 import { ChannelMembershipEntity } from "./channelMember.entity"
 import { MessageEntity } from "./message.entity"
 
@@ -49,5 +50,8 @@ export class ChannelEntity {
         onUpdate: 'CASCADE'
     })
     members: ChannelMembershipEntity[]
+
+    @Column({type: 'int', default: 0})
+    membersCount: number
 
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, Param, UseGuards } from "@nestjs/common";
+import { Controller, Get, HttpCode, Param, ParseIntPipe, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { MessageService } from "./message.service";
 
@@ -10,7 +10,7 @@ export class MessageController {
     @Get(':channel_id')
     @UseGuards(JwtAuthGuard)
 	@HttpCode(200)
-    async getChannelMessages(@Param('channel_id') channelId: number) {
+    async getChannelMessages(@Param('channel_id', ParseIntPipe) channelId: number) {
         return await this.messageService.findChannelMessages(channelId)
     }
 }

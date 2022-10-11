@@ -30,7 +30,7 @@ export class UserController {
 	@HttpCode(201)
 	async sendFriendRequest(
 		@User('id') userId: number,
-		@Body('target_id') friendId: number ) {
+		@Body('target_id', ParseIntPipe) friendId: number ) {
 			if (!friendId || userId === friendId)
 				throw new BadRequestException("invalid target id")
 			await this.userService.addFriend(userId, friendId)
@@ -42,7 +42,7 @@ export class UserController {
 	@HttpCode(201)
 	async acceptFriendRequest(
 		@User('id') userId: number,
-		@Body('target_id') friendId: number ) {
+		@Body('target_id', ParseIntPipe) friendId: number ) {
 			if (!friendId || userId === friendId)
 				throw new BadRequestException("invalid friend id")
 			await this.userService.acceptFriendship(userId, friendId)
@@ -54,7 +54,7 @@ export class UserController {
 	@HttpCode(201)
 	async removeFromFriends(
 		@User('id') userId: number,
-		@Body('target_id') friendId: number ) {
+		@Body('target_id', ParseIntPipe) friendId: number ) {
 			if (userId === friendId)
 				throw new BadRequestException("invalid friend id")
 			await this.userService.removeRelationship(userId, friendId)
@@ -66,7 +66,7 @@ export class UserController {
 	@HttpCode(201)
 	async BlockUser(
 		@User('id') userId: number,
-		@Body('target_id') friendId: number ) {
+		@Body('target_id', ParseIntPipe) friendId: number ) {
 			if (userId === friendId)
 				throw new BadRequestException("invalid friend id")
 			await this.userService.blockUser(userId, friendId)
@@ -78,7 +78,7 @@ export class UserController {
 	@HttpCode(201)
 	async unblock(
 		@User('id') userId: number,
-		@Body('target_id') friendId: number ) {
+		@Body('target_id', ParseIntPipe) friendId: number ) {
 			if (userId === friendId)
 				throw new BadRequestException("invalid friend id")
 			await this.userService.removeRelationship(userId, friendId)
@@ -126,7 +126,10 @@ export class UserController {
 	@Get('profile/:id')
 	@UseGuards(JwtAuthGuard)
 	@HttpCode(200)
-    async userProfile(@User('id') userId: number, @Param('id', ParseIntPipe) targetId: number) {
+    async userProfile(
+		@User('id') userId: number,
+		@Param('id', ParseIntPipe) targetId: number
+	) {
 		if (!targetId)
 			throw new BadRequestException('user id not found')
 		const profile: UserDto = await this.userService.findUser(targetId)

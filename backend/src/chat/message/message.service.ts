@@ -5,6 +5,7 @@ import { UserDto } from "src/dto/User.dto";
 import { Repository } from "typeorm";
 import { ChannelDto } from "../channel/channel.dto";
 import { ChannelService } from "../channel/channel.service";
+import { ChannelEntity } from "../entities/channel.entity";
 import { MessageEntity } from "../entities/message.entity";
 import { MessageDto } from "./message.dto";
 
@@ -20,15 +21,22 @@ export class MessageService {
     async findChannelMessages(channelId: number): Promise<MessageEntity[]> {
         // TO DO: - filter blocked users messages
     
-        const channel = await this.channelService.findOneChannel(channelId)
+        const channel: ChannelEntity = await this.channelService.findOneChannel(channelId)
 
         if (!channel)
             throw new BadRequestException('channel not found')
 
+        // return await this.messageRepository.find({
+        //     relations: ['author', 'channel'],
+        //     where: {
+        //         channel: channel
+        //     },
+        //     order: {created_at: "ASC"}
+        // })
         return await this.messageRepository.find({
-            relations: ['author', 'channel'],
+            relations: {author: true, channel: true},
             where: {
-                channel: channel
+                channel: {id: channelId}
             },
             order: {created_at: "ASC"}
         })

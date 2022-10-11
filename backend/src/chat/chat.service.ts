@@ -34,29 +34,31 @@ export class ChatService {
         // when someone create his own channel i make an owner membership for him right away
         // i added this so they don't join their channels 2 times i might remove it later
         if (membership)
-            return channel
+            return channel.name
         if (channel.type === 'private') {
             if (!await bcrypt.compare(payload.password, channel.password))
                 throw new WsException("wrong password")
         }
         await this.channelService.createMembership(member, channel, Channel_Member_Role.MEMBER)
-        return channel
+        // await this.channelService.updateChannelMembersCount(channel.id, channel.membersCount + 1)
+        return channel.name
     }
 
     async leaveChannel(userId: number, payload: any) {
         const member: UserDto = await this.userService.findUser(userId)
-        const channel: ChannelEntity = await this.channelService.findOneChannel(payload.channelId)
+        const channel: ChannelDto = await this.channelService.findOneChannel(payload.channelId)
         const membership: MembershipDto = await this.channelService.findMembership(member, channel)
 
         if (!member || !channel || !membership)
             throw new WsException("ressource not found")
     
         await this.channelService.deleteMembership(member, channel)
+        // await this.channelService.updateChannelMembersCount(channel.id, channel.membersCount - 1)
     
         if (membership.role === 'owner')
             await this.channelService.changeChannelOwner(channel.id)
 
-        return channel
+        return channel.name
     }
 
     async sendMessage(userId: number, payload: any) {

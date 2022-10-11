@@ -8,7 +8,7 @@ import {PartialType} from '@nestjs/swagger'
 
 export class ChannelDto {
 
-    // id: number
+    id: number
 
     @IsNotEmpty()
     // @IsString()
@@ -25,6 +25,8 @@ export class ChannelDto {
     // @IsNotEmpty()
     // @IsUrl() // also handles IsString case
     // imgPath: string
+    // @IsNumber()
+    // membersCount: number
 
     @IsNotEmpty()
     @IsString()
@@ -47,4 +49,21 @@ export class MembershipDto {
 }
 
 // Makes a copy of the ChannelDto with all fields Optional, Useful when updating
-export class UpdateChannelDto extends PartialType(ChannelDto) {}
+// export class UpdateChannelDto extends PartialType(ChannelDto) {}
+
+export class UpdateChannelDto {
+    @IsOptional()
+    @IsNotEmpty()
+    @IsAlphanumeric()
+    name: string
+
+    @IsOptional()
+    @IsNotEmpty()
+    @IsAlphanumeric()
+    password?: string
+
+    @IsOptional()
+    @IsNotEmpty()
+    @IsString()
+    type: Channel_Type
+}

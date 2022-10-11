@@ -47,12 +47,9 @@ export class ChannelController {
     async createChannel(@
         User() creator: UserDto,
         @Body() channelData: ChannelDto,
-        @UploadedFile() file: File
     ) {
-        if (channelData.type !== 'direct' && !file)
-            throw new BadRequestException('please upload an image')
-        const imgPath = `http://localhost:3000/${file.path}`
-        return await this.channelService.createChannel(creator, channelData, imgPath)
+        const channelId: number = await this.channelService.createChannel(creator, channelData)
+        return  this.channelService.findOneChannel(channelId)
     }
 
     // @Get('all')
@@ -107,22 +104,6 @@ export class ChannelController {
 	@HttpCode(202)
     async deleteChannel(@Param('channel_id', ParseIntPipe) channelId: number) {
         return await this.channelService.deleteChannel(channelId)
-    }
-
-    @Patch(':channel_id')
-    @UseGuards(JwtAuthGuard)
-    @HttpCode(201)
-	@UseInterceptors(FileInterceptor('file', multerOptions))
-    async updateChannel(
-        @Param('channel_id', ParseIntPipe) channelId: number,
-        @Body() data: UpdateChannelDto,
-        @UploadedFile() file: File
-    ) {
-        let imgPath = ''
-        if (file)
-            imgPath = `http://localhost:3000/${file.path}`
-        await this.channelService.updateChannel(channelId, data, imgPath)
-        return await this.channelService.findOneChannel(channelId)
     }
 
     @Patch('add-admin')
@@ -182,10 +163,25 @@ export class ChannelController {
     @Patch('remove-member')
     @UseGuards(JwtAuthGuard)
     async removeMember(
-        @Query('channel_id', ParseIntPipe) channelId: number,
-        @Query('member_id', ParseIntPipe) memberid: number
+        @Body('channel_id', ParseIntPipe) channelId: number,
+        @Body('member_id', ParseIntPipe) memberid: number
     ) {
         await this.channelService.removeMemberFromChannel(channelId, memberid)
     }
 
+    @Patch(':channel_id')
+    @UseGuards(JwtAuthGuard)
+    @HttpCode(201)
+	@UseInterceptors(FileInterceptor('file', multerOptions))
+    async updateChannel(
+        @Param('channel_id', ParseIntPipe) channelId: number,
+        @Body() data: UpdateChannelDto,
+        @UploadedFile() file: File
+    ) {
+        let imgPath = ''
+        if (file)
+            imgPath = `http://localhost:3000/${file.path}`
+        await this.channelService.updateChannel(channelId, data, imgPath)
+        return await this.channelService.findOneChannel(channelId)
+    }
 }
