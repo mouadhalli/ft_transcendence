@@ -7,6 +7,7 @@ import {
 } from '@nestjs/websockets';
 
 import { Server, Socket } from 'socket.io';
+import { ChannelService } from './chat/channel/channel.service';
 import { GatewayConnectionService, ConnectionStatus } from './connection.service';
 import { UserDto } from './dto/User.dto';
 import { Relationship_State } from './user/entities/relationship.entity';
@@ -24,7 +25,8 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 	
 	constructor(
 		private connectionService: GatewayConnectionService,
-		private userService: UserService
+		private userService: UserService,
+		private channelService: ChannelService
 	){}
 
 	@WebSocketServer()
@@ -47,7 +49,10 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 				const userToken: any = socket.handshake.headers.token
 				const { id } = await this.connectionService.getUserFromToken(userToken)
 				this.connectionService.saveSocketConnection(socket.id, id)
+				// grouping user sockets in a room so i can ping all user Tabs easily
 				socket.join(String(id))
+				const channels = await this.channelService.findJoinedChannels(id)
+				channels.forEach(channel => socket.join(channel.name))
 			} catch(error) {
 				socket.disconnect()
 				socket._error(error)
@@ -60,6 +65,8 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			const userToken: any = socket.handshake.headers.token
 			const { id } = await this.connectionService.getUserFromToken(userToken)
 			this.connectionService.removeSocketConnection(id, socket.id)
+			socket.leave(String(id))
+			
 		} catch (error) {
 			// console.log(error)
 			socket._error(error)

@@ -18,7 +18,7 @@ export class Connection {
 export class GatewayConnectionService {
 
     constructor(
-		private authservice: AuthService
+		private authservice: AuthService,
 	) {}
 
 /*

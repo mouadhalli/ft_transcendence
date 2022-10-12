@@ -15,16 +15,16 @@ export class ChannelController {
 
     constructor( private channelService: ChannelService ) {}
 
-    @Get()
-    @UseGuards(JwtAuthGuard)
-	@HttpCode(200)
-    async getPublicAndProtectedChannels(
-        @User('id') userId: number,
-        @Query('index') index: number,
-		@Query('amount') amount: number
-    ) {
-        return await this.channelService.findAllChannels(userId, index, amount)
-    }
+    // @Get()
+    // @UseGuards(JwtAuthGuard)
+	// @HttpCode(200)
+    // async getPublicAndProtectedChannels(
+    //     @User('id') userId: number,
+    //     @Query('index') index: number,
+	// 	@Query('amount') amount: number
+    // ) {
+    //     return await this.channelService.findAllChannels(userId, index, amount)
+    // }
 
     @Post('add-member')
     @UseGuards(JwtAuthGuard)

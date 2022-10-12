@@ -107,29 +107,29 @@ export class ChannelService {
         }
     }
 
-    async findAllChannels(userId: number, index: number, amount: number): Promise<ChannelEntity[]> {
-        const skip: number = index | 0
-		const take : number = amount | 10
+    // async findAllChannels(userId: number, index: number, amount: number): Promise<ChannelEntity[]> {
+    //     const skip: number = index | 0
+	// 	const take : number = amount | 10
 
-        return await this.channelRepository.find({
-            where: [
-                {
-                    type: Channel_Type.PUBLIC,
-                    members: {
-                        member: {id: Not(userId)}
-                    }
-                },
-                {
-                    type: Channel_Type.PROTECTED,
-                    members: {
-                        member: {id: Not(userId)}
-                    }
-                },
-            ],
-            skip: skip,
-            take: take
-        })
-    }
+    //     return await this.channelRepository.find({
+    //         where: [
+    //             {
+    //                 type: Channel_Type.PUBLIC,
+    //                 members: {
+    //                     member: {id: Not(userId)}
+    //                 }
+    //             },
+    //             {
+    //                 type: Channel_Type.PROTECTED,
+    //                 members: {
+    //                     member: {id: Not(userId)}
+    //                 }
+    //             },
+    //         ],
+    //         skip: skip,
+    //         take: take
+    //     })
+    // }
 
     async turnChannelPrivate(channelId: number): Promise<ChannelEntity> {
         try{
@@ -221,11 +221,13 @@ export class ChannelService {
                 channel: {id: channelId}
             },
             select: {
+                role: true,
                 member: {id: true, displayName: true}
             }
         })
 
-        return members.map(membership => membership.member)
+        // return members.map(membership => membership.member)
+        return members
 
     }
 
@@ -269,25 +271,28 @@ export class ChannelService {
         })
     }
 
-    async findNonJoinedChannels(userId: number): Promise<ChannelEntity[]> {
-
+    async findPrivateAndProtectedChannels() {
         return await this.channelRepository.find({
-            where: {
-                members: {
-                    member: {id: Not(userId)}
-                },
-            },
+            where: [
+                {type: Channel_Type.PUBLIC},
+                {type: Channel_Type.PROTECTED},
+            ]
+        })
+    }
+
+    async findNonJoinedChannels(userId: number) {
+
+        const joinedChannels = await this.findJoinedChannels(userId)
+        
+        const Allchannels = await this.findPrivateAndProtectedChannels()
+
+        return Allchannels.filter(channel => {
+            const isJoined = joinedChannels.findIndex((Joinedchannel) => Joinedchannel.id === channel.id)
+            if (isJoined === -1)
+                return channel
+            return false
         })
 
-        // alternative way
-
-        // return await this.membershipsRepository.find({
-        //     relations: ['channel'],
-        //     where: {
-        //         member: {id: Not(userId)}
-        //     },
-        //     select: ['channel']
-        // })
     }
 
     async findMembership(member: UserDto, channel: ChannelDto): Promise<ChannelMembershipEntity> {
@@ -302,7 +307,8 @@ export class ChannelService {
     async createMembership (
         user: UserDto,
         channel: ChannelDto,
-        member_role: Channel_Member_Role ) {
+        member_role: Channel_Member_Role
+    ) {
         try {
             await this.membershipsRepository.save({
                 member: user,

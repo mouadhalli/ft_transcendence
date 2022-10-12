@@ -24,6 +24,7 @@ import { MessageController } from './message/message.controller';
         UsersModule,
         AuthModule,
     ],
+    exports: [ChannelService],
     controllers: [ChannelController, MessageController],
     providers: [ChatGateway, ChatService, ChannelService, MessageService, GatewayConnectionService],
 })
