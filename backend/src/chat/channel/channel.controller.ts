@@ -8,6 +8,8 @@ import { ChannelService } from "./channel.service";
 
 import { FileInterceptor } from '@nestjs/platform-express';
 import { multerOptions } from '../../config/mutler.conf'
+import { IsOwnerGuard } from "../guards/owner.role.guard";
+import { IsAdminGuard } from "../guards/admin.role.guard";
 type File = Express.Multer.File
 
 @Controller('channel')
@@ -16,7 +18,7 @@ export class ChannelController {
     constructor( private channelService: ChannelService ) {}
 
     @Post('add-member')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, IsAdminGuard)
 	@HttpCode(201)
     async addFriendToChannel(
         @User() user: UserDto,
@@ -91,14 +93,14 @@ export class ChannelController {
     }
 
     @Delete(":channel_id")
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, IsOwnerGuard)
 	@HttpCode(202)
     async deleteChannel(@Param('channel_id', ParseIntPipe) channelId: number) {
         return await this.channelService.deleteChannel(channelId)
     }
 
     @Patch('add-admin')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, IsAdminGuard)
     async addAdmin(
         @Query('channel_id', ParseIntPipe) channelId: number,
         @Query('member_id', ParseIntPipe) memberid: number
@@ -107,7 +109,7 @@ export class ChannelController {
     }
 
     @Patch('remove-admin')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, IsOwnerGuard)
     async removeAdmin(
         @Query('channel_id', ParseIntPipe) channelId: number,
         @Query('member_id', ParseIntPipe) memberid: number
@@ -116,7 +118,7 @@ export class ChannelController {
     }
 
     @Patch('mute-member')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, IsAdminGuard)
     async muteMember(
         @Query('channel_id', ParseIntPipe) channelId: number,
         @Query('member_id', ParseIntPipe) memberid: number
@@ -125,7 +127,7 @@ export class ChannelController {
     }
 
     @Patch('unmute-member')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, IsAdminGuard)
     async unmuteMember(
         @Query('channel_id', ParseIntPipe) channelId: number,
         @Query('member_id', ParseIntPipe) memberid: number
@@ -134,7 +136,7 @@ export class ChannelController {
     }
 
     @Patch('ban-member')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, IsAdminGuard)
     async banMember(
         @Query('channel_id', ParseIntPipe) channelId: number,
         @Query('member_id', ParseIntPipe) memberid: number
@@ -143,7 +145,7 @@ export class ChannelController {
     }
 
     @Patch('unban-member')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, IsAdminGuard)
     async unbanMember(
         @Query('channel_id', ParseIntPipe) channelId: number,
         @Query('member_id', ParseIntPipe) memberid: number
@@ -152,7 +154,7 @@ export class ChannelController {
     }
 
     @Patch('remove-member')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, IsAdminGuard)
     async removeMember(
         @Body('channel_id', ParseIntPipe) channelId: number,
         @Body('member_id', ParseIntPipe) memberid: number
@@ -161,7 +163,7 @@ export class ChannelController {
     }
 
     @Patch(':channel_id')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, IsAdminGuard)
     @HttpCode(201)
 	@UseInterceptors(FileInterceptor('file', multerOptions))
     async updateChannel(
