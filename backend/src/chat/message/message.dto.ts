@@ -21,3 +21,23 @@ export class MessageDto {
     @IsNotEmpty()
     created_at: Date
 }
+
+export class DirectMessageDto {
+
+    @IsNotEmpty()
+    @IsNumber()
+    id: number
+
+    @IsNotEmpty()
+    @IsString()
+    content: string
+
+    @IsNotEmpty()
+    author: UserEntity
+    
+    @IsNotEmpty()
+    receiver: UserEntity
+
+    @IsNotEmpty()
+    created_at: Date
+}

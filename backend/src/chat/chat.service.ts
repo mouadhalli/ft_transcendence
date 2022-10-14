@@ -9,7 +9,7 @@ import { Channel_Member_Role } from './entities/channelMember.entity';
 import * as bcrypt from "bcryptjs";
 import { ChannelDto, MembershipDto } from './channel/channel.dto';
 import { UserDto } from 'src/dto/User.dto';
-import { MessageDto } from './message/message.dto';
+import { DirectMessageDto, MessageDto } from './message/message.dto';
 import { ChannelEntity } from "./entities/channel.entity"
 
  
@@ -76,6 +76,22 @@ export class ChatService {
         )
 
         return {channel, message}
+
+    }
+
+    async sendDirectMessage(userId: number, receiverId: number, content: string) {
+        const author: UserDto = await this.userService.findUser(userId)
+        const receiver: UserDto = await this.userService.findUser(receiverId)
+
+        if (!author || !receiver)
+            throw new WsException("ressources not found")
+        
+        return await this.messageService.saveDirectMessage(
+            author,
+            receiver,
+            content
+        )
+
 
     }
 }

@@ -15,17 +15,6 @@ export class ChannelController {
 
     constructor( private channelService: ChannelService ) {}
 
-    // @Get()
-    // @UseGuards(JwtAuthGuard)
-	// @HttpCode(200)
-    // async getPublicAndProtectedChannels(
-    //     @User('id') userId: number,
-    //     @Query('index') index: number,
-	// 	@Query('amount') amount: number
-    // ) {
-    //     return await this.channelService.findAllChannels(userId, index, amount)
-    // }
-
     @Post('add-member')
     @UseGuards(JwtAuthGuard)
 	@HttpCode(201)
@@ -40,7 +29,6 @@ export class ChannelController {
         return 'target added successfully'
     }
 
-
     @Post('create')
     @UseGuards(JwtAuthGuard)
 	@HttpCode(201)
@@ -51,11 +39,6 @@ export class ChannelController {
         const channelId: number = await this.channelService.createChannel(creator, channelData)
         return  this.channelService.findOneChannel(channelId)
     }
-
-    // @Get('all')
-    // async getAllChannels() {
-    //     return await this.channelService.findAllChannels()
-    // }
 
     @Get('all-public')
     @UseGuards(JwtAuthGuard)

@@ -46,7 +46,7 @@ export class ChatGateway {
 	}
 
 	@SubscribeMessage('send_message')
-	async receiveMessageEvent( @ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
+	async sendMessageEvent( @ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
 		try {
 
 			const { userId } = payload
@@ -54,6 +54,7 @@ export class ChatGateway {
 
 			// Users who blocked current user should not receive his messages
 			const roomSockets = await this.server.in(payload.channelName).fetchSockets()
+
 			const roomMembers: roomMember[] = await this.connectionService.getUsesrIdFromSockets(roomSockets)
 
 			roomMembers.forEach( async ({memberId, memberSocket}) => {
@@ -64,6 +65,20 @@ export class ChatGateway {
 		
 			socket.broadcast.to(channel.name).except('exceptionRoom').emit('receive_message', message)
 			this.server.socketsLeave('exceptionRoom')
+
+		} catch(error) {
+			throw error
+		}
+	}
+
+	@SubscribeMessage('send_direct_message')
+	async sendDirectMessageEvent( @ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
+		try {
+
+			const { userId, receiverId, content } = payload
+			const message = await this.chatService.sendDirectMessage(userId, receiverId, content)
+		
+			socket.to(receiverId).emit('receive_message', message)
 
 		} catch(error) {
 			throw error

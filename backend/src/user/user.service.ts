@@ -173,19 +173,18 @@ export class UserService {
 		})
 	}
 
-	async addFriend(senderId: number, targetId: number) {
-		let Friendship = await this.findRelationship(senderId, targetId)
+	async addFriend(user: UserDto, targetId: number) {
+		let Friendship = await this.findRelationship(user.id, targetId)
 
 		if (Friendship)
 			throw new BadRequestException("User already Friend")
 		
-		const sender = await this.findUser(senderId)
 		const receiver = await this.findUser(targetId)
 
-		if (!sender || !receiver)
-			throw new BadRequestException("Users not found")
+		if (!receiver)
+			throw new BadRequestException("User not found")
 
-		Friendship = this.relationshipRepository.create({sender: sender, receiver: receiver})
+		Friendship = this.relationshipRepository.create({sender: user, receiver: receiver})
 		
 		Friendship = await this.relationshipRepository.save(Friendship).catch(error => {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
