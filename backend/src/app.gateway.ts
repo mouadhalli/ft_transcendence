@@ -46,7 +46,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 				this.logger.log(socket.id + ' connected')
 				// const userToken: string = socket.handshake.auth.token
 				// extracting token from headers because postmane don't support auth
-				const userToken: any = socket.handshake.headers.token
+				const userToken: string = String(socket.handshake.headers.token)
 				const { id } = await this.connectionService.getUserFromToken(userToken)
 				this.connectionService.saveSocketConnection(socket.id, id)
 				// grouping user sockets in a room so i can ping all user Tabs easily
@@ -97,5 +97,13 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			return {friendId: friend.id, status: FriendStatus}
 		})
 		socket.to(String(userId)).emit('friends-status', friendsConnectionStatus)
+	}
+
+	@SubscribeMessage('user-status')
+	async getUserConnectionStatus(@ConnectedSocket() socket: Socket, @MessageBody(ParseIntPipe) userId: number) {
+		// const frineds = await this.userService.findUserRelationships(userId, 0, 999, Relationship_State.FRIENDS)
+		const userStatus = this.connectionService.getUserConectionStatus(userId)
+
+		socket.to(socket.id).emit('friends-status', userStatus)
 	}
 }

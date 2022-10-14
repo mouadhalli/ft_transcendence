@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { UserDto } from './dto/User.dto';
 import { WsException } from '@nestjs/websockets';
 import { AuthService } from './auth/auth.service';
+import { Socket } from 'socket.io';
+import { roomMember } from './chat/chat.gateway';
 
 export enum ConnectionStatus {
 	ONLINE = 'online',
@@ -59,6 +61,30 @@ export class GatewayConnectionService {
 
 	// 	return this.ConnectedSockets.get(socketId).user_id
 	// }
+
+	async getUsesrIdFromSockets(sockets: any[]) {
+
+		// return sockets.filter( async (socket: Socket) => {
+		// 	const token = String(socket.handshake.headers.token)
+		// 	const { id } = await this.getUserFromToken(token)
+		// 	return {memberId: id, memberSocket: socket.id}
+		// })
+
+		let roomMembers: roomMember[]
+
+		for (let i = 0; i < sockets.length; i++) {
+			const token = String(sockets[i].handshake.headers.token)
+			const { id } = await this.getUserFromToken(token)
+			const member: roomMember = {
+				memberId: id,
+				memberSocket: sockets[i]
+			}
+			roomMembers.push(member)
+		}
+
+		return roomMembers
+	
+	}
 
 	saveSocketConnection(socketId: string, userId: number) {
 

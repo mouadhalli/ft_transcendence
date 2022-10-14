@@ -33,6 +33,37 @@ export class UserService {
 		return result.map( relationship => relationship.sender )
 	}
 
+	async getBlockedUsers(userId: number) {
+		const result: RelationshipEntity[] = await this.relationshipRepository.find({
+			relations: ['receiver'],
+			where: {
+				sender: {id: userId},
+				state: Relationship_State.BLOCKED
+			},
+			select: {
+				receiver: {
+					id: true,
+					// displayName: true,
+					// imgPath: true
+				}
+			}
+		})
+		return result.map( relationship => relationship.receiver )
+	}
+
+	async isUserBlockingMe(myId: number, userId: number) {
+
+		const membership: RelationshipEntity = await this.relationshipRepository.findOne({
+			where: {
+				receiver: { id: myId },
+				sender: { id: userId },
+				state: Relationship_State.BLOCKED
+			}
+		})
+
+		return membership ? true : false
+	}
+
 	async findUsersByDisplayNameLike(userId: number, displayname: string) {
 		const users: UserEntity[] = await this.usersRepository.find({
 			where: {

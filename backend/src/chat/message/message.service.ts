@@ -1,9 +1,10 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { WsException } from "@nestjs/websockets";
 import { UserDto } from "src/dto/User.dto";
+import { UserService } from "src/user/user.service";
 import { Repository } from "typeorm";
-import { ChannelDto } from "../channel/channel.dto";
+import { ChannelDto, MembershipDto } from "../channel/channel.dto";
 import { ChannelService } from "../channel/channel.service";
 import { ChannelEntity } from "../entities/channel.entity";
 import { MessageEntity } from "../entities/message.entity";
@@ -15,30 +16,40 @@ export class MessageService {
     constructor(
         @InjectRepository(MessageEntity)
             private messageRepository: Repository<MessageEntity>,
-        private channelService: ChannelService
+        private channelService: ChannelService,
+        private userService: UserService
     ) {}
 
-    async findChannelMessages(channelId: number): Promise<MessageEntity[]> {
-        // TO DO: - filter blocked users messages
+    async findChannelMessages(user: UserDto, channelId: number): Promise<MessageEntity[]> {
     
         const channel: ChannelEntity = await this.channelService.findOneChannel(channelId)
 
         if (!channel)
             throw new BadRequestException('channel not found')
 
-        // return await this.messageRepository.find({
-        //     relations: ['author', 'channel'],
-        //     where: {
-        //         channel: channel
-        //     },
-        //     order: {created_at: "ASC"}
-        // })
-        return await this.messageRepository.find({
+        const userMembership: MembershipDto = await this.channelService.findMembership(user, channel)
+
+        if (!userMembership)
+            throw new BadRequestException('user is not a member of this channel')
+        
+        if (userMembership.state === 'banned')
+            throw new ForbiddenException('user is banned from this channel')
+        
+        const blockedUsers: UserDto[] = await this.userService.getBlockedUsers(user.id)
+
+        let messages: MessageDto[] =  await this.messageRepository.find({
             relations: {author: true, channel: true},
             where: {
                 channel: {id: channelId}
             },
             order: {created_at: "ASC"}
+        })
+
+        return messages.filter((message) => {
+            const toHide = blockedUsers.findIndex((blockedUser) => blockedUser.id === message.author.id)
+            if (toHide === -1)
+                return message
+            return false
         })
     }
 
