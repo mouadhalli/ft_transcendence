@@ -14,7 +14,12 @@
 # start containers
 # docker-compose up -d
 
-docker-compose down
+# docker-compose down
+
+# eval $(docker-machine env default1)
 
 # start based on changes
 docker-compose up --build -d
+
+
+#npm run start:dev
