@@ -40,6 +40,14 @@ export class ChannelController {
         return  this.channelService.findOneChannel(channelId)
     }
 
+    @Get('role/:channel_id')
+    async getMyChannelRole(
+        @User('id') userId: number,
+        @Param('channel_id', ParseIntPipe) channelId: number
+    ) {
+        return await this.channelService.findUserChannelRole(userId, channelId)
+    }
+
     @Get('all-public')
     @UseGuards(JwtAuthGuard)
 	@HttpCode(200)

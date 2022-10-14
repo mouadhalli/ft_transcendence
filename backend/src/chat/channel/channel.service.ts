@@ -363,4 +363,22 @@ export class ChannelService {
         )
     }
 
+    async findUserChannelRole(userId: number, channelId: number) {
+        const user: UserDto = await this.userService.findUser(userId)
+    
+        if (!user)
+            throw new BadRequestException('user not found')
+        
+        const channel: ChannelDto = await this.findOneChannel(channelId)
+    
+        if (!channel)
+            throw new BadRequestException('channel not found')
+
+        const membership: MembershipDto = await this.findMembership(user, channel)
+        if (!membership)
+            throw new BadRequestException('user is not a member of this channel')
+        
+        return membership.role
+    }
+
 }
