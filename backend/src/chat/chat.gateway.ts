@@ -53,7 +53,7 @@ export class ChatGateway {
 			const {channel, message} = await this.chatService.sendMessage(userId, payload)
 
 			// Users who blocked current user should not receive his messages
-			const roomSockets = await this.server.in(payload.channelName).fetchSockets()
+			const roomSockets = await this.server.in(channel.name).fetchSockets()
 
 			const roomMembers: roomMember[] = await this.connectionService.getUsesrIdFromSockets(roomSockets)
 
