@@ -70,7 +70,7 @@ export class GatewayConnectionService {
 		// 	return {memberId: id, memberSocket: socket.id}
 		// })
 
-		let roomMembers: roomMember[]
+		let roomMembers: roomMember[] = []
 
 		for (let i = 0; i < sockets.length; i++) {
 			const token = String(sockets[i].handshake.headers.token)

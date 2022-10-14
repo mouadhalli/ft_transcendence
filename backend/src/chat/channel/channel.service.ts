@@ -300,12 +300,17 @@ export class ChannelService {
     async changeChannelOwner(channelId: number) {
         let adminMembership: ChannelMembershipEntity = await this.findChannelAdminMembership(channelId)
 
-        if (!adminMembership)
-            await this.deleteChannel(channelId)
-        else {
-            adminMembership.role = Channel_Member_Role.OWNER
-            await this.membershipsRepository.save(adminMembership)
-        }
+        if (adminMembership)
+            return await this.changeMembershipRole(adminMembership.member.id, channelId, Channel_Member_Role.OWNER)
+
+        let randomMembership: MembershipDto = await this.membershipsRepository.findOne({
+            where: {channel: {id: channelId}}
+        })
+
+        if (randomMembership)
+            return await this.changeMembershipRole(randomMembership.member.id, channelId, Channel_Member_Role.OWNER)
+
+        await this.deleteChannel(channelId)
     }
 
     async changeMembershipRole(memberId: number, channelId: number, role: Channel_Member_Role) {
