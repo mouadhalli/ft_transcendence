@@ -117,22 +117,24 @@ export class ChannelController {
         await this.channelService.changeMembershipRole(channelId, memberid, Channel_Member_Role.MEMBER)
     }
 
-    @Patch('mute-member')
+    @Patch('mute-member/:channel_id')
     @UseGuards(JwtAuthGuard, IsAdminGuard)
+	@HttpCode(200)
     async muteMember(
-        @Query('channel_id', ParseIntPipe) channelId: number,
-        @Query('member_id', ParseIntPipe) memberid: number
+        @Param('channel_id', ParseIntPipe) channelId: number,
+        @Query('member_id', ParseIntPipe) memberId: number,
+        @Query('mute_time', ParseIntPipe) muteTime: number
     ) {
-        await this.channelService.changeMembershipState(channelId, memberid, Channel_Member_State.MUTED)
+        await this.channelService.muteChannelMember(channelId, memberId, muteTime)
     }
 
-    @Patch('unmute-member')
+    @Patch('unmute-member/:channel_id')
     @UseGuards(JwtAuthGuard, IsAdminGuard)
     async unmuteMember(
-        @Query('channel_id', ParseIntPipe) channelId: number,
-        @Query('member_id', ParseIntPipe) memberid: number
+        @Param('channel_id', ParseIntPipe) channelId: number,
+        @Query('member_id', ParseIntPipe) memberId: number
     ) {
-        await this.channelService.changeMembershipState(channelId, memberid, Channel_Member_State.ACTIVE)
+        await this.channelService.unmuteChannelMember(channelId, memberId)
     }
 
     @Patch('ban-member')

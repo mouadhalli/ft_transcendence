@@ -386,4 +386,50 @@ export class ChannelService {
         return membership.role
     }
 
+    async muteChannelMember(channelId: number, memberId, muteTime: number) {
+        const membership: MembershipDto = await this.membershipsRepository.findOne({
+            where: {
+                channel: { id: channelId },
+                member: { id: memberId }
+            }
+        })
+
+        if (!membership)
+            throw new BadRequestException("couldn't find membership")
+        
+        if (membership.state === 'banned')
+            throw new BadRequestException('user is banned from this channel')
+        
+        if (membership.role !== 'member')
+            throw new ForbiddenException('only a member can be muted')
+        
+        membership.state = Channel_Member_State.MUTED
+        membership.muteEnd = Date.now() + muteTime
+
+        this.membershipsRepository.save(membership).catch((error) => {
+            throw new InternalServerErrorException(error)
+        })
+    }
+
+    async unmuteChannelMember(channelId: number, memberId: number) {
+        const membership: MembershipDto = await this.membershipsRepository.findOne({
+            where: {
+                channel: { id: channelId },
+                member: { id: memberId }
+            }
+        })
+
+        if (!membership)
+            throw new BadRequestException("couldn't find membership")
+        if (membership.state !== 'muted')
+            throw new BadRequestException("member is not muted")
+        
+        membership.state = Channel_Member_State.ACTIVE
+        membership.muteEnd = null
+
+        this.membershipsRepository.save(membership).catch((error) => {
+            throw new InternalServerErrorException(error)
+        })
+    }
+
 }

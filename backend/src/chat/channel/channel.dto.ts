@@ -46,6 +46,8 @@ export class MembershipDto {
     
     state: Channel_Member_State
 
+    muteEnd: number
+
 }
 
 // Makes a copy of the ChannelDto with all fields Optional, Useful when updating

@@ -65,9 +65,17 @@ export class ChatService {
         const author: UserDto = await this.userService.findUser(userId)
         const channel: ChannelDto = await this.channelService.findOneChannel(payload.channelId)
         const membership: MembershipDto = await this.channelService.findMembership(author, channel)
-
+        
         if (!author || !channel || !membership)
             throw new WsException("ressources not found")
+
+        if (membership.state === 'muted') {
+            if (membership.muteEnd > Date.now()) 
+                return {success: false, cause: membership.state}
+            this.channelService.unmuteChannelMember(payload.channelId, userId)
+        }
+        if (membership.state === 'banned')
+            return {success: false, cause: membership.state}
         
         const message: MessageDto = await this.messageService.saveMessage(
             author,
@@ -75,7 +83,7 @@ export class ChatService {
             payload.content
         )
 
-        return {channel, message}
+        return {success: true, channelName: channel.name, message}
 
     }
 
