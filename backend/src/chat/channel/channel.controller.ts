@@ -17,14 +17,15 @@ export class ChannelController {
 
     constructor( private channelService: ChannelService ) {}
 
-    @Post('add-member')
+    @Post('add-member/:channel_id')
     @UseGuards(JwtAuthGuard, IsAdminGuard)
 	@HttpCode(201)
     async addFriendToChannel(
         @User() user: UserDto,
-        @Body('target_id', ParseIntPipe) targetId: number,
-        @Body('channel_id', ParseIntPipe) channelId: number
+        @Param('channel_id', ParseIntPipe) channelId: number,
+        @Body('target_id', ParseIntPipe) targetId: number
     ) {
+        console.log(targetId, channelId)
         if (user.id === targetId)
             throw new BadRequestException('user cannot add himseld')
         await this.channelService.addUserToChannel(user, targetId, channelId)
@@ -105,22 +106,28 @@ export class ChannelController {
         return await this.channelService.deleteChannel(channelId)
     }
 
-    @Patch('add-admin:/channel_id')
+    @Delete("all")
+	@HttpCode(202)
+    async deleteAllChannels(@Param('channel_id', ParseIntPipe) channelId: number) {
+        return await this.channelService.deleteAllChannels()
+    }
+
+    @Patch('add-admin/:channel_id')
     @UseGuards(JwtAuthGuard, IsAdminGuard)
     async addAdmin(
         @Param('channel_id', ParseIntPipe) channelId: number,
-        @Query('member_id', ParseIntPipe) memberid: number
+        @Query('member_id', ParseIntPipe) memberId: number
     ) {
-        await this.channelService.changeMembershipRole(channelId, memberid, Channel_Member_Role.ADMIN)
+        await this.channelService.changeMembershipRole(memberId, channelId, Channel_Member_Role.ADMIN)
     }
 
-    @Patch('remove-admin')
+    @Patch('remove-admin/:channel_id')
     @UseGuards(JwtAuthGuard, IsAdminGuard)
     async removeAdmin(
-        @Query('channel_id', ParseIntPipe) channelId: number,
-        @Query('member_id', ParseIntPipe) memberid: number
+        @Param('channel_id', ParseIntPipe) channelId: number,
+        @Query('member_id', ParseIntPipe) memberId: number
     ) {
-        await this.channelService.changeMembershipRole(channelId, memberid, Channel_Member_Role.MEMBER)
+        await this.channelService.changeMembershipRole(memberId, channelId, Channel_Member_Role.MEMBER)
     }
 
     @Patch('mute-member/:channel_id')

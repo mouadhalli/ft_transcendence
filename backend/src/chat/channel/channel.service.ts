@@ -446,12 +446,21 @@ export class ChannelService {
         if (membership.role !== 'member')
             throw new ForbiddenException('only a member can be restricted')
         
-        membership.restricitonEnd = Date.now() + time
+        
+        // let t = new Date(Date.now())
+        membership.restricitonEnd = new Date(Date.now() + time)
         membership.state = type
 
         this.membershipsRepository.save(membership).catch((error) => {
             throw new InternalServerErrorException(error)
         })
+    }
+
+    async deleteAllChannels() {
+        const allChannels = await this.channelRepository.find()
+        allChannels.forEach( async (channel) => {
+            await this.channelRepository.remove(channel)
+        } )
     }
 
 }

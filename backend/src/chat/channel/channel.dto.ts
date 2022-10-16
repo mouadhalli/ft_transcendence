@@ -46,7 +46,7 @@ export class MembershipDto {
     
     state: Channel_Member_State
 
-    restricitonEnd: number
+    restricitonEnd: Date
 
 }
 
