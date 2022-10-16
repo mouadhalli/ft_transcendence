@@ -386,7 +386,7 @@ export class ChannelService {
         return membership.role
     }
 
-    async muteChannelMember(channelId: number, memberId, muteTime: number) {
+    async removeRestrictionOnChannelMember(channelId: number, memberId: number) {
         const membership: MembershipDto = await this.membershipsRepository.findOne({
             where: {
                 channel: { id: channelId },
@@ -396,22 +396,23 @@ export class ChannelService {
 
         if (!membership)
             throw new BadRequestException("couldn't find membership")
+        if (membership.state === 'active')
+            throw new BadRequestException("member is not restricted")
         
-        if (membership.state === 'banned')
-            throw new BadRequestException('user is banned from this channel')
-        
-        if (membership.role !== 'member')
-            throw new ForbiddenException('only a member can be muted')
-        
-        membership.state = Channel_Member_State.MUTED
-        membership.muteEnd = Date.now() + muteTime
+        membership.restricitonEnd = null
+        membership.state = Channel_Member_State.ACTIVE
 
         this.membershipsRepository.save(membership).catch((error) => {
             throw new InternalServerErrorException(error)
         })
     }
 
-    async unmuteChannelMember(channelId: number, memberId: number) {
+    async restrictChannelMember(
+        channelId: number,
+        memberId: number,
+        time: number,
+        type: Channel_Member_State
+    ) {
         const membership: MembershipDto = await this.membershipsRepository.findOne({
             where: {
                 channel: { id: channelId },
@@ -419,13 +420,20 @@ export class ChannelService {
             }
         })
 
+        if (!time || !type || type === 'active')
+            return
+
         if (!membership)
             throw new BadRequestException("couldn't find membership")
-        if (membership.state !== 'muted')
-            throw new BadRequestException("member is not muted")
         
-        membership.state = Channel_Member_State.ACTIVE
-        membership.muteEnd = null
+        if (type === 'muted' && membership.state === 'banned')
+            throw new BadRequestException('user is banned')
+        
+        if (membership.role !== 'member')
+            throw new ForbiddenException('only a member can be restricted')
+        
+        membership.restricitonEnd = Date.now() + time
+        membership.state = type
 
         this.membershipsRepository.save(membership).catch((error) => {
             throw new InternalServerErrorException(error)

@@ -49,7 +49,7 @@ export class ChannelMembershipEntity {
     state: Channel_Member_State
 
     @Column({nullable: true})
-    muteEnd: number
+    restricitonEnd: number
 
     @CreateDateColumn()
     created_at: Date

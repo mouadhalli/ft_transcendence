@@ -52,11 +52,11 @@ export class ChatService {
         if (!member || !channel || !membership)
             throw new WsException("ressource not found")
     
-        await this.channelService.deleteMembership(member, channel)
-        // await this.channelService.updateChannelMembersCount(channel.id, channel.membersCount - 1)
-    
+            // await this.channelService.updateChannelMembersCount(channel.id, channel.membersCount - 1)    
         if (membership.role === 'owner')
             await this.channelService.changeChannelOwner(channel.id)
+
+        await this.channelService.deleteMembership(member, channel)
 
         return channel.name
     }
@@ -69,14 +69,12 @@ export class ChatService {
         if (!author || !channel || !membership)
             throw new WsException("ressources not found")
 
-        if (membership.state === 'muted') {
-            if (membership.muteEnd > Date.now()) 
-                return {success: false, cause: membership.state}
-            this.channelService.unmuteChannelMember(payload.channelId, userId)
+        if (membership.state !== 'active') {
+            if (membership.restricitonEnd > Date.now()) 
+                return {success: false, cause: membership.state, time: membership.restricitonEnd}
+            this.channelService.removeRestrictionOnChannelMember(payload.channelId, userId)
         }
-        if (membership.state === 'banned')
-            return {success: false, cause: membership.state}
-        
+
         const message: MessageDto = await this.messageService.saveMessage(
             author,
             channel,

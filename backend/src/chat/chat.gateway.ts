@@ -50,24 +50,27 @@ export class ChatGateway {
 		try {
 
 			const { userId } = payload
-			const {success, channelName, message, cause} = await this.chatService.sendMessage(userId, payload)
-
+			const {success, channelName, message, cause, time} = await this.chatService.sendMessage(userId, payload)
 
 			if (success === false)
-				return {success, cause}
+				return {success, cause, time}
 
 			// Users who blocked current user should not receive his messages
 			const roomSockets = await this.server.in(channelName).fetchSockets()
 			const roomMembers: roomMember[] = await this.connectionService.getUsesrIdFromSockets(roomSockets)
 
+			// Making theire socket join an exception room
 			roomMembers.forEach( async ({memberId, memberSocket}) => {
 				const isBlockingMe = await this.userService.isUserBlockingMe(userId, memberId)
 				if (isBlockingMe === true)
 					memberSocket.join('exceptionRoom')
 			})
 		
+			// sending the event to all room sockets except those in axceptionRoom
 			socket.broadcast.to(channelName).except('exceptionRoom').emit('receive_message', message)
 			this.server.socketsLeave('exceptionRoom')
+		
+			return {success: true} 
 
 		} catch(error) {
 			throw error

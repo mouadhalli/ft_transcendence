@@ -46,7 +46,7 @@ export class MembershipDto {
     
     state: Channel_Member_State
 
-    muteEnd: number
+    restricitonEnd: number
 
 }
 
