@@ -88,8 +88,14 @@ export class ChannelController {
     @Get(":channel_id")
     @UseGuards(JwtAuthGuard)
 	@HttpCode(200)
-    async getChannel(@Param('channel_id', ParseIntPipe) channelId: number) {
-        return await this.channelService.findOneChannel(channelId)
+    async getChannel(
+        @User('id') userId: number,
+        @Param('channel_id', ParseIntPipe) channelId: number
+    ) {
+        const { id, name, imgPath, type, membersCount } = await this.channelService.findOneChannel(channelId)
+        const role = await this.channelService.findUserChannelRole(userId, channelId)
+
+        return { id, name, imgPath, type, membersCount, role }
     }
 
     @Delete(":channel_id")
@@ -109,7 +115,7 @@ export class ChannelController {
     }
 
     @Patch('remove-admin')
-    @UseGuards(JwtAuthGuard, IsOwnerGuard)
+    @UseGuards(JwtAuthGuard, IsAdminGuard)
     async removeAdmin(
         @Query('channel_id', ParseIntPipe) channelId: number,
         @Query('member_id', ParseIntPipe) memberid: number
@@ -166,7 +172,7 @@ export class ChannelController {
     }
 
     @Patch(':channel_id')
-    @UseGuards(JwtAuthGuard, IsAdminGuard)
+    @UseGuards(JwtAuthGuard, IsOwnerGuard)
     @HttpCode(201)
 	@UseInterceptors(FileInterceptor('file', multerOptions))
     async updateChannel(

@@ -237,6 +237,15 @@ export class ChannelService {
         })
     }
 
+    // async findMembership2(memberId: number, channelId: number): Promise<ChannelMembershipEntity> {
+    //     return await this.membershipsRepository.findOne({
+    //         where: {
+    //             member: { id: memberId },
+    //             channel: { id: channelId }
+    //         }
+    //     })
+    // }
+
     async createMembership (
         user: UserDto,
         channel: ChannelDto,
@@ -304,7 +313,12 @@ export class ChannelService {
             return await this.changeMembershipRole(adminMembership.member.id, channelId, Channel_Member_Role.OWNER)
 
         let randomMembership: MembershipDto = await this.membershipsRepository.findOne({
-            where: {channel: {id: channelId}}
+            relations: {member: true},
+            where: {
+                channel: {id: channelId},
+                role: Channel_Member_Role.MEMBER
+            },
+            select: {member: {id: true}}
         })
 
         if (randomMembership)
