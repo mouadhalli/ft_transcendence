@@ -32,9 +32,14 @@ export class ChatGateway {
 	@SubscribeMessage('join_channel')
 	async joinChannelEvent(@ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
 		const { userId } = payload
-		const channelName: string = await this.chatService.joinChannel(userId, payload)
+		const { success, channelName, error } = await this.chatService.joinChannel(userId, payload)
+
+		if (success === false)
+			return { success, error }
+
 		socket.join(channelName)
-		socket.broadcast.to(channelName).emit('receive_message', userId + " joined")
+		return { success }
+		// socket.broadcast.to(channelName).emit('receive_message', userId + " joined")
 	}
 
 	@SubscribeMessage('leave_channel')
@@ -42,7 +47,7 @@ export class ChatGateway {
 		const { userId } = payload
 		const channelName: string = await this.chatService.leaveChannel(userId, payload)
 		socket.leave(channelName)
-		socket.broadcast.to(channelName).emit('receive_message', socket.id + " left")
+		// socket.broadcast.to(channelName).emit('receive_message', socket.id + " left")
 	}
 
 	@SubscribeMessage('send_message')
@@ -70,7 +75,7 @@ export class ChatGateway {
 			socket.broadcast.to(channelName).except('exceptionRoom').emit('receive_message', message)
 			this.server.socketsLeave('exceptionRoom')
 		
-			return {success: true} 
+			return { success } 
 
 		} catch(error) {
 			throw error
