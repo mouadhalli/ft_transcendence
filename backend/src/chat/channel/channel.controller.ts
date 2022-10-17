@@ -8,6 +8,8 @@ import { ChannelService } from "./channel.service";
 
 import { FileInterceptor } from '@nestjs/platform-express';
 import { multerOptions } from '../../config/mutler.conf'
+import { IsOwnerGuard } from "../guards/owner.role.guard";
+import { IsAdminGuard } from "../guards/admin.role.guard";
 type File = Express.Multer.File
 
 @Controller('channel')
@@ -15,31 +17,20 @@ export class ChannelController {
 
     constructor( private channelService: ChannelService ) {}
 
-    // @Get()
-    // @UseGuards(JwtAuthGuard)
-	// @HttpCode(200)
-    // async getPublicAndProtectedChannels(
-    //     @User('id') userId: number,
-    //     @Query('index') index: number,
-	// 	@Query('amount') amount: number
-    // ) {
-    //     return await this.channelService.findAllChannels(userId, index, amount)
-    // }
-
-    @Post('add-member')
-    @UseGuards(JwtAuthGuard)
+    @Post('add-member/:channel_id')
+    @UseGuards(JwtAuthGuard, IsAdminGuard)
 	@HttpCode(201)
     async addFriendToChannel(
         @User() user: UserDto,
-        @Body('target_id', ParseIntPipe) targetId: number,
-        @Body('channel_id', ParseIntPipe) channelId: number
+        @Param('channel_id', ParseIntPipe) channelId: number,
+        @Body('target_id', ParseIntPipe) targetId: number
     ) {
+        console.log(targetId, channelId)
         if (user.id === targetId)
             throw new BadRequestException('user cannot add himseld')
         await this.channelService.addUserToChannel(user, targetId, channelId)
         return 'target added successfully'
     }
-
 
     @Post('create')
     @UseGuards(JwtAuthGuard)
@@ -52,10 +43,13 @@ export class ChannelController {
         return  this.channelService.findOneChannel(channelId)
     }
 
-    // @Get('all')
-    // async getAllChannels() {
-    //     return await this.channelService.findAllChannels()
-    // }
+    @Get('role/:channel_id')
+    async getMyChannelRole(
+        @User('id') userId: number,
+        @Param('channel_id', ParseIntPipe) channelId: number
+    ) {
+        return await this.channelService.findUserChannelRole(userId, channelId)
+    }
 
     @Get('all-public')
     @UseGuards(JwtAuthGuard)
@@ -95,82 +89,97 @@ export class ChannelController {
     @Get(":channel_id")
     @UseGuards(JwtAuthGuard)
 	@HttpCode(200)
-    async getChannel(@Param('channel_id', ParseIntPipe) channelId: number) {
-        return await this.channelService.findOneChannel(channelId)
+    async getChannel(
+        @User('id') userId: number,
+        @Param('channel_id', ParseIntPipe) channelId: number
+    ) {
+        const { id, name, imgPath, type, membersCount } = await this.channelService.findOneChannel(channelId)
+        const role = await this.channelService.findUserChannelRole(userId, channelId)
+
+        return { id, name, imgPath, type, membersCount, role }
     }
 
     @Delete(":channel_id")
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, IsOwnerGuard)
 	@HttpCode(202)
     async deleteChannel(@Param('channel_id', ParseIntPipe) channelId: number) {
         return await this.channelService.deleteChannel(channelId)
     }
 
-    @Patch('add-admin')
-    @UseGuards(JwtAuthGuard)
+    @Delete("all")
+	@HttpCode(202)
+    async deleteAllChannels(@Param('channel_id', ParseIntPipe) channelId: number) {
+        return await this.channelService.deleteAllChannels()
+    }
+
+    @Patch('add-admin/:channel_id')
+    @UseGuards(JwtAuthGuard, IsAdminGuard)
     async addAdmin(
-        @Query('channel_id', ParseIntPipe) channelId: number,
-        @Query('member_id', ParseIntPipe) memberid: number
+        @Param('channel_id', ParseIntPipe) channelId: number,
+        @Query('member_id', ParseIntPipe) memberId: number
     ) {
-        await this.channelService.changeMembershipRole(channelId, memberid, Channel_Member_Role.ADMIN)
+        await this.channelService.changeMembershipRole(memberId, channelId, Channel_Member_Role.ADMIN)
     }
 
-    @Patch('remove-admin')
-    @UseGuards(JwtAuthGuard)
+    @Patch('remove-admin/:channel_id')
+    @UseGuards(JwtAuthGuard, IsAdminGuard)
     async removeAdmin(
-        @Query('channel_id', ParseIntPipe) channelId: number,
-        @Query('member_id', ParseIntPipe) memberid: number
+        @Param('channel_id', ParseIntPipe) channelId: number,
+        @Query('member_id', ParseIntPipe) memberId: number
     ) {
-        await this.channelService.changeMembershipRole(channelId, memberid, Channel_Member_Role.MEMBER)
+        await this.channelService.changeMembershipRole(memberId, channelId, Channel_Member_Role.MEMBER)
     }
 
-    @Patch('mute-member')
-    @UseGuards(JwtAuthGuard)
+    @Patch('mute-member/:channel_id')
+    @UseGuards(JwtAuthGuard, IsAdminGuard)
+	@HttpCode(200)
     async muteMember(
-        @Query('channel_id', ParseIntPipe) channelId: number,
-        @Query('member_id', ParseIntPipe) memberid: number
+        @Param('channel_id', ParseIntPipe) channelId: number,
+        @Query('member_id', ParseIntPipe) memberId: number,
+        @Query('mute_time', ParseIntPipe) muteTime: number
     ) {
-        await this.channelService.changeMembershipState(channelId, memberid, Channel_Member_State.MUTED)
+        await this.channelService.restrictChannelMember(channelId, memberId, muteTime, Channel_Member_State.MUTED)
     }
 
-    @Patch('unmute-member')
-    @UseGuards(JwtAuthGuard)
+    @Patch('unmute-member/:channel_id')
+    @UseGuards(JwtAuthGuard, IsAdminGuard)
     async unmuteMember(
-        @Query('channel_id', ParseIntPipe) channelId: number,
-        @Query('member_id', ParseIntPipe) memberid: number
+        @Param('channel_id', ParseIntPipe) channelId: number,
+        @Query('member_id', ParseIntPipe) memberId: number
     ) {
-        await this.channelService.changeMembershipState(channelId, memberid, Channel_Member_State.ACTIVE)
+        await this.channelService.removeRestrictionOnChannelMember(channelId, memberId)
     }
 
-    @Patch('ban-member')
-    @UseGuards(JwtAuthGuard)
+    @Patch('ban-member/:channel_id')
+    @UseGuards(JwtAuthGuard, IsAdminGuard)
     async banMember(
-        @Query('channel_id', ParseIntPipe) channelId: number,
-        @Query('member_id', ParseIntPipe) memberid: number
+        @Param('channel_id', ParseIntPipe) channelId: number,
+        @Query('member_id', ParseIntPipe) memberId: number,
+        @Query('mute_time', ParseIntPipe) banTime: number
     ) {
-        await this.channelService.changeMembershipState(channelId, memberid, Channel_Member_State.BANNED)
+        await this.channelService.restrictChannelMember(channelId, memberId, banTime, Channel_Member_State.BANNED)
     }
 
-    @Patch('unban-member')
-    @UseGuards(JwtAuthGuard)
+    @Patch('unban-member/:channel_id')
+    @UseGuards(JwtAuthGuard, IsAdminGuard)
     async unbanMember(
-        @Query('channel_id', ParseIntPipe) channelId: number,
-        @Query('member_id', ParseIntPipe) memberid: number
+        @Param('channel_id', ParseIntPipe) channelId: number,
+        @Query('member_id', ParseIntPipe) memberId: number
     ) {
-        await this.channelService.changeMembershipState(channelId, memberid, Channel_Member_State.ACTIVE)
+        await this.channelService.removeRestrictionOnChannelMember(channelId, memberId)
     }
 
-    @Patch('remove-member')
-    @UseGuards(JwtAuthGuard)
+    @Patch('remove-member/:channel_id')
+    @UseGuards(JwtAuthGuard, IsAdminGuard)
     async removeMember(
-        @Body('channel_id', ParseIntPipe) channelId: number,
-        @Body('member_id', ParseIntPipe) memberid: number
+        @Param('channel_id', ParseIntPipe) channelId: number,
+        @Query('member_id', ParseIntPipe) memberId: number
     ) {
-        await this.channelService.removeMemberFromChannel(channelId, memberid)
+        await this.channelService.removeMemberFromChannel(channelId, memberId)
     }
 
     @Patch(':channel_id')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, IsOwnerGuard)
     @HttpCode(201)
 	@UseInterceptors(FileInterceptor('file', multerOptions))
     async updateChannel(

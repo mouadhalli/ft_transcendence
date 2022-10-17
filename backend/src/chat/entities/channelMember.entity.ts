@@ -48,6 +48,9 @@ export class ChannelMembershipEntity {
     })
     state: Channel_Member_State
 
+    @Column({nullable: true})
+    restricitonEnd: Date
+
     @CreateDateColumn()
     created_at: Date
 }

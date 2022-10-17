@@ -7,6 +7,7 @@ import { Repository } from "typeorm";
 import { ChannelDto, MembershipDto } from "../channel/channel.dto";
 import { ChannelService } from "../channel/channel.service";
 import { ChannelEntity } from "../entities/channel.entity";
+import { DirectMessageEntity } from "../entities/directMessage.entity";
 import { MessageEntity } from "../entities/message.entity";
 import { MessageDto } from "./message.dto";
 
@@ -16,6 +17,8 @@ export class MessageService {
     constructor(
         @InjectRepository(MessageEntity)
             private messageRepository: Repository<MessageEntity>,
+        @InjectRepository(DirectMessageEntity)
+            private directMessageRepository: Repository<DirectMessageEntity>,
         private channelService: ChannelService,
         private userService: UserService
     ) {}
@@ -55,17 +58,32 @@ export class MessageService {
 
     async saveMessage(author: UserDto, channel: ChannelDto, content: string): Promise<MessageEntity> {
         try {
-
-            // const message: MessageEntity = this.messageRepository.create({
-            //     content: content,
-            //     author: author,
-            //     channel: channel
-            // })
-
             return await this.messageRepository.save({
                 content: content,
                 author: author,
                 channel: channel
+            })
+
+        } catch(error) {
+            throw new WsException("internal server error")
+        }
+    }
+
+    async findDirectMessages(authorId: number, receiverId: number) {
+        return await this.directMessageRepository.find({
+            where: {
+                author: {id: authorId},
+                receiver: {id: receiverId}
+            }
+        })
+    }
+
+    async saveDirectMessage(author: UserDto, receiver: UserDto, content: string) {
+        try {
+            return await this.directMessageRepository.save({
+                content: content,
+                author: author,
+                receiver: receiver
             })
 
         } catch(error) {

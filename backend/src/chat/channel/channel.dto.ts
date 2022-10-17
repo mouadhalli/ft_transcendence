@@ -46,6 +46,8 @@ export class MembershipDto {
     
     state: Channel_Member_State
 
+    restricitonEnd: Date
+
 }
 
 // Makes a copy of the ChannelDto with all fields Optional, Useful when updating

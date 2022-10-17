@@ -29,11 +29,11 @@ export class UserController {
 	@UseGuards(JwtAuthGuard)
 	@HttpCode(201)
 	async sendFriendRequest(
-		@User('id') userId: number,
+		@User() user: UserDto,
 		@Body('target_id', ParseIntPipe) friendId: number ) {
-			if (!friendId || userId === friendId)
+			if (!friendId || user.id === friendId)
 				throw new BadRequestException("invalid target id")
-			await this.userService.addFriend(userId, friendId)
+			await this.userService.addFriend(user, friendId)
 			return "friend request sent"
 	}
 

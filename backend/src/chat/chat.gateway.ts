@@ -31,41 +31,66 @@ export class ChatGateway {
 
 	@SubscribeMessage('join_channel')
 	async joinChannelEvent(@ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
-		const { userId } = payload
-		const channelName: string = await this.chatService.joinChannel(userId, payload)
+		const { success, channelName, error } = await this.chatService.joinChannel(payload)
+
+		console.log(success, error)
+		if (success === false)
+			return { success, error }
+
 		socket.join(channelName)
-		socket.broadcast.to(channelName).emit('receive_message', userId + " joined")
+		return { success }
+		// socket.broadcast.to(channelName).emit('receive_message', userId + " joined")
 	}
 
 	@SubscribeMessage('leave_channel')
 	async leaveChannelEvent(@ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
-		const { userId } = payload
-		const channelName: string = await this.chatService.leaveChannel(userId, payload)
+		const channelName: string = await this.chatService.leaveChannel(payload)
 		socket.leave(channelName)
-		socket.broadcast.to(channelName).emit('receive_message', socket.id + " left")
+		// socket.broadcast.to(channelName).emit('receive_message', socket.id + " left")
 	}
 
 	@SubscribeMessage('send_message')
-	async receiveMessageEvent( @ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
+	async sendMessageEvent( @ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
 		try {
 
-			const { userId } = payload
-			const {channel, message} = await this.chatService.sendMessage(userId, payload)
+			const {success, channelName, message, cause, time} = await this.chatService.sendMessage(payload)
+
+			if (success === false)
+				return {success, cause, time}
 
 			// Users who blocked current user should not receive his messages
-			const roomSockets = await this.server.in(payload.channelName).fetchSockets()
+			const roomSockets = await this.server.in(channelName).fetchSockets()
 			const roomMembers: roomMember[] = await this.connectionService.getUsesrIdFromSockets(roomSockets)
 
+			// Making theire socket join an exception room
 			roomMembers.forEach( async ({memberId, memberSocket}) => {
-				const isBlockingMe = await this.userService.isUserBlockingMe(userId, memberId)
+				const isBlockingMe = await this.userService.isUserBlockingMe(payload.userId, memberId)
 				if (isBlockingMe === true)
 					memberSocket.join('exceptionRoom')
 			})
 		
-			socket.broadcast.to(channel.name).except('exceptionRoom').emit('receive_message', message)
+			// sending the event to all room sockets except those in axceptionRoom
+			socket.to(channelName).except('exceptionRoom').emit('receive_message', message)
 			this.server.socketsLeave('exceptionRoom')
+		
+			return { success } 
 
 		} catch(error) {
+			throw error
+		}
+	}
+
+	@SubscribeMessage('send_direct_message')
+	async sendDirectMessageEvent( @ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
+		try {
+
+			const { userId, receiverId, content } = payload
+			const message = await this.chatService.sendDirectMessage(userId, receiverId, content)
+		
+			socket.to(receiverId).emit('receive_message', message)
+
+		} catch(error) {
+			console.log(error)
 			throw error
 		}
 	}

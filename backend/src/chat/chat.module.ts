@@ -12,6 +12,7 @@ import { MessageEntity } from './entities/message.entity';
 import { UsersModule } from 'src/user/user.module';
 import { GatewayConnectionService } from 'src/connection.service';
 import { MessageController } from './message/message.controller';
+import { DirectMessageEntity } from './entities/directMessage.entity';
 
 
 @Module({
@@ -19,7 +20,8 @@ import { MessageController } from './message/message.controller';
         TypeOrmModule.forFeature([
             ChannelEntity,
             ChannelMembershipEntity,
-            MessageEntity
+            MessageEntity,
+            DirectMessageEntity
         ]),
         UsersModule,
         AuthModule,

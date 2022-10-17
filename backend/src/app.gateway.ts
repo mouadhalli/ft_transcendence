@@ -104,6 +104,6 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 		// const frineds = await this.userService.findUserRelationships(userId, 0, 999, Relationship_State.FRIENDS)
 		const userStatus = this.connectionService.getUserConectionStatus(userId)
 
-		socket.to(socket.id).emit('friends-status', userStatus)
+		socket.emit('friends-status', userStatus)
 	}
 }
