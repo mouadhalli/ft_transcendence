@@ -33,7 +33,6 @@ export class ChatGateway {
 	async joinChannelEvent(@ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
 		const { success, channelName, error } = await this.chatService.joinChannel(payload)
 
-		console.log(success, error)
 		if (success === false)
 			return { success, error }
 
@@ -53,10 +52,14 @@ export class ChatGateway {
 	async sendMessageEvent( @ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
 		try {
 
-			const {success, channelName, message, cause, time} = await this.chatService.sendMessage(payload)
+			const {success, cause, time, channelName, message} = await this.chatService.sendMessage(payload)
 
-			if (success === false)
-				return {success, cause, time}
+			if (success === false) {
+				if (cause === 'muted')
+					return {success, cause, time}
+				this.server.to(String(payload.userId)).socketsLeave(channelName)
+				return {success, cause}
+			}
 
 			// Users who blocked current user should not receive his messages
 			const roomSockets = await this.server.in(channelName).fetchSockets()

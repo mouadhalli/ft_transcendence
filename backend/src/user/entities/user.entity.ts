@@ -41,6 +41,12 @@ export class UserEntity {
     @Column({ nullable: true, select: false })
     twoFactorSecret: string;
 
+    @Column({type: 'int', default: -1})
+    xp: number
+
+    @Column({type: 'int', default: 1})
+    lvl: number
+
     // @OneToMany(() => RelationshipEntity, (relationship) => relationship.sender, {
     //     // https://orkhan.gitbook.io/typeorm/docs/eager-and-lazy-relations
     //     // eager: true, // you don't need to join or specify relations you want to load

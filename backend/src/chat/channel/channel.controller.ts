@@ -108,7 +108,7 @@ export class ChannelController {
 
     @Delete("all")
 	@HttpCode(202)
-    async deleteAllChannels(@Param('channel_id', ParseIntPipe) channelId: number) {
+    async deleteAllChannels() {
         return await this.channelService.deleteAllChannels()
     }
 
