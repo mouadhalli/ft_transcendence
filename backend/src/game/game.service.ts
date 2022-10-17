@@ -1,6 +1,7 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserDto } from "src/dto/User.dto";
+import { UserEntity } from "src/user/entities/user.entity";
 import { UserService } from "src/user/user.service";
 import { Repository } from "typeorm";
 import { GameEntity } from "./entities/game.entity";
@@ -91,6 +92,34 @@ export class GameService {
         })
 
         return totalGoals
+    }
+
+    async gainXp(userId: number) {
+        const user: UserDto = await this.userService.findUser(userId)
+
+        if (!user)
+            return { success: false, error: "user not found" }
+
+        user.xp += 1
+            
+        //xp required to reach next lvl XP = LVL * ((LVL - 1) / 2)
+        if (user.xp === user.lvl * ((user.lvl - 1) / 2)) {
+            user.lvl += 1
+            user.xp = 0
+        }
+
+        return { success: true, user}
+
+    }
+
+    async getUserXpAndLvl(userId: number) {
+        const { xp, lvl }: UserDto = await this.userService.findUser(userId)
+
+        if (!lvl)
+            throw new BadRequestException("couldn't find user")
+        
+        return {xp, lvl}
+
     }
 
 }

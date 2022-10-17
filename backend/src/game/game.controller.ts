@@ -25,8 +25,9 @@ export class GameController {
         const totalDefeats: number = await this.gameService.countUserDefeats(userId)
         const totalGamesPlayed: number = await this.gameService.countUserTotalGamesPlayed(userId)
         const totalGoals: number = await this.gameService.countUserTotalGoals(userId)
+        const { xp, lvl } = await this.gameService.getUserXpAndLvl(userId)
 
-        return {totalGamesPlayed, totalGoals, totalWins, totalDefeats}
+        return {totalGamesPlayed, totalGoals, totalWins, totalDefeats, xp, lvl}
     }
 
 }
