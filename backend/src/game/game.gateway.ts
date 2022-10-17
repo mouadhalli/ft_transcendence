@@ -40,7 +40,7 @@ export class gameGateway implements OnGatewayDisconnect {
 
     @SubscribeMessage('ball_move')
     handelball(socket: Socket, Data: any) {        
-        if (Data.room !== '')
+        if (Data.room !== '' && ball_room[Data.room] !== undefined)
         {
             if (ball_room[Data.room].x - ball_room[Data.room].r < 0 )
             {
@@ -50,13 +50,23 @@ export class gameGateway implements OnGatewayDisconnect {
                 else
                 {
                     this.server.to(Data.room).emit('reset', "");
-                    setTimeout(() => {
-                        ball_room[Data.room].x = windw / 2 + 50;
-                        ball_room[Data.room].y = windh / 2 + 50;
-                        ball_room[Data.room].dx = 5;
-                        ball_room[Data.room].dy = 5;
-                        this.server.to(Data.room).emit('restart', ball_room[Data.room]);
-                }, 1000);
+                    ball_room[Data.room].p1 += 0.5;
+                    console.log(ball_room[Data.room].p1);
+                    if (ball_room[Data.room].p1 < 4.5)
+                    {
+                        setTimeout(() => {
+                            ball_room[Data.room].x = windw / 2 + 50;
+                            ball_room[Data.room].y = windh / 2 + 50;
+                            ball_room[Data.room].dx = 5;
+                            ball_room[Data.room].dy = 5;
+                            // if (ball_room[Data.room].p1 < 4.5)
+                            this.server.to(Data.room).emit('restart', ball_room[Data.room]);
+                        }, 1000);
+                    }  
+                    else if (socket.id === Data.room)
+                        socket.emit('lost', "");
+                    else
+                        socket.emit('won', "");
                 }
             }
             ball_room[Data.room].x = ball_room[Data.room].x + ball_room[Data.room].dx;
@@ -72,15 +82,15 @@ export class gameGateway implements OnGatewayDisconnect {
     }
 
     @SubscribeMessage('disc')
-    salina(socket: Socket, Data: any) {
+    disc(socket: Socket, Data: any) {
         socket.emit("fin", Data);
     }
 
     @SubscribeMessage('connection')
     conn(socket: Socket, Data: any) {
         console.log("Hi user " + socket.id)
-        // console.log(socket.id)
-        players[socket.id] = Data;
+        players[socket.id] = "";
+
         let i:any = waiting.length;
         let f_player : Socket;
         if (i % 2 != 0)//someone is waiting
@@ -93,6 +103,10 @@ export class gameGateway implements OnGatewayDisconnect {
             const Datas = {room:f_player.id, yourplace:1}
             f_player.emit("take_pos", Datas)
             socket.emit("take_pos", {...Datas, yourplace:2})
+
+            players[socket.id] = f_player;
+            players[f_player.id] = socket;
+
             // f_player.volatile.emit('connection', "start")
         }
         else
@@ -101,14 +115,23 @@ export class gameGateway implements OnGatewayDisconnect {
             waiting.push(socket);
             socket.emit('connection', "wait")
         }
-        console.log(players);
+        //console.log(players);
     }
     
     handleDisconnect(socket: Socket){
+        // console.log(players[socket.id] + "|2");
+        if (players[socket.id] !== undefined && players[socket.id] !== "")
+        {
+            let tmp: Socket;
+            tmp = players[socket.id];
+            tmp.emit("done", "");
+            tmp.emit("won", "");
+            players[tmp.id] = "";
+        }
         delete players[socket.id]
         if (waiting.length && waiting.at(0).id === socket.id)
             waiting.pop();
         console.log("finaly " + socket.id)
-        console.log(players);
+        //console.log(players);
     }
 }
