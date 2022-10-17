@@ -446,9 +446,10 @@ export class ChannelService {
         if (membership.role !== 'member')
             throw new ForbiddenException('only a member can be restricted')
         
-        
-        // let t = new Date(Date.now())
-        membership.restricitonEnd = new Date(Date.now() + time)
+        const now = new Date()
+        membership.restricitonEnd = new Date()
+        membership.restricitonEnd.setMilliseconds(now.getMilliseconds() + time)
+
         membership.state = type
 
         this.membershipsRepository.save(membership).catch((error) => {

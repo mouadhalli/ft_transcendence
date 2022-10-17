@@ -26,7 +26,6 @@ export class ChatService {
 
     async joinChannel(payload: any) {
 
-        console.log(payload.userId)
         const member: UserDto = await this.userService.findUser(payload.userId)
         const channel: ChannelDto = await this.channelService.findOneChannel(payload.channelId)
         const membership: MembershipDto = await this.channelService.findMembership(member, channel)
@@ -70,11 +69,10 @@ export class ChatService {
             throw new WsException("ressources not found")
 
         if (membership.state !== 'active') {
-            if (membership.restricitonEnd.getMilliseconds() > Date.now()) 
-                return {success: false, cause: membership.state, time: membership.restricitonEnd}
+            if (membership.restricitonEnd.getTime() > Date.now()) 
+                return {success: false, cause: membership.state, time: membership.restricitonEnd.getTime() - Date.now()}
             this.channelService.removeRestrictionOnChannelMember(payload.channelId, payload.userId)
         }
-        // return {time: 1, cause: ""}
 
         const message: MessageDto = await this.messageService.saveMessage(
             author,

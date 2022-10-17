@@ -33,7 +33,6 @@ export class ChatGateway {
 	async joinChannelEvent(@ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
 		const { success, channelName, error } = await this.chatService.joinChannel(payload)
 
-		console.log(success, error)
 		if (success === false)
 			return { success, error }
 
