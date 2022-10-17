@@ -65,8 +65,11 @@ export class ChatService {
         const channel: ChannelDto = await this.channelService.findOneChannel(payload.channelId)
         const membership: MembershipDto = await this.channelService.findMembership(author, channel)
         
-        if (!author || !channel || !membership)
-            throw new WsException("ressources not found")
+        if (!author || !channel)
+            return { success: false, cause: "ressources not found" }
+        
+        if (!membership)
+            return { success: false, cause: "user is not a member of this channel" }
 
         if (membership.state !== 'active') {
             if (membership.restricitonEnd.getTime() > Date.now()) 
