@@ -237,14 +237,14 @@ export class ChannelService {
         })
     }
 
-    // async findMembership2(memberId: number, channelId: number): Promise<ChannelMembershipEntity> {
-    //     return await this.membershipsRepository.findOne({
-    //         where: {
-    //             member: { id: memberId },
-    //             channel: { id: channelId }
-    //         }
-    //     })
-    // }
+    async findMembership2(memberId: number, channelId: number): Promise<ChannelMembershipEntity> {
+        return await this.membershipsRepository.findOne({
+            where: {
+                member: { id: memberId },
+                channel: { id: channelId }
+            }
+        })
+    }
 
     async createMembership (
         user: UserDto,

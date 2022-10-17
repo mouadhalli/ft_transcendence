@@ -10,6 +10,7 @@ import { GatewayConnectionService } from 'src/connection.service';
 import { UserDto } from 'src/dto/User.dto';
 import { UserService } from 'src/user/user.service';
 import { ChannelDto } from './channel/channel.dto';
+import { ChannelService } from './channel/channel.service';
 import { ChatService } from './chat.service'
 
 export class roomMember {
@@ -23,7 +24,8 @@ export class ChatGateway {
     constructor(
 		private readonly chatService: ChatService,
         private connectionService: GatewayConnectionService,
-		private userService: UserService
+		private userService: UserService,
+		private channelService: ChannelService
 	) {}
 
 	@WebSocketServer()
@@ -55,22 +57,24 @@ export class ChatGateway {
 			const {success, cause, time, channelName, message} = await this.chatService.sendMessage(payload)
 
 			if (success === false) {
-				if (cause === 'muted')
-					return {success, cause, time}
-				this.server.to(String(payload.userId)).socketsLeave(channelName)
-				return {success, cause}
+				if (cause === 'kicked') {
+					this.server.to(String(payload.userId)).socketsLeave(channelName)
+					return {success, cause}
+				}
+				return {success, cause, time}
 			}
 
 			// Users who blocked current user should not receive his messages
 			const roomSockets = await this.server.in(channelName).fetchSockets()
 			const roomMembers: roomMember[] = await this.connectionService.getUsesrIdFromSockets(roomSockets)
 
-			// Making theire socket join an exception room
-			roomMembers.forEach( async ({memberId, memberSocket}) => {
-				const isBlockingMe = await this.userService.isUserBlockingMe(payload.userId, memberId)
-				if (isBlockingMe === true)
-					memberSocket.join('exceptionRoom')
-			})
+			for (let i = 0; i < roomMembers.length; i++) {
+				const isBlockingMe = await this.userService.isUserBlockingMe(payload.userId, roomMembers[i].memberId)
+				const membership = await this.channelService.findMembership2(roomMembers[i].memberId, payload.channelId)
+
+				if (isBlockingMe === true || membership.state === 'banned')
+					roomMembers[i].memberSocket.join('exceptionRoom')
+			}
 		
 			// sending the event to all room sockets except those in axceptionRoom
 			socket.to(channelName).except('exceptionRoom').emit('receive_message', message)

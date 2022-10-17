@@ -64,7 +64,7 @@ export class ChatService {
         const author: UserDto = await this.userService.findUser(payload.userId)
         const channel: ChannelDto = await this.channelService.findOneChannel(payload.channelId)
         const membership: MembershipDto = await this.channelService.findMembership(author, channel)
-        
+
         if (!author || !channel)
             return { success: false, cause: "ressources not found" }
         
@@ -99,7 +99,5 @@ export class ChatService {
             receiver,
             content
         )
-
-
     }
 }
