@@ -108,6 +108,9 @@ export class GameService {
             user.xp = 0
         }
 
+        await this.userService.saveUser(user).catch((error) => {
+            throw new BadRequestException(error)
+        })
         return { success: true, user}
 
     }
