@@ -69,11 +69,11 @@ export class ChatService {
             return { success: false, cause: "ressources not found" }
         
         if (!membership)
-            return { success: false, cause: "user is not a member of this channel" }
+            return { success: false, cause: "kicked", channelName: channel.name }
 
         if (membership.state !== 'active') {
             if (membership.restricitonEnd.getTime() > Date.now()) 
-                return {success: false, cause: membership.state, time: membership.restricitonEnd.getTime() - Date.now()}
+                return {success: false, cause: membership.state, time: membership.restricitonEnd.getTime() - Date.now(), channelName: channel.name}
             this.channelService.removeRestrictionOnChannelMember(payload.channelId, payload.userId)
         }
 

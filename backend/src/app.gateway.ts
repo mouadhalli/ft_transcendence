@@ -9,7 +9,6 @@ import {
 import { Server, Socket } from 'socket.io';
 import { ChannelService } from './chat/channel/channel.service';
 import { GatewayConnectionService, ConnectionStatus } from './connection.service';
-import { UserDto } from './dto/User.dto';
 import { Relationship_State } from './user/entities/relationship.entity';
 import { UserService } from './user/user.service';
 
