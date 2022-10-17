@@ -46,4 +46,51 @@ export class GameService {
         })
     }
 
+    async findUserGames(userId: number) {
+        return await this.gameRepository.find({
+            relations: {winner: true, opponent: true, score: true},
+            where: [
+                { winner: { id: userId } },
+                { opponent: { id: userId } }
+            ]
+        })
+    }
+
+    async countUserWins(userId: number) {
+        return await this.gameRepository.count({
+            where: { winner: { id: userId } }
+        })
+    }
+
+    async countUserDefeats(userId: number) {
+        return await this.gameRepository.count({
+            where: { opponent: { id: userId } }
+        })
+    }
+
+    async countUserTotalGamesPlayed(userId: number) {
+        return await this.gameRepository.count({
+            where: [
+                { winner: { id: userId } },
+                { opponent: { id: userId } }
+            ]
+        })
+    }
+
+    async countUserTotalGoals(userId: number) {
+
+        const games: GameEntity[] = await this.findUserGames(userId)
+
+        let totalGoals: number = 0
+
+        games.forEach((game) => {
+            if (game.winner.id === userId)
+                totalGoals += game.score.winnerScore
+            else
+                totalGoals += game.score.opponentScore
+        })
+
+        return totalGoals
+    }
+
 }
