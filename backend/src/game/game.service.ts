@@ -30,17 +30,19 @@ export class GameService {
     }
 
     async saveGameScore(
-        winner: UserDto,
-        opponent: UserDto,
+        winnerId: number,
+        opponentId: number,
         winnerScore: number,
         opponentScore: number
     ) {
 
         const Score: ScoreEntity = this.scoreEntity.create({
-            game: {winner: winner, opponent: opponent},
+            game: {winner: {id: winnerId}, opponent: {id: opponentId}},
             winnerScore: winnerScore,
             opponentScore: opponentScore
         })
+
+        await this.gainXp(winnerId)
 
         return await this.scoreEntity.save(Score).catch(error => {
             throw new InternalServerErrorException(error)
