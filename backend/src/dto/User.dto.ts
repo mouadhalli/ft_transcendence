@@ -64,9 +64,9 @@ export class UserDto {
     @IsUrl()
     imgPath: string
 
-    xp: number
+    xp?: number
 
-    lvl: number
+    lvl?: number
 
     // is2faEnabled: boolean
 
