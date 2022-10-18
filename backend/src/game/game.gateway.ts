@@ -247,7 +247,7 @@ export class gameGateway implements OnGatewayDisconnect {
                 delete ball_room[tmp.id];
             }
             //console.log(swinner + " " + sloser);
-            // await this.gameService.saveGameScore(playerID[tmp.id], playerID[socket.id], swinner, sloser);
+            await this.gameService.saveGameScore(playerID[tmp.id], playerID[socket.id], swinner, sloser);
             
             players[tmp.id] = "";
             console.log("salina");
