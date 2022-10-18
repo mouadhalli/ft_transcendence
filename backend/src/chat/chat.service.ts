@@ -36,7 +36,7 @@ export class ChatService {
         // i added this so they don't join their channels 2 times i might remove it later
         if (membership)
             return {success: false, error: "already a member"}
-        if (channel.type === 'private') {
+        if (channel.type === 'protected') {
             if (!await bcrypt.compare(payload.password, channel.password))
                 return {success: false, error: "wrong password"}
         }

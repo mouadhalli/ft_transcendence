@@ -82,6 +82,7 @@ export class ChannelService {
     async findOneChannel(channelId: number): Promise<ChannelEntity> {
         try{
             return await this.channelRepository.findOne({
+                select: {password: true},
                 where: {id: channelId}
             })
         } catch (error) {
