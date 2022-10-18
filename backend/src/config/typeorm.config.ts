@@ -5,6 +5,8 @@ import { RelationshipEntity } from "src/user/entities/relationship.entity";
 import { ChannelEntity } from "src/chat/entities/channel.entity";
 import { ChannelMembershipEntity } from "src/chat/entities/channelMember.entity";
 import { MessageEntity } from "src/chat/entities/message.entity";
+import { GameEntity } from "src/game/entities/game.entity";
+import { ScoreEntity } from "src/game/entities/score.entity";
 
 export const typeormConfig :TypeOrmModuleAsyncOptions = {
     imports: [ConfigModule],
@@ -15,7 +17,7 @@ export const typeormConfig :TypeOrmModuleAsyncOptions = {
       username: configService.get('DB_USERNAME'),
       password: configService.get('DB_PASSWORD'),
       database: configService.get('DB_NAME'),
-      entities: [UserEntity, RelationshipEntity, ChannelEntity, ChannelMembershipEntity, MessageEntity],
+      entities: [UserEntity, RelationshipEntity, ChannelEntity, ChannelMembershipEntity, MessageEntity, GameEntity, ScoreEntity],
       synchronize: true,
     }),
     inject: [ConfigService],
