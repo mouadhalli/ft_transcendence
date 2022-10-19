@@ -27,7 +27,7 @@ export class ChatService {
     async joinChannel(payload: any) {
 
         const member: UserDto = await this.userService.findUser(payload.userId)
-        const channel: ChannelDto = await this.channelService.findOneChannel(payload.channelId, true)
+        const channel: ChannelDto = await this.channelService.findOneChannel(payload.channelId)
         const membership: MembershipDto = await this.channelService.findMembership(member, channel)
 
         if (!member || !channel)
@@ -46,7 +46,7 @@ export class ChatService {
 
     async leaveChannel(payload: any) {
         const member: UserDto = await this.userService.findUser(payload.userId)
-        const channel: ChannelDto = await this.channelService.findOneChannel(payload.channelId, false)
+        const channel: ChannelDto = await this.channelService.findOneChannel(payload.channelId)
         const membership: MembershipDto = await this.channelService.findMembership(member, channel)
 
         if (!member || !channel || !membership)
@@ -62,7 +62,7 @@ export class ChatService {
 
     async sendMessage(payload: any) {
         const author: UserDto = await this.userService.findUser(payload.userId)
-        const channel: ChannelDto = await this.channelService.findOneChannel(payload.channelId, false)
+        const channel: ChannelDto = await this.channelService.findOneChannel(payload.channelId)
         const membership: MembershipDto = await this.channelService.findMembership(author, channel)
 
         if (!author || !channel)

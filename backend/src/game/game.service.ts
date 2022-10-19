@@ -104,7 +104,6 @@ export class GameService {
         let totalGoals: number = 0
 
         games.forEach((game) => {
-          //  console.log(game);
             if (game.winner.id === userId)
                 totalGoals += game.score?.winnerScore
             else

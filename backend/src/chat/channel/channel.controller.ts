@@ -40,7 +40,7 @@ export class ChannelController {
         @Body() channelData: ChannelDto,
     ) {
         const channelId: number = await this.channelService.createChannel(creator, channelData)
-        return  this.channelService.findOneChannel(channelId, false)
+        return  this.channelService.findOneChannel(channelId)
     }
 
     @Get('role/:channel_id')
@@ -93,7 +93,7 @@ export class ChannelController {
         @User('id') userId: number,
         @Param('channel_id', ParseIntPipe) channelId: number
     ) {
-        const { id, name, imgPath, type, membersCount } = await this.channelService.findOneChannel(channelId, false)
+        const { id, name, imgPath, type, membersCount } = await this.channelService.findOneChannel(channelId)
         const role = await this.channelService.findUserChannelRole(userId, channelId)
 
         return { id, name, imgPath, type, membersCount, role }
@@ -191,6 +191,6 @@ export class ChannelController {
         if (file)
             imgPath = `http://localhost:3000/${file.path}`
         await this.channelService.updateChannel(channelId, data, imgPath)
-        return await this.channelService.findOneChannel(channelId, false)
+        return await this.channelService.findOneChannel(channelId)
     }
 }

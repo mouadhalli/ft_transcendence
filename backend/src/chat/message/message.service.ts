@@ -25,7 +25,7 @@ export class MessageService {
 
     async findChannelMessages(user: UserDto, channelId: number): Promise<MessageEntity[]> {
     
-        const channel: ChannelEntity = await this.channelService.findOneChannel(channelId, false)
+        const channel: ChannelEntity = await this.channelService.findOneChannel(channelId)
 
         if (!channel)
             throw new BadRequestException('channel not found')
