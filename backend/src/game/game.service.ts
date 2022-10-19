@@ -13,7 +13,7 @@ export class GameService {
         @InjectRepository(GameEntity)
             private gameRepository: Repository<GameEntity>,
         @InjectRepository(ScoreEntity)
-            private scoreEntity: Repository<ScoreEntity>,
+            private scoreRepository: Repository<ScoreEntity>,
         private userService: UserService
     ) {}
 
@@ -36,17 +36,34 @@ export class GameService {
         opponentScore: number
     ) {
 
-        const Score: ScoreEntity = this.scoreEntity.create({
-            game: {winner: {id: winnerId}, opponent: {id: opponentId}},
+        const Winner: UserDto = await this.userService.findUser(winnerId)
+        const Opponnet: UserDto = await this.userService.findUser(opponentId)
+
+        if (!Winner || !Opponnet)
+            return {success: false, error: "couldn't find users"}
+            
+        let Game: GameEntity = this.gameRepository.create({
+            winner: Winner,
+            opponent: Opponnet,
+        })
+
+        Game = await this.scoreRepository.save(Game).catch(error => {
+            throw new InternalServerErrorException(error)
+        })
+            
+        let Score: ScoreEntity = this.scoreRepository.create({
+            game: Game,
             winnerScore: winnerScore,
             opponentScore: opponentScore
         })
 
-        await this.gainXp(winnerId)
-
-        return await this.scoreEntity.save(Score).catch(error => {
+        Score = await this.scoreRepository.save(Score).catch(error => {
             throw new InternalServerErrorException(error)
         })
+
+        await this.gainXp(winnerId)
+
+        return { success: true }
     }
 
     async findUserGames(userId: number) {
@@ -88,16 +105,16 @@ export class GameService {
 
         games.forEach((game) => {
             if (game.winner.id === userId)
-                totalGoals += game.score.winnerScore
+                totalGoals += game.score?.winnerScore
             else
-                totalGoals += game.score.opponentScore
+                totalGoals += game.score?.opponentScore
         })
 
         return totalGoals
     }
 
     async gainXp(userId: number) {
-        const user: UserDto = await this.userService.findUser(userId)
+        let user: UserDto = await this.userService.findUser(userId)
 
         if (!user)
             return { success: false, error: "user not found" }
@@ -110,7 +127,7 @@ export class GameService {
             user.xp = 0
         }
 
-        await this.userService.saveUser(user).catch((error) => {
+        user = await this.userService.saveUser(user).catch((error) => {
             throw new BadRequestException(error)
         })
         return { success: true, user}
