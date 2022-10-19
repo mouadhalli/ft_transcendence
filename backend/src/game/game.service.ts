@@ -13,7 +13,7 @@ export class GameService {
         @InjectRepository(GameEntity)
             private gameRepository: Repository<GameEntity>,
         @InjectRepository(ScoreEntity)
-            private scoreEntity: Repository<ScoreEntity>,
+            private scoreRepository: Repository<ScoreEntity>,
         private userService: UserService
     ) {}
 
@@ -36,15 +36,38 @@ export class GameService {
         opponentScore: number
     ) {
 
-        const Score: ScoreEntity = this.scoreEntity.create({
-            game: {winner: {id: winnerId}, opponent: {id: opponentId}},
+        // console.log(winnerId, opponentId, winnerScore, opponentScore)
+
+        const Winner: UserDto = await this.userService.findUser(winnerId)
+        const Opponnet: UserDto = await this.userService.findUser(opponentId)
+
+        if (!Winner || !Opponnet)
+            return {success: false, error: "couldn't find users"}
+
+
+            
+            
+        const Game: GameEntity = this.gameRepository.create({
+            winner: Winner,
+            opponent: Opponnet,
+        })
+        
+        const tmp = await this.gameRepository.save(Game).catch(error => {
+            throw new InternalServerErrorException(error)
+        })
+            
+        const Score: ScoreEntity = this.scoreRepository.create({
+            game: tmp,
             winnerScore: winnerScore,
             opponentScore: opponentScore
         })
 
+        // console.log(tmp)
+        // console.log(Score)
+
         await this.gainXp(winnerId)
 
-        return await this.scoreEntity.save(Score).catch(error => {
+        return await this.scoreRepository.save(Score).catch(error => {
             throw new InternalServerErrorException(error)
         })
     }
@@ -87,10 +110,11 @@ export class GameService {
         let totalGoals: number = 0
 
         games.forEach((game) => {
+          //  console.log(game);
             if (game.winner.id === userId)
-                totalGoals += game.score.winnerScore
+                totalGoals += game.score?.winnerScore
             else
-                totalGoals += game.score.opponentScore
+                totalGoals += game.score?.opponentScore
         })
 
         return totalGoals
