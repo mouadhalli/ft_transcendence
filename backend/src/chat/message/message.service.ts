@@ -25,7 +25,7 @@ export class MessageService {
 
     async findChannelMessages(user: UserDto, channelId: number): Promise<MessageEntity[]> {
     
-        const channel: ChannelEntity = await this.channelService.findOneChannel(channelId)
+        const channel: ChannelEntity = await this.channelService.findOneChannel(channelId, false)
 
         if (!channel)
             throw new BadRequestException('channel not found')
@@ -35,8 +35,11 @@ export class MessageService {
         if (!userMembership)
             throw new BadRequestException('user is not a member of this channel')
         
-        if (userMembership.state === 'banned')
-            throw new ForbiddenException('user is banned from this channel')
+        if (userMembership.state === 'banned') {
+            if (userMembership.restricitonEnd.getTime() > Date.now())
+                throw new ForbiddenException(`banned from this channel for ${userMembership.restricitonEnd.getTime() - Date.now()} seconds`)
+            this.channelService.removeRestrictionOnChannelMember(channelId, user.id)
+        }
         
         const blockedUsers: UserDto[] = await this.userService.getBlockedUsers(user.id)
 
