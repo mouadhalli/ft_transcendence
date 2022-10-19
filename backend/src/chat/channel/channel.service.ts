@@ -198,7 +198,7 @@ export class ChannelService {
             where: {
                 members: {
                     member: {id: userId},
-                    state: Not(Channel_Member_State.BANNED)
+                    // state: Not(Channel_Member_State.BANNED)
                 },
             },
         })
