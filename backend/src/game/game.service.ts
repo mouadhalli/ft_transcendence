@@ -36,40 +36,34 @@ export class GameService {
         opponentScore: number
     ) {
 
-        // console.log(winnerId, opponentId, winnerScore, opponentScore)
-
         const Winner: UserDto = await this.userService.findUser(winnerId)
         const Opponnet: UserDto = await this.userService.findUser(opponentId)
 
         if (!Winner || !Opponnet)
             return {success: false, error: "couldn't find users"}
-
-
             
-            
-        const Game: GameEntity = this.gameRepository.create({
+        let Game: GameEntity = this.gameRepository.create({
             winner: Winner,
             opponent: Opponnet,
         })
-        
-        const tmp = await this.gameRepository.save(Game).catch(error => {
+
+        Game = await this.scoreRepository.save(Game).catch(error => {
             throw new InternalServerErrorException(error)
         })
             
-        const Score: ScoreEntity = this.scoreRepository.create({
-            game: tmp,
+        let Score: ScoreEntity = this.scoreRepository.create({
+            game: Game,
             winnerScore: winnerScore,
             opponentScore: opponentScore
         })
 
-        // console.log(tmp)
-        // console.log(Score)
+        Score = await this.scoreRepository.save(Score).catch(error => {
+            throw new InternalServerErrorException(error)
+        })
 
         await this.gainXp(winnerId)
 
-        return await this.scoreRepository.save(Score).catch(error => {
-            throw new InternalServerErrorException(error)
-        })
+        return { success: true }
     }
 
     async findUserGames(userId: number) {
@@ -121,7 +115,7 @@ export class GameService {
     }
 
     async gainXp(userId: number) {
-        const user: UserDto = await this.userService.findUser(userId)
+        let user: UserDto = await this.userService.findUser(userId)
 
         if (!user)
             return { success: false, error: "user not found" }
@@ -134,7 +128,7 @@ export class GameService {
             user.xp = 0
         }
 
-        await this.userService.saveUser(user).catch((error) => {
+        user = await this.userService.saveUser(user).catch((error) => {
             throw new BadRequestException(error)
         })
         return { success: true, user}

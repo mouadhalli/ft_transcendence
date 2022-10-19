@@ -26,7 +26,7 @@ export class ChannelService {
 
     async addUserToChannel(user: UserDto, targetId: number, channelId: number) {
 
-        const channel: ChannelDto = await this.findOneChannel(channelId)
+        const channel: ChannelDto = await this.findOneChannel(channelId, false)
         if (!channel)
             throw new BadRequestException('channel not found')
         
@@ -79,10 +79,10 @@ export class ChannelService {
         }
     }
 
-    async findOneChannel(channelId: number): Promise<ChannelEntity> {
+    async findOneChannel(channelId: number, selectPassword: boolean): Promise<ChannelEntity> {
         try{
             return await this.channelRepository.findOne({
-                select: {password: true},
+                select: {password: selectPassword},
                 where: {id: channelId}
             })
         } catch (error) {
@@ -92,7 +92,7 @@ export class ChannelService {
 
     async turnChannelPrivate(channelId: number): Promise<ChannelEntity> {
         try{
-            const channel: ChannelEntity = await this.findOneChannel(channelId)
+            const channel: ChannelEntity = await this.findOneChannel(channelId, true)
 
             if (!channel)
                 throw new BadRequestException("channel not found")
@@ -110,7 +110,7 @@ export class ChannelService {
 
     async turnChannelPublic(channelId: number): Promise<ChannelEntity> {
         try{
-            const channel: ChannelEntity = await this.findOneChannel(channelId)
+            const channel: ChannelEntity = await this.findOneChannel(channelId, true)
 
             if (!channel)
                 throw new BadRequestException("channel not found")
@@ -128,7 +128,7 @@ export class ChannelService {
 
     async turnChannelProtected(channelId: number, password: string): Promise<ChannelEntity> {
         try{
-            const channel: ChannelEntity = await this.findOneChannel(channelId)
+            const channel: ChannelEntity = await this.findOneChannel(channelId, true)
 
             if (!channel)
                 throw new BadRequestException("channel not found")
@@ -298,7 +298,7 @@ export class ChannelService {
 
     async deleteChannel(channelId: number) {
         try{
-            const channel: ChannelEntity = await this.findOneChannel(channelId)
+            const channel: ChannelEntity = await this.findOneChannel(channelId, false)
             if (!channel)
                 return
             return await this.channelRepository.remove(channel)
@@ -389,7 +389,7 @@ export class ChannelService {
         if (!user)
             throw new BadRequestException('user not found')
         
-        const channel: ChannelDto = await this.findOneChannel(channelId)
+        const channel: ChannelDto = await this.findOneChannel(channelId, false)
     
         if (!channel)
             throw new BadRequestException('channel not found')
