@@ -47,7 +47,7 @@ export class GameService {
             opponent: Opponnet,
         })
 
-        Game = await this.scoreRepository.save(Game).catch(error => {
+        Game = await this.gameRepository.save(Game).catch(error => {
             throw new InternalServerErrorException(error)
         })
             
