@@ -1,9 +1,9 @@
-import { Logger, ParseIntPipe, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Logger, ParseIntPipe, UnauthorizedException, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 import {
   SubscribeMessage, WebSocketGateway,
   OnGatewayInit, WebSocketServer,
   OnGatewayConnection, OnGatewayDisconnect,
-  MessageBody, ConnectedSocket
+  MessageBody, ConnectedSocket, WsException
 } from '@nestjs/websockets';
 
 import { Server, Socket } from 'socket.io';
@@ -35,25 +35,29 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 		this.logger.log('App Gateway inisialized')
 	}
 
-		async handleConnection(socket: Socket, ...args: any[]) {
-			try {
-				// this.server.sockets.sockets.forEach(element => {
-				// 	console.log(element.id)
-				// });
-				this.logger.log(socket.id + ' connected')
-				// const userToken: string = socket.handshake.auth.token
-				// extracting token from headers because postmane don't support auth
-				const userToken: string = String(socket.handshake.headers.token)
-				const { id } = await this.connectionService.getUserFromToken(userToken)
-				this.connectionService.saveSocketConnection(socket.id, id)
-				// grouping user sockets in a room so i can ping all user Tabs easily
-				socket.join(String(id))
-				const channels = await this.channelService.findJoinedChannels(id)
-				channels.forEach(channel => socket.join(channel.name))
-			} catch(error) {
-				socket.disconnect()
-				socket._error(error)
-			}
+	async handleConnection(socket: Socket, ...args: any[]) {
+		try {
+
+			this.logger.log(socket.id + ' connected')
+
+			const userToken: string = String(socket.handshake.headers.token)
+			const { id } = await this.connectionService.getUserFromToken(userToken)
+
+			if (!id)
+				throw new WsException('invalid access token')
+
+			this.connectionService.saveSocketConnection(socket.id, id)
+
+			// grouping user sockets in a room so i can ping all user Tabs easily
+			socket.join(String(id))
+
+			const channels = await this.channelService.findJoinedChannels(id)
+			channels.forEach(channel => socket.join(channel.name))
+
+		} catch(error) {
+			socket._error(error)
+			socket.disconnect()
+		}
 	}
 
 	async handleDisconnect(socket: Socket) {
@@ -61,13 +65,15 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			this.logger.log(socket.id + ' disconnected')
 			const userToken: any = socket.handshake.headers.token
 			const { id } = await this.connectionService.getUserFromToken(userToken)
+
+			if (!id)
+				throw new WsException('invalid access token')
+
 			this.connectionService.removeSocketConnection(id, socket.id)
 			socket.leave(String(id))
 			
 		} catch (error) {
-			// console.log(error)
 			socket._error(error)
-			// socket.disconnect()
 		}
 	}
 
@@ -76,32 +82,30 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 		try {
 			const userToken: any = socket.handshake.headers.token
 			const { id } = await this.connectionService.getUserFromToken(userToken)
+
+			if (!id)
+				throw new WsException('invalid access token')
+
 			this.connectionService.removeConnection(id)
 			this.server.to(String(id)).disconnectSockets()
 		}
 		catch (error) {
-			// console.log(error)
 			socket._error(error)
+			socket.disconnect()
 		}
 	}
 
-	@SubscribeMessage('frineds-status')
-	async getFriendsConnectionStatus(@ConnectedSocket() socket: Socket, @MessageBody(ParseIntPipe) userId: number) {
-		const frineds = await this.userService.findUserRelationships(userId, 0, 999, Relationship_State.FRIENDS)
-
-		const friendsConnectionStatus = frineds.map(friend => {
-			const FriendStatus = this.connectionService.getUserConectionStatus(friend.id)
-			return {friendId: friend.id, status: FriendStatus}
-		})
-		socket.to(String(userId)).emit('friends-status', friendsConnectionStatus)
-	}
-
 	@SubscribeMessage('user-status')
-	async getUserConnectionStatus(@ConnectedSocket() socket: Socket, @MessageBody('userId', ParseIntPipe) userId: number) {
-		console.log(userId)
-		// const frineds = await this.userService.findUserRelationships(userId, 0, 999, Relationship_State.FRIENDS)
+	async getUserConnectionStatus(@ConnectedSocket() socket: Socket, @MessageBody(ParseIntPipe) userId: number) {
+
+		const userToken: any = socket.handshake.headers.token
+		const { id } = await this.connectionService.getUserFromToken(userToken)
+
+		if (!id)
+			return {success: false, error: 'unAuthorized'}
+
 		const userStatus = this.connectionService.getUserConectionStatus(userId)
 
-		socket.emit('friends-status', userStatus)
+		socket.emit('user-status', userStatus)
 	}
 }

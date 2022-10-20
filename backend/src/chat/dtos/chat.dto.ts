@@ -3,9 +3,6 @@ import { IsAlphanumeric, IsNumber, IsOptional } from 'class-validator';
 export class joinChannelPayload {
 
 	@IsNumber()
-	userId: number
-
-	@IsNumber()
 	channelId: number
 
 	@IsOptional()
@@ -16,9 +13,6 @@ export class joinChannelPayload {
 export class sendMsgPayload {
 
 	@IsNumber()
-	userId: number
-
-	@IsNumber()
 	channelId: number
 
 	@IsOptional()
@@ -27,9 +21,6 @@ export class sendMsgPayload {
 }
 
 export class sendDirectMsgPayload {
-
-	@IsNumber()
-	userId: number
 
 	@IsNumber()
 	receiverId: number

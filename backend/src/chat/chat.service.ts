@@ -26,10 +26,6 @@ export class ChatService {
 
     async joinChannel(userId: number, channelId: number, password: string) {
 
-
-        // if (!userId || !channelId )
-        //     return {success: false, error: "invalid input"}
-
         const member: UserDto = await this.userService.findUser(userId)
         const channel: ChannelDto = await this.channelService.findChannelWithPassword(channelId)
         const membership: MembershipDto = await this.channelService.findMembership(member, channel)
@@ -37,8 +33,11 @@ export class ChatService {
             return {success: false, error: "ressources not found"}
         // when someone create a channel i make an owner membership for him right away
         // this condition prevent creating a new membership for the owner
-        if (membership && membership.role !== 'owner')
+        if (membership) {
+            if (membership.role === 'owner')
+                return { success: true, channelName: channel.name }
             return {success: false, error: "already a member"}
+        }
         if (channel.type === 'protected') {
             if (!await bcrypt.compare(password, channel.password))
                 return {success: false, error: "wrong password"}
@@ -53,14 +52,14 @@ export class ChatService {
         const membership: MembershipDto = await this.channelService.findMembership(member, channel)
 
         if (!member || !channel || !membership)
-            throw new WsException("ressource not found")
+            return { success: false, error: 'ressource not found' }
 
         await this.channelService.deleteMembership(member, channel)
 
         if (membership.role === 'owner')
             await this.channelService.changeChannelOwner(channel.id)
 
-        return channel.name
+        return {success: true, channelName: channel.name}
     }
 
     async sendMessage(userId: number, channelId: number, msgContent: string) {
@@ -93,9 +92,13 @@ export class ChatService {
     async sendDirectMessage(userId: number, receiverId: number, content: string) {
         const author: UserDto = await this.userService.findUser(userId)
         const receiver: UserDto = await this.userService.findUser(receiverId)
+        const friendship = await this.userService.findRelationship(author.id, receiver.id)
 
         if (!author || !receiver)
             return {success: false, error: "ressources not found" }
+
+        if (!friendship || friendship.state !== 'friends')
+            return {success: false, error: "you can only dm your friends" }
         
         const message: DirectMessageDto = await this.messageService.saveDirectMessage(
             author,
