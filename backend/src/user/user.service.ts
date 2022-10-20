@@ -238,6 +238,13 @@ export class UserService {
 		return user
 	}
 
+	async findUserWithAuthData(userId: number): Promise<UserEntity> {
+		return await this.usersRepository.findOne({
+			where: {id: userId},
+			select: ['id', 'displayName', 'imgPath', 'twoFactorSecret', 'is2faEnabled']
+		})
+	}
+
 	async getUserWithRelations(id: number): Promise<UserEntity> {
 		const user = await this.usersRepository.findOne({
 			relations: ['sentFriendRequests', 'receivedFriendRequests'],
@@ -279,7 +286,7 @@ export class UserService {
 	}
 
 	async Set2faSecret(userId: number, secret: string) {
-		let user = await this.findUser( userId )
+		let user = await this.findUserWithAuthData( userId )
 		if (!user)
 			throw new HttpException('user not found', HttpStatus.NOT_FOUND)
 		user.twoFactorSecret = secret

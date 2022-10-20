@@ -14,30 +14,21 @@ import { UserEntity } from 'src/user/entities/user.entity';
 export class TwofaController {
     constructor(
         private twofaservice: TwofaService,
-        private authService: AuthService
     ) {}
 
     @Get('generate')
     @HttpCode(200)
-    async generateQrCode(@User('id') userId: number/*, @Res() res*/) {
+    async generateQrCode(@User('id') userId: number, @Res() res) {
         const otpauthUrl = await this.twofaservice.generate2faSecret(userId);
-        return toDataURL(otpauthUrl)
-        // return toFileStream(res, otpauthUrl)
+        // return toDataURL(otpauthUrl)
+        return toFileStream(res, otpauthUrl)
     }
 
     @Post('verify')
     @HttpCode(200)
-    async verifyCode( @User() user: UserEntity, @Body('code') code: string ) {
+    async verifyCode( @User('id') userId: number, @Body('code') code: string ) {
 
-        if (!user.twoFactorSecret)
-            throw new UnauthorizedException("user 2fa is not active")
-        else if ( authenticator.verify({ token: code ,secret: user.twoFactorSecret })  === false)
-            throw new UnauthorizedException({message: "unvalid 2fa code", valid: false})
+        return await this.twofaservice.verifyTwofaCode(userId, code)
 
-        if (user.is2faEnabled === false)
-            await this.twofaservice.turnTwofaOnOff(user.id, true)
-
-        const token = this.authService.issueJwtToken(user, twoFactorState.CONFIRMED)
-        return {message: "valid 2fa code", valid: true, accessToken: token }
     }
 }
