@@ -35,8 +35,8 @@ export class ChannelController {
     @Post('create')
     @UseGuards(JwtAuthGuard)
 	@HttpCode(201)
-    async createChannel(@
-        User() creator: UserDto,
+    async createChannel(
+        @User() creator: UserDto,
         @Body() channelData: ChannelDto,
     ) {
         const channelId: number = await this.channelService.createChannel(creator, channelData)

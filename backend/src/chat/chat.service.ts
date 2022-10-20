@@ -26,15 +26,15 @@ export class ChatService {
 
     async joinChannel(payload: any) {
 
+        console.log(payload)
         const member: UserDto = await this.userService.findUser(payload.userId)
-        const channel: ChannelDto = await this.channelService.findOneChannel(payload.channelId)
+        const channel: ChannelDto = await this.channelService.findChannelWithPassword(payload.channelId)
         const membership: MembershipDto = await this.channelService.findMembership(member, channel)
-
         if (!member || !channel)
             return {success: false, error: "ressources not found"}
-        // when someone create his own channel i make an owner membership for him right away
-        // i added this so they don't join their channels 2 times i might remove it later
-        if (membership)
+        // when someone create a channel i make an owner membership for him right away
+        // this condition prevent creating a new membership for the owner
+        if (membership && membership.role !== 'owner')
             return {success: false, error: "already a member"}
         if (channel.type === 'protected') {
             if (!await bcrypt.compare(payload.password, channel.password))
@@ -92,12 +92,14 @@ export class ChatService {
         const receiver: UserDto = await this.userService.findUser(receiverId)
 
         if (!author || !receiver)
-            throw new WsException("ressources not found")
+            return {success: false, error: "ressources not found" }
         
-        return await this.messageService.saveDirectMessage(
+        const message: DirectMessageDto = await this.messageService.saveDirectMessage(
             author,
             receiver,
             content
         )
+
+        return { success: true, message }
     }
 }

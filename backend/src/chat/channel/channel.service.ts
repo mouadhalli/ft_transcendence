@@ -89,9 +89,20 @@ export class ChannelService {
         }
     }
 
+    async findChannelWithPassword(channelId: number): Promise<ChannelEntity> {
+        try{
+            return await this.channelRepository.findOne({
+                select: ['id', 'name', 'imgPath', 'password', 'type', 'membersCount'],
+                where: {id: channelId}
+            })
+        } catch (error) {
+            throw new InternalServerErrorException(error)
+        }
+    }
+
     async turnChannelPrivate(channelId: number): Promise<ChannelEntity> {
         try{
-            const channel: ChannelEntity = await this.findOneChannel(channelId)
+            const channel: ChannelEntity = await this.findChannelWithPassword(channelId)
 
             if (!channel)
                 throw new BadRequestException("channel not found")
@@ -109,7 +120,7 @@ export class ChannelService {
 
     async turnChannelPublic(channelId: number): Promise<ChannelEntity> {
         try{
-            const channel: ChannelEntity = await this.findOneChannel(channelId)
+            const channel: ChannelEntity = await this.findChannelWithPassword(channelId)
 
             if (!channel)
                 throw new BadRequestException("channel not found")
@@ -127,7 +138,7 @@ export class ChannelService {
 
     async turnChannelProtected(channelId: number, password: string): Promise<ChannelEntity> {
         try{
-            const channel: ChannelEntity = await this.findOneChannel(channelId)
+            const channel: ChannelEntity = await this.findChannelWithPassword(channelId)
 
             if (!channel)
                 throw new BadRequestException("channel not found")
