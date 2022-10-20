@@ -1,4 +1,4 @@
-import { Logger, ParseIntPipe } from '@nestjs/common';
+import { Logger, ParseIntPipe, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 import {
   SubscribeMessage, WebSocketGateway,
   OnGatewayInit, WebSocketServer,
@@ -9,16 +9,14 @@ import {
 import { Server, Socket } from 'socket.io';
 import { ChannelService } from './chat/channel/channel.service';
 import { GatewayConnectionService, ConnectionStatus } from './connection.service';
+import { HttpExceptionFilter } from './gateway.filter';
 import { Relationship_State } from './user/entities/relationship.entity';
 import { UserService } from './user/user.service';
 
-/*
-	To Do:
-		- when a user change his connection status needs to update all his friends
-*/
-
+@UseFilters(HttpExceptionFilter)
 @WebSocketGateway({
-	cors: '*'
+	cors: '*',
+	// Credential: true
 })
 export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 	
@@ -99,7 +97,8 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 	}
 
 	@SubscribeMessage('user-status')
-	async getUserConnectionStatus(@ConnectedSocket() socket: Socket, @MessageBody(ParseIntPipe) userId: number) {
+	async getUserConnectionStatus(@ConnectedSocket() socket: Socket, @MessageBody('userId', ParseIntPipe) userId: number) {
+		console.log(userId)
 		// const frineds = await this.userService.findUserRelationships(userId, 0, 999, Relationship_State.FRIENDS)
 		const userStatus = this.connectionService.getUserConectionStatus(userId)
 

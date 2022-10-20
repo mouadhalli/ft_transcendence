@@ -3,7 +3,7 @@ import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { UserDto } from "src/dto/User.dto";
 import { User } from "src/user/decorators/user.decorator";
 import { Channel_Member_Role, Channel_Member_State } from "../entities/channelMember.entity";
-import { ChannelDto, UpdateChannelDto } from "./channel.dto";
+import { ChannelDto, UpdateChannelDto } from "../dtos/channel.dto";
 import { ChannelService } from "./channel.service";
 
 import { FileInterceptor } from '@nestjs/platform-express';

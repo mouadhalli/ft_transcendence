@@ -7,9 +7,9 @@ import { MessageService } from './message/message.service';
 import { UserService } from 'src/user/user.service';
 import { Channel_Member_Role } from './entities/channelMember.entity';
 import * as bcrypt from "bcryptjs";
-import { ChannelDto, MembershipDto } from './channel/channel.dto';
+import { ChannelDto, MembershipDto } from './dtos/channel.dto';
 import { UserDto } from 'src/dto/User.dto';
-import { DirectMessageDto, MessageDto } from './message/message.dto';
+import { DirectMessageDto, MessageDto } from './dtos/message.dto';
 import { ChannelEntity } from "./entities/channel.entity"
 
  
@@ -24,11 +24,14 @@ export class ChatService {
         private connectionService: GatewayConnectionService
     ) {}
 
-    async joinChannel(payload: any) {
+    async joinChannel(userId: number, channelId: number, password: string) {
 
-        console.log(payload)
-        const member: UserDto = await this.userService.findUser(payload.userId)
-        const channel: ChannelDto = await this.channelService.findChannelWithPassword(payload.channelId)
+
+        // if (!userId || !channelId )
+        //     return {success: false, error: "invalid input"}
+
+        const member: UserDto = await this.userService.findUser(userId)
+        const channel: ChannelDto = await this.channelService.findChannelWithPassword(channelId)
         const membership: MembershipDto = await this.channelService.findMembership(member, channel)
         if (!member || !channel)
             return {success: false, error: "ressources not found"}
@@ -37,16 +40,16 @@ export class ChatService {
         if (membership && membership.role !== 'owner')
             return {success: false, error: "already a member"}
         if (channel.type === 'protected') {
-            if (!await bcrypt.compare(payload.password, channel.password))
+            if (!await bcrypt.compare(password, channel.password))
                 return {success: false, error: "wrong password"}
         }
         await this.channelService.createMembership(member, channel, Channel_Member_Role.MEMBER)
         return {success: true, channelName: channel.name}
     }
 
-    async leaveChannel(payload: any) {
-        const member: UserDto = await this.userService.findUser(payload.userId)
-        const channel: ChannelDto = await this.channelService.findOneChannel(payload.channelId)
+    async leaveChannel(userId: number, channelId: number) {
+        const member: UserDto = await this.userService.findUser(userId)
+        const channel: ChannelDto = await this.channelService.findOneChannel(channelId)
         const membership: MembershipDto = await this.channelService.findMembership(member, channel)
 
         if (!member || !channel || !membership)
@@ -60,9 +63,9 @@ export class ChatService {
         return channel.name
     }
 
-    async sendMessage(payload: any) {
-        const author: UserDto = await this.userService.findUser(payload.userId)
-        const channel: ChannelDto = await this.channelService.findOneChannel(payload.channelId)
+    async sendMessage(userId: number, channelId: number, msgContent: string) {
+        const author: UserDto = await this.userService.findUser(userId)
+        const channel: ChannelDto = await this.channelService.findOneChannel(channelId)
         const membership: MembershipDto = await this.channelService.findMembership(author, channel)
 
         if (!author || !channel)
@@ -74,13 +77,13 @@ export class ChatService {
         if (membership.state !== 'active') {
             if (membership.restricitonEnd.getTime() > Date.now())
                 return {success: false, cause: membership.state, time: membership.restricitonEnd.getTime() - Date.now(), channelName: channel.name}
-            this.channelService.removeRestrictionOnChannelMember(payload.channelId, payload.userId)
+            this.channelService.removeRestrictionOnChannelMember(channelId, userId)
         }
 
         const message: MessageDto = await this.messageService.saveMessage(
             author,
             channel,
-            payload.content
+            msgContent
         )
 
         return {success: true, channelName: channel.name, message}

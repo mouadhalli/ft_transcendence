@@ -3,7 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Not, Repository } from "typeorm";
 import { ChannelEntity, Channel_Type } from "../entities/channel.entity"
 import { ChannelMembershipEntity, Channel_Member_Role, Channel_Member_State } from "../entities/channelMember.entity";
-import { ChannelDto, MembershipDto, UpdateChannelDto } from "./channel.dto";
+import { ChannelDto, MembershipDto, UpdateChannelDto } from "../dtos/channel.dto";
 // import { UserService } from "src/user/user.service";
 import { MessageService } from "../message/message.service"
 import * as bcrypt from "bcryptjs";
