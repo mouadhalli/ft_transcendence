@@ -1,23 +1,24 @@
-import { Logger } from '@nestjs/common';
+import { BadRequestException, Logger, ParseIntPipe, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 import {
 	SubscribeMessage, WebSocketGateway,
 	WebSocketServer, //OnGatewayInit,
 	// OnGatewayConnection, OnGatewayDisconnect,
-	MessageBody, ConnectedSocket
+	MessageBody, ConnectedSocket, WsException
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { GatewayConnectionService } from 'src/connection.service';
-import { UserDto } from 'src/dto/User.dto';
+import { HttpExceptionFilter } from 'src/gateway.filter';
 import { UserService } from 'src/user/user.service';
-import { ChannelDto } from './channel/channel.dto';
 import { ChannelService } from './channel/channel.service';
 import { ChatService } from './chat.service'
+import { joinChannelPayload, sendDirectMsgPayload, sendMsgPayload } from './dtos/chat.dto';
 
 export class roomMember {
 	memberId: number
 	memberSocket: Socket
 }
 
+@UseFilters(HttpExceptionFilter)
 @WebSocketGateway()
 export class ChatGateway {
 
@@ -32,33 +33,40 @@ export class ChatGateway {
 	server: Server;
 
 	@SubscribeMessage('join_channel')
-	async joinChannelEvent(@ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
-		const { success, channelName, error } = await this.chatService.joinChannel(payload)
+	async joinChannelEvent(
+		@ConnectedSocket() socket: Socket,
+		@MessageBody() {userId, channelId, password}: joinChannelPayload
+	) {
 
+		const { success, channelName, error } = await this.chatService.joinChannel(userId, channelId, password)
+	
 		if (success === false)
 			return { success, error }
 
 		socket.join(channelName)
 		return { success }
-		// socket.broadcast.to(channelName).emit('receive_message', userId + " joined")
 	}
 
 	@SubscribeMessage('leave_channel')
-	async leaveChannelEvent(@ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
-		const channelName: string = await this.chatService.leaveChannel(payload)
+	async leaveChannelEvent(
+		@ConnectedSocket() socket: Socket,
+		@MessageBody('userId', ParseIntPipe) userId: number,
+		@MessageBody('userId', ParseIntPipe) channelId: number
+	) {
+		const channelName: string = await this.chatService.leaveChannel(userId, channelId)
 		socket.leave(channelName)
-		// socket.broadcast.to(channelName).emit('receive_message', socket.id + " left")
 	}
 
 	@SubscribeMessage('send_message')
-	async sendMessageEvent( @ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
-		try {
-
-			const {success, cause, time, channelName, message} = await this.chatService.sendMessage(payload)
+	async sendMessageEvent(
+		@ConnectedSocket() socket: Socket,
+		@MessageBody() { userId, channelId, content }: sendMsgPayload,
+		) {
+			const {success, cause, time, channelName, message} = await this.chatService.sendMessage(userId, channelId, content)
 
 			if (success === false) {
 				if (cause === 'kicked') {
-					this.server.to(String(payload.userId)).socketsLeave(channelName)
+					this.server.to(String(userId)).socketsLeave(channelName)
 					return {success, cause}
 				}
 				return {success, cause, time}
@@ -69,37 +77,36 @@ export class ChatGateway {
 			const roomMembers: roomMember[] = await this.connectionService.getUsesrIdFromSockets(roomSockets)
 
 			for (let i = 0; i < roomMembers.length; i++) {
-				const isBlockingMe = await this.userService.isUserBlockingMe(payload.userId, roomMembers[i].memberId)
-				const membership = await this.channelService.findMembership2(roomMembers[i].memberId, payload.channelId)
+				if (userId === roomMembers[i].memberId)
+					continue
+				const isBlockingMe = await this.userService.isUserBlockingMe(userId, roomMembers[i].memberId)
+				const membership = await this.channelService.findMembership2(roomMembers[i].memberId, channelId)
 
-				if (isBlockingMe === true || membership.state === 'banned')
+				if (isBlockingMe === true || (membership && membership.state === 'banned')) {
 					roomMembers[i].memberSocket.join('exceptionRoom')
+				}
 			}
-		
 			// sending the event to all room sockets except those in axceptionRoom
 			socket.to(channelName).except('exceptionRoom').emit('receive_message', message)
 			this.server.socketsLeave('exceptionRoom')
 		
 			return { success } 
-
-		} catch(error) {
-			throw error
-		}
 	}
 
 	@SubscribeMessage('send_direct_message')
-	async sendDirectMessageEvent( @ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
-		try {
+	async sendDirectMessageEvent(
+		@ConnectedSocket() socket: Socket,
+		@MessageBody() { userId, receiverId, content }: sendDirectMsgPayload
+	) {
+	
+		const { success, error, message } = await this.chatService.sendDirectMessage(userId, receiverId, content)
 
-			const { userId, receiverId, content } = payload
-			const message = await this.chatService.sendDirectMessage(userId, receiverId, content)
-		
-			socket.to(receiverId).emit('receive_message', message)
+		if (success === false)
+			return { success, error }
 
-		} catch(error) {
-			console.log(error)
-			throw error
-		}
+		socket.to(String(receiverId)).emit('receive_direct_message', message)
+
+		return { success, message }
 	}
 
 }

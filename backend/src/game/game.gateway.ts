@@ -112,15 +112,9 @@ export class gameGateway implements OnGatewayDisconnect {
     async gameLoop(server: Server, socketleft: Socket, socketright: Socket, func: (winnerId: number, opponentId: number, winnerScore: number, opponentScore: number) => Promise<ScoreEntity>) {
         if (socketleft.id !== '' && ball_room[socketleft.id] !== undefined)
         {
-            // console.log(ball_room[socketleft.id].dx);
-            // console.log(ball_room[socketleft.id].dy);
-            
             if (ball_room[socketleft.id].x - ball_room[socketleft.id].r < 0 && ball_room[socketleft.id].dx < 0)
             {
                 if (ball_room[socketleft.id].y >= ball_room[socketleft.id].p1 && ball_room[socketleft.id].y <= ball_room[socketleft.id].p1 + (windw / 14)) {
-                    // if (ball_room[socketleft.id].dx > 0)
-                    //     ball_room[socketleft.id].dx = -ball_room[socketleft.id].dx - 0.5;
-                    // else
                     ball_room[socketleft.id].dx = -ball_room[socketleft.id].dx + 0.5;
                     if (ball_room[socketleft.id].dy > 0)
                         ball_room[socketleft.id].dy = ball_room[socketleft.id].dy + 0.25;
@@ -141,8 +135,6 @@ export class gameGateway implements OnGatewayDisconnect {
                         setTimeout(() => {
                             if (ball_room[socketleft.id] !== undefined)
                             {
-                                // ball_room[socketleft.id].x = windw / 2;
-                                // ball_room[socketleft.id].y = windh / 2;
                                 ball_room[socketleft.id].dx = 8;
                                 ball_room[socketleft.id].dy = getRandomDY();
                                 server.to(socketleft.id).emit('restart', ball_room[socketleft.id]);
@@ -388,7 +380,6 @@ export class gameGateway implements OnGatewayDisconnect {
                     {
                         socket.join(f_player.id);
                         socket.emit('watch_wait', "");
-                        // socket.emit('connection', "match didnt start yet"); //00000000000000000000000000000000
                     }
                 }
             }

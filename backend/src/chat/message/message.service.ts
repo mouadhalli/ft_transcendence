@@ -4,12 +4,12 @@ import { WsException } from "@nestjs/websockets";
 import { UserDto } from "src/dto/User.dto";
 import { UserService } from "src/user/user.service";
 import { Repository } from "typeorm";
-import { ChannelDto, MembershipDto } from "../channel/channel.dto";
+import { ChannelDto, MembershipDto } from "../dtos/channel.dto";
 import { ChannelService } from "../channel/channel.service";
 import { ChannelEntity } from "../entities/channel.entity";
 import { DirectMessageEntity } from "../entities/directMessage.entity";
 import { MessageEntity } from "../entities/message.entity";
-import { MessageDto } from "./message.dto";
+import { MessageDto } from "../dtos/message.dto";
 
 @Injectable()
 export class MessageService {
@@ -25,7 +25,7 @@ export class MessageService {
 
     async findChannelMessages(user: UserDto, channelId: number): Promise<MessageEntity[]> {
     
-        const channel: ChannelEntity = await this.channelService.findOneChannel(channelId, false)
+        const channel: ChannelEntity = await this.channelService.findOneChannel(channelId)
 
         if (!channel)
             throw new BadRequestException('channel not found')
