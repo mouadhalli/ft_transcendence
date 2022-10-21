@@ -92,18 +92,21 @@ export class ChatGateway {
 
 		// Users who blocked current user should not receive his messages
 		const roomSockets = await this.server.in(channelName).fetchSockets()
-		const roomMembers: roomMember[] = await this.connectionService.getUsesrIdFromSockets(roomSockets)
 
-		for (let i = 0; i < roomMembers.length; i++) {
-			if (id === roomMembers[i].memberId)
+		for (let i = 0; i < roomSockets.length; i++) {
+			const memberToken = String(roomSockets[i].handshake.headers?.Token)
+			const { id: memberId } = await this.connectionService.getUserFromToken(memberToken)
+			if (!id)
 				continue
-			const isBlockingMe = await this.userService.isUserBlockingMe(id, roomMembers[i].memberId)
-			const membership = await this.channelService.findMembership2(roomMembers[i].memberId, channelId)
+			
+			const isBlockingMe = await this.userService.isUserBlockingMe(id, memberId)
+			const membership = await this.channelService.findMembershipByIds(memberId, channelId)
 
 			if (isBlockingMe === true || (membership && membership.state === 'banned')) {
-				roomMembers[i].memberSocket.join('exceptionRoom')
+				roomSockets[i].join('exceptionRoom')
 			}
 		}
+
 		// sending the event to all room sockets except those in axceptionRoom
 		socket.to(channelName).except('exceptionRoom').emit('receive_message', message)
 		this.server.socketsLeave('exceptionRoom')

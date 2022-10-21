@@ -44,9 +44,9 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			const { id } = await this.connectionService.getUserFromToken(userToken)
 
 			if (!id)
-				throw new WsException('invalid access token')
+				throw new WsException('unAuthorized')
 
-			this.connectionService.saveSocketConnection(socket.id, id)
+			this.connectionService.saveUserSocketConnection(socket.id, id)
 
 			// grouping user sockets in a room so i can ping all user Tabs easily
 			socket.join(String(id))
@@ -57,6 +57,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 		} catch(error) {
 			socket._error(error)
 			socket.disconnect()
+			throw new WsException(error)
 		}
 	}
 
@@ -69,11 +70,12 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			if (!id)
 				throw new WsException('invalid access token')
 
-			this.connectionService.removeSocketConnection(id, socket.id)
+			this.connectionService.removeUserSocketConnection(id, socket.id)
 			socket.leave(String(id))
 			
 		} catch (error) {
 			socket._error(error)
+			throw new WsException(error)
 		}
 	}
 
@@ -84,14 +86,15 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			const { id } = await this.connectionService.getUserFromToken(userToken)
 
 			if (!id)
-				throw new WsException('invalid access token')
+				throw new WsException('unAuthorized')
 
-			this.connectionService.removeConnection(id)
+			this.connectionService.removeUserConnection(id)
 			this.server.to(String(id)).disconnectSockets()
 		}
 		catch (error) {
 			socket._error(error)
 			socket.disconnect()
+			throw new WsException(error)
 		}
 	}
 
