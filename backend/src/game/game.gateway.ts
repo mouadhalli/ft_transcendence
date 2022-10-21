@@ -14,6 +14,7 @@ const windh: number = 624;
 
 let ball_room: any = {};
 let playerID: any = {};
+let privateroomsID: any = {};
 let socketFromId: any = {};
 let Intervals: any = {};
 
@@ -42,8 +43,22 @@ const ball = {
   }
 
 function init_data() {
-    let Data: typeof ball;
-    Data = ball;
+    let Data = ball;
+    // Data = ball;
+    Data.x = windw/2;
+    Data.y = windh/2;
+    Data.r = 15;
+    Data.dx = 8;
+    Data.dy = getRandomDY();
+    Data.p1 = 0;
+    Data.p2 = 0;
+    Data.score1 = 0;
+    Data.score2 = 0;
+    Data.playerleft = "";
+    Data.playerright = "";
+    Data.middleY = 0;
+    Data.counter = 0;
+    Data.mDY = 0;
     return Data;
 }
 
@@ -64,18 +79,37 @@ export class gameGateway implements OnGatewayDisconnect {
 
     @SubscribeMessage('getIDS')
     async getID(socket: Socket, Data: any){
+        Data.room = "";
+        Data.pos = 0;
+        if (Data.mode === "private")
+        {
+            if (privateroomsID[Data.id] === undefined)
+            {
+                privateroomsID[Data.id] = socket.id;
+                Data.pos = 1;
+            }
+            Data.room = privateroomsID[Data.id];
+        }
+        if (Data.mode !== "watch")
+        {
+            // get id from token
+            // check invalid token
+        }
         Data.socket = socket.id;
         playerID[socket.id] = Data;
         socketFromId[Data.id] = socket;
         console.log(Data);
+        
         // await this.gameService.saveGameScore(winner, loser, swinner, sloser);
     }
-
+    
     @SubscribeMessage('update_mouse')
     afficher(socket: Socket, Data: any) {
+        //console.log(playerID[socket.id]);
+        
         if (Data.room !== "" && Data.pos != 0 && ball_room[Data.room] !== undefined && ball_room[Data.room] !== "")
         {
-            if (playerID[socket.id].room === Data.room && playerID[socket.id].pos === Data.pos)
+            if (playerID[socket.id] !== undefined && playerID[socket.id].room === Data.room && playerID[socket.id].pos === Data.pos)
             {
                 this.server.to(Data.room).volatile.emit('mouse', Data);
                 if (Data.pos === 1)
@@ -110,6 +144,9 @@ export class gameGateway implements OnGatewayDisconnect {
     // }
 
     async gameLoop(server: Server, socketleft: Socket, socketright: Socket, func: (winnerId: number, opponentId: number, winnerScore: number, opponentScore: number) => Promise<ScoreEntity>) {
+        // console.log(ball_room[socketleft.id]);
+        // console.log(socketleft.id);
+        
         if (socketleft.id !== '' && ball_room[socketleft.id] !== undefined)
         {
             if (ball_room[socketleft.id].x - ball_room[socketleft.id].r < 0 && ball_room[socketleft.id].dx < 0)
@@ -117,13 +154,15 @@ export class gameGateway implements OnGatewayDisconnect {
                 if (ball_room[socketleft.id].y >= ball_room[socketleft.id].p1 && ball_room[socketleft.id].y <= ball_room[socketleft.id].p1 + (windw / 14)) {
                     ball_room[socketleft.id].dx = -ball_room[socketleft.id].dx + 0.5;
                     if (ball_room[socketleft.id].dy > 0)
-                        ball_room[socketleft.id].dy = ball_room[socketleft.id].dy + 0.25;
+                    ball_room[socketleft.id].dy = ball_room[socketleft.id].dy + 0.25;
                     else
-                        ball_room[socketleft.id].dy = ball_room[socketleft.id].dy - 0.25;
+                    ball_room[socketleft.id].dy = ball_room[socketleft.id].dy - 0.25;
                 }
                 else
                 {
                     ball_room[socketleft.id].score1 += 1;
+                    // console.log("hi   a wili");
+                    
                     server.to(socketleft.id).emit('reset', {score1:ball_room[socketleft.id].score1, score2:ball_room[socketleft.id].score2});
                     console.log(ball_room[socketleft.id].score1);
                     ball_room[socketleft.id].x = windw / 2;
@@ -139,7 +178,7 @@ export class gameGateway implements OnGatewayDisconnect {
                                 ball_room[socketleft.id].dy = getRandomDY();
                                 server.to(socketleft.id).emit('restart', ball_room[socketleft.id]);
                             }
-                       }, 1000);
+                        }, 1000);
                     }
                     else
                     {
@@ -206,8 +245,10 @@ export class gameGateway implements OnGatewayDisconnect {
                 else
                 {
                     ball_room[socketleft.id].score1 += 1;
+                    // console.log("hi");
+
                     server.to(socketleft.id).emit('reset', {score1:ball_room[socketleft.id].score1, score2:ball_room[socketleft.id].score2});
-                    console.log(ball_room[socketleft.id].score1);
+                    // console.log(ball_room[socketleft.id].score1);
                     ball_room[socketleft.id].x = windw / 2;
                     ball_room[socketleft.id].y = windh / 2;
                     ball_room[socketleft.id].dx = 0;
@@ -221,8 +262,8 @@ export class gameGateway implements OnGatewayDisconnect {
                                 ball_room[socketleft.id].dx = 8;
                                 ball_room[socketleft.id].dy = getRandomDY();
                                 ball_room[socketleft.id].middleY = 0;
+                                server.to(socketleft.id).emit('restart', ball_room[socketleft.id]);
                             }
-                            server.to(socketleft.id).emit('restart', ball_room[socketleft.id]);
                        }, 1000);
                     }
                     else
@@ -292,94 +333,171 @@ export class gameGateway implements OnGatewayDisconnect {
         
         let i:any;
         let f_player : Socket;
-        console.log(playerID[socket.id].mode);
-
-        if (playerID[socket.id].mode === "classic")
+        if (playerID[socket.id] !== undefined)
         {
-            i = waiting.length;
-            if (i % 2 != 0)//someone is waiting
+            console.log(playerID[socket.id].mode);
+            if (playerID[socket.id].mode === "classic")
             {
-                f_player = waiting.at(0);
-                socket.join(f_player.id);
-                waiting.pop();
-                playerID[f_player.id].room = f_player.id;
-                playerID[socket.id].room = f_player.id;
-                playerID[f_player.id].pos = 1;
-                playerID[socket.id].pos = 2;
-                ball_room[f_player.id] = init_data();
-                ball_room[f_player.id].playerleft = playerID[f_player.id].id;
-                ball_room[f_player.id].playerright = playerID[socket.id].id;
-                console.log(ball_room[f_player.id]);
-                
-                this.server.to(f_player.id).emit('connection', "start")
-                const Datas = {room:f_player.id, yourplace:1}
-                f_player.emit("takePosition", Datas)
-                socket.emit("takePosition", {...Datas, yourplace:2})
-
-                players[socket.id] = f_player;
-                players[f_player.id] = socket;
-
-                Intervals[socket.id] = setInterval(this.gameLoop, 25, this.server, f_player, socket, this.gameService.saveGameScore.bind(this.gameService));
-                Intervals[f_player.id] = Intervals[socket.id];
-            }
-            else
-            {
-                waiting.push(socket);
-                socket.emit('connection', "wait")
-            }
-        }
-        else if (playerID[socket.id].mode === "modern")
-        {
-            i = waitingmodern.length;
-            if (i % 2 != 0)//someone is waiting
-            {
-                f_player = waitingmodern.at(0);
-                socket.join(f_player.id);
-                waitingmodern.pop();
-                playerID[f_player.id].room = f_player.id;
-                playerID[socket.id].room = f_player.id;
-                playerID[f_player.id].pos = 1;
-                playerID[socket.id].pos = 2;
-                ball_room[f_player.id] = init_data();
-                ball_room[f_player.id].playerleft = playerID[f_player.id].id;
-                ball_room[f_player.id].playerright = playerID[socket.id].id;
-
-                this.server.to(f_player.id).emit('connection', "start Modern")
-                const Datas = {room:f_player.id, yourplace:1}
-                f_player.emit("takePosition", Datas)
-                socket.emit("takePosition", {...Datas, yourplace:2})
-
-                players[socket.id] = f_player;
-                players[f_player.id] = socket;
-
-                Intervals[socket.id] = setInterval(this.gameLoopModern, 25, this.server, f_player, socket, this.gameService.saveGameScore.bind(this.gameService));
-                Intervals[f_player.id] = Intervals[socket.id];
-            }
-            else
-            {
-                waitingmodern.push(socket);
-                socket.emit('connection', "wait Modern")
-            }
-        }
-        else if (playerID[socket.id].mode === "watch")
-        {
-            let getID = playerID[socket.id].id;
-            if (getID !== undefined)
-            {
-                f_player = socketFromId[getID];
-                if (f_player !== undefined && playerID[f_player.id] !== undefined)
+                i = waiting.length;
+                if (i % 2 != 0)//someone is waiting
                 {
-                    if (playerID[f_player.id].room != undefined && playerID[f_player.id].room != "")
+                    f_player = waiting.at(0);
+                    socket.join(f_player.id);
+                    waiting.pop();
+                    playerID[f_player.id].room = f_player.id;
+                    playerID[socket.id].room = f_player.id;
+                    playerID[f_player.id].pos = 1;
+                    playerID[socket.id].pos = 2;
+                    ball_room[f_player.id] = init_data();
+                    // console.log(ball_room[f_player.id].score1);
+                    
+                    ball_room[f_player.id].playerleft = playerID[f_player.id].id;
+                    ball_room[f_player.id].playerright = playerID[socket.id].id;
+                    // console.log(ball_room[f_player.id]);
+                    
+                    this.server.to(f_player.id).emit('connection', "start")
+                    const Datas = {room:f_player.id, yourplace:1}
+                    f_player.emit("takePosition", Datas)
+                    socket.emit("takePosition", {...Datas, yourplace:2})
+
+                    players[socket.id] = f_player;
+                    players[f_player.id] = socket;
+
+                    Intervals[socket.id] = setInterval(this.gameLoop, 25, this.server, f_player, socket, this.gameService.saveGameScore.bind(this.gameService));
+                    Intervals[f_player.id] = Intervals[socket.id];
+                }
+                else
+                {
+                    waiting.push(socket);
+                    socket.emit('connection', "wait")
+                }
+            }
+            else if (playerID[socket.id].mode === "modern")
+            {
+                i = waitingmodern.length;
+                if (i % 2 != 0)//someone is waiting
+                {
+                    f_player = waitingmodern.at(0);
+                    socket.join(f_player.id);
+                    // const sockets = await this.server.in(f_player.id).fetchSockets();
+                    // console.log(sockets.length + "   ..............");
+                    // for (let a of sockets) {
+                    //     console.log(a.id);
+                    // }
+                    waitingmodern.pop();
+                    playerID[f_player.id].room = f_player.id;
+                    playerID[socket.id].room = f_player.id;
+                    playerID[f_player.id].pos = 1;
+                    playerID[socket.id].pos = 2;
+                    ball_room[f_player.id] = init_data();
+                    ball_room[f_player.id].playerleft = playerID[f_player.id].id;
+                    ball_room[f_player.id].playerright = playerID[socket.id].id;
+
+                    this.server.to(f_player.id).emit('connection', "start Modern")
+                    const Datas = {room:f_player.id, yourplace:1}
+                    f_player.emit("takePosition", Datas)
+                    socket.emit("takePosition", {...Datas, yourplace:2})
+
+                    players[socket.id] = f_player;
+                    players[f_player.id] = socket;
+
+                    Intervals[socket.id] = setInterval(this.gameLoopModern, 25, this.server, f_player, socket, this.gameService.saveGameScore.bind(this.gameService));
+                    Intervals[f_player.id] = Intervals[socket.id];
+                }
+                else
+                {
+                    waitingmodern.push(socket);
+                    socket.emit('connection', "wait Modern")
+                }
+            }
+            else if (playerID[socket.id].mode === "watch")
+            {
+                let getID = playerID[socket.id].id;
+                if (getID !== undefined)
+                {
+                    f_player = socketFromId[getID];
+                    if (f_player !== undefined && playerID[f_player.id] !== undefined)
                     {
-                        socket.join(playerID[f_player.id].room);
-                        if (playerID[f_player.id].mode === "modern")
-                            socket.emit('watch_modern', "");
-                        socket.emit('watch_work', "");
+                        if (playerID[f_player.id].room != undefined && playerID[f_player.id].room != "")
+                        {
+                            socket.join(playerID[f_player.id].room);
+                            if (playerID[f_player.id].mode === "modern")
+                                socket.emit('watch_modern', "");
+                            socket.emit('watch_work', "");
+                        }
+                        else
+                        {
+                            socket.join(f_player.id);
+                            socket.emit('watch_wait', "");
+                        }
+                    }
+                }
+            }
+            else if (playerID[socket.id].mode === "private")
+            {
+                console.log("comming soon");
+                if (playerID[socket.id] !== undefined)
+                {
+                    if (playerID[socket.id].pos === 1)
+                    {
+                        socket.emit('connection', "wait");
                     }
                     else
                     {
-                        socket.join(f_player.id);
-                        socket.emit('watch_wait', "");
+                        // let isThereop1 = false;
+                        let isThereop = false;
+                        const roomID = playerID[socket.id].room;
+                        
+                        if (playerID[roomID] !== undefined)
+                        {
+                            f_player = socketFromId[playerID[roomID].id];
+                            if (f_player !== undefined)
+                            {
+                                const sockets = await this.server.in(roomID).fetchSockets();
+                                console.log(sockets.length + "   ..............");
+
+                                for (let a of sockets) {
+                                    console.log(a);
+                                    if (playerID[a.id].pos == 2)
+                                        isThereop = true;
+                                }
+
+                                // if (isThereop1 === false)
+                                // {
+                                //     // dkhol khod pos 1
+                                //     playerID[socket.id].pos = 1;
+                                //     socket.join(playerID[socket.id].room);
+                                //     socket.emit('connection', "wait");
+                                // }
+                                if (isThereop === false)
+                                {
+                                    // khona ydkhal yl3ab f pos 2
+                                    playerID[socket.id].pos = 2;
+                                    socket.join(roomID);
+                                    
+                                    ball_room[roomID] = init_data();
+                                    ball_room[roomID].playerleft = playerID[roomID].id;
+                                    ball_room[roomID].playerright = playerID[socket.id].id;
+                                    
+                                    this.server.to(roomID).emit('connection', "start")
+                                    const Datas = {room:roomID, yourplace:1}
+                                    f_player.emit("takePosition", Datas)
+                                    socket.emit("takePosition", {...Datas, yourplace:2})
+
+                                    players[socket.id] = f_player;
+                                    players[f_player.id] = socket;
+
+                                    Intervals[socket.id] = setInterval(this.gameLoop, 25, this.server, f_player, socket, this.gameService.saveGameScore.bind(this.gameService));
+                                    Intervals[f_player.id] = Intervals[socket.id];
+                                }
+                                else
+                                {
+                                    // watch
+                                    socket.join(roomID);
+                                    socket.emit('watch_work', "");
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -391,7 +509,8 @@ export class gameGateway implements OnGatewayDisconnect {
         {
             let swinner:number = 0;
             let sloser:number = 0;
-            let tmp: Socket;
+            let tmp:Socket;
+
             tmp = players[socket.id];
             clearInterval(Intervals[tmp.id]);
             // tmp.emit("done", "");
