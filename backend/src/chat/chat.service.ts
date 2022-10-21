@@ -38,9 +38,12 @@ export class ChatService {
                 return { success: true, channelName: channel.name }
             return {success: false, error: "already a member"}
         }
-        if (channel.type === 'protected') {
-            if (!await bcrypt.compare(password, channel.password))
-                return {success: false, error: "wrong password"}
+        if (channel.type !== 'public') {
+            if (channel.type === 'private')
+                return {success: false, error: "you can't join a private channel"}
+            if ( password && (!await bcrypt.compare(password, channel.password)))
+                    return {success: false, error: "incorrect password"}
+            return {success: false, error: "password is required"}
         }
         await this.channelService.createMembership(member, channel, Channel_Member_Role.MEMBER)
         return {success: true, channelName: channel.name}

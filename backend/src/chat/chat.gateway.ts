@@ -1,13 +1,11 @@
-import { BadRequestException, Logger, ParseIntPipe, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Logger, ParseIntPipe, UseFilters } from '@nestjs/common';
 import {
 	SubscribeMessage, WebSocketGateway,
-	WebSocketServer, //OnGatewayInit,
-	// OnGatewayConnection, OnGatewayDisconnect,
-	MessageBody, ConnectedSocket, WsException
+	WebSocketServer, MessageBody,
+	ConnectedSocket, WsException
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { GatewayConnectionService } from 'src/connection.service';
-import { UserDto } from 'src/dto/User.dto';
 import { HttpExceptionFilter } from 'src/gateway.filter';
 import { UserService } from 'src/user/user.service';
 import { ChannelService } from './channel/channel.service';
@@ -20,7 +18,6 @@ export class roomMember {
 }
 
 @UseFilters(HttpExceptionFilter)
-// @UsePipes(new ValidationPipe())
 @WebSocketGateway()
 export class ChatGateway {
 
@@ -77,47 +74,41 @@ export class ChatGateway {
 	async sendMessageEvent(
 		@ConnectedSocket() socket: Socket,
 		@MessageBody() {channelId, content }: sendMsgPayload,
-		) {
-
-			console.log('sending message');
+	) {
 			
-			
-			const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
-			if ( !id )
-				return { success: false, error: "unauthorized" }
+		const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
+		if ( !id )
+			return { success: false, error: "unauthorized" }
 
-			console.log(content);
+		const {success, cause, time, channelName, message} = await this.chatService.sendMessage(id, channelId, content)
 
-
-			const {success, cause, time, channelName, message} = await this.chatService.sendMessage(id, channelId, content)
-
-			if (success === false) {
-				if (cause === 'kicked') {
-					this.server.to(String(id)).socketsLeave(channelName)
-					return { success, cause }
-				}
-				return {success, cause, time}
+		if (success === false) {
+			if (cause === 'kicked') {
+				this.server.to(String(id)).socketsLeave(channelName)
+				return { success, cause }
 			}
+			return {success, cause, time}
+		}
 
-			// Users who blocked current user should not receive his messages
-			const roomSockets = await this.server.in(channelName).fetchSockets()
-			const roomMembers: roomMember[] = await this.connectionService.getUsesrIdFromSockets(roomSockets)
+		// Users who blocked current user should not receive his messages
+		const roomSockets = await this.server.in(channelName).fetchSockets()
+		const roomMembers: roomMember[] = await this.connectionService.getUsesrIdFromSockets(roomSockets)
 
-			for (let i = 0; i < roomMembers.length; i++) {
-				if (id === roomMembers[i].memberId)
-					continue
-				const isBlockingMe = await this.userService.isUserBlockingMe(id, roomMembers[i].memberId)
-				const membership = await this.channelService.findMembership2(roomMembers[i].memberId, channelId)
+		for (let i = 0; i < roomMembers.length; i++) {
+			if (id === roomMembers[i].memberId)
+				continue
+			const isBlockingMe = await this.userService.isUserBlockingMe(id, roomMembers[i].memberId)
+			const membership = await this.channelService.findMembership2(roomMembers[i].memberId, channelId)
 
-				if (isBlockingMe === true || (membership && membership.state === 'banned')) {
-					roomMembers[i].memberSocket.join('exceptionRoom')
-				}
+			if (isBlockingMe === true || (membership && membership.state === 'banned')) {
+				roomMembers[i].memberSocket.join('exceptionRoom')
 			}
-			// sending the event to all room sockets except those in axceptionRoom
-			socket.to(channelName).except('exceptionRoom').emit('receive_message', message)
-			this.server.socketsLeave('exceptionRoom')
+		}
+		// sending the event to all room sockets except those in axceptionRoom
+		socket.to(channelName).except('exceptionRoom').emit('receive_message', message)
+		this.server.socketsLeave('exceptionRoom')
 		
-			return { success } 
+		return { success } 
 	}
 
 	@SubscribeMessage('send_direct_message')
