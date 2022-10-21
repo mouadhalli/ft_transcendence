@@ -99,17 +99,17 @@ export class ChannelController {
         return { id, name, imgPath, type, membersCount, role }
     }
 
+    @Delete("all")
+	@HttpCode(202)
+    async deleteAllChannels() {
+        return await this.channelService.deleteAllChannels()
+    }
+
     @Delete(":channel_id")
     @UseGuards(JwtAuthGuard, IsOwnerGuard)
 	@HttpCode(202)
     async deleteChannel(@Param('channel_id', ParseIntPipe) channelId: number) {
         return await this.channelService.deleteChannel(channelId)
-    }
-
-    @Delete("all")
-	@HttpCode(202)
-    async deleteAllChannels() {
-        return await this.channelService.deleteAllChannels()
     }
 
     @Patch('add-admin/:channel_id')

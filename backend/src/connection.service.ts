@@ -23,27 +23,14 @@ export class GatewayConnectionService {
 		private authservice: AuthService,
 	) {}
 
-/*
-	To Do:
-	YES	- need to double check if one user can have multiple sockets
-		  if he opens multiple tabs
-*/
 	private ConnectedSockets = new Map<number, Connection>();
 
     async getUserFromToken(userToken: string): Promise<UserDto> {
 		const user: UserDto =  await this.authservice.verifyTokenAndExtractUser(userToken)
 		if (!user)
-			throw new WsException('unauthorized');
+			return
 		return user
     }
-
-	// getSocketConectionStatus(socketId: string) {
-
-	// 	if (!socketId)
-	// 		return
-
-	// 	return this.ConnectedSockets.get(socketId).status
-	// }
 
 	getUserConectionStatus(userId: number) {
 
@@ -54,21 +41,7 @@ export class GatewayConnectionService {
 		return friendConnection ? friendConnection.status : ConnectionStatus.OFFLINE
 	}
 
-	// getSocketUserId(socketId: string) {
-
-	// 	if (!socketId)
-	// 		return
-
-	// 	return this.ConnectedSockets.get(socketId).user_id
-	// }
-
 	async getUsesrIdFromSockets(sockets: any[]) {
-
-		// return sockets.filter( async (socket: Socket) => {
-		// 	const token = String(socket.handshake.headers.token)
-		// 	const { id } = await this.getUserFromToken(token)
-		// 	return {memberId: id, memberSocket: socket.id}
-		// })
 
 		let roomMembers: roomMember[] = []
 

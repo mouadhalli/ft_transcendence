@@ -6,7 +6,7 @@ import { Socket } from 'socket.io';
 export class HttpExceptionFilter extends BaseWsExceptionFilter {
     catch(exception: HttpException, host: ArgumentsHost) {
         const properException = new WsException(exception.getResponse());
-        // console.log(properException)
+        // console.log(properException.getError())
         super.catch(properException, host)
         // const client = host.switchToWs().getClient() as WebSocket
   }
