@@ -23,9 +23,9 @@ export class MessageController {
     @UseGuards(JwtAuthGuard)
 	@HttpCode(200)
     async getDirectMessages(
-        @User('id') authorId: number,
+        @User('id') userId: number,
         @Param('channel_id') channelId: string
     ) {
-        return await this.messageService.findDirectMessages(channelId)
+        return await this.messageService.findDirectMessages(userId, channelId)
     }
 }
