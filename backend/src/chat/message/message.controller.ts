@@ -19,13 +19,13 @@ export class MessageController {
         return await this.messageService.findChannelMessages(userId, channelId)
     }
 
-    @Get(':receiver_id')
+    @Get('dm/:channel_id')
     @UseGuards(JwtAuthGuard)
 	@HttpCode(200)
     async getDirectMessages(
         @User('id') authorId: number,
-        @Param('receiver_id', ParseIntPipe) receiverId: number
+        @Param('channel_id') channelId: string
     ) {
-        return await this.messageService.findDirectMessages(authorId, receiverId)
+        return await this.messageService.findDirectMessages(channelId)
     }
 }

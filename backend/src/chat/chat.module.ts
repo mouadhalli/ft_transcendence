@@ -13,6 +13,7 @@ import { UsersModule } from 'src/user/user.module';
 import { GatewayConnectionService } from 'src/connection.service';
 import { MessageController } from './message/message.controller';
 import { DirectMessageEntity } from './entities/directMessage.entity';
+import { DirectChannelEntity } from './entities/directChannel.entity';
 
 
 @Module({
@@ -21,7 +22,8 @@ import { DirectMessageEntity } from './entities/directMessage.entity';
             ChannelEntity,
             ChannelMembershipEntity,
             MessageEntity,
-            DirectMessageEntity
+            DirectMessageEntity,
+            DirectChannelEntity
         ]),
         UsersModule,
         AuthModule,

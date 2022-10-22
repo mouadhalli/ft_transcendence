@@ -92,20 +92,21 @@ export class ChatService {
 
     }
 
-    async sendDirectMessage(userId: number, receiverId: number, content: string) {
+    async sendDirectMessage(userId: number, channelId: string, content: string) {
         const author: UserDto = await this.userService.findUser(userId)
-        const receiver: UserDto = await this.userService.findUser(receiverId)
-        const friendship = await this.userService.findRelationship(author.id, receiver.id)
+        const channel = await this.channelService.findDmChannel(channelId)
+        // const receiver: UserDto = await this.userService.findUser(receiverId)
+        // const friendship = await this.userService.findRelationship(author.id, receiver.id)
 
-        if (!author || !receiver)
+        if (!author || !channel)
             return {success: false, error: "ressources not found" }
 
-        if (!friendship || friendship.state !== 'friends')
-            return {success: false, error: "you can only dm your friends" }
+        // if (!friendship || friendship.state !== 'friends')
+        //     return {success: false, error: "you can only dm your friends" }
         
-        const message: DirectMessageDto = await this.messageService.saveDirectMessage(
+        const message = await this.messageService.saveDirectMessage(
             author,
-            receiver,
+            channel.id,
             content
         )
 

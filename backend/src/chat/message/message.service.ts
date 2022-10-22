@@ -23,23 +23,23 @@ export class MessageService {
         private userService: UserService
     ) {}
 
-    async findChannelMessages(user: UserDto, channelId: number): Promise<MessageEntity[]> {
+    async findChannelMessages(user: UserDto, channelId: number){
     
         const channel: ChannelEntity = await this.channelService.findOneChannel(channelId)
 
         if (!channel)
             throw new BadRequestException('channel not found')
 
-        const userMembership: MembershipDto = await this.channelService.findMembership(user, channel)
+        // const userMembership: MembershipDto = await this.channelService.findMembership(user, channel)
 
-        if (!userMembership)
-            throw new BadRequestException('user is not a member of this channel')
+        // if (!userMembership)
+        //     throw new BadRequestException('user is not a member of this channel')
         
-        if (userMembership.state === 'banned') {
-            if (userMembership.restricitonEnd.getTime() > Date.now())
-                throw new ForbiddenException(`banned from this channel for ${userMembership.restricitonEnd.getTime() - Date.now()} seconds`)
-            this.channelService.removeRestrictionOnChannelMember(channelId, user.id)
-        }
+        // if (userMembership.state === 'banned') {
+        //     if (userMembership.restricitonEnd.getTime() > Date.now())
+        //         throw new ForbiddenException(`banned from this channel for ${userMembership.restricitonEnd.getTime() - Date.now()} seconds`)
+        //     this.channelService.removeRestrictionOnChannelMember(channelId, user.id)
+        // }
         
         const blockedUsers: UserDto[] = await this.userService.getBlockedUsers(user.id)
 
@@ -72,21 +72,33 @@ export class MessageService {
         }
     }
 
-    async findDirectMessages(authorId: number, receiverId: number) {
+    // async findDirectMessages(authorId: number, receiverId: number) {
+    //     return await this.directMessageRepository.find({
+    //         where: {
+    //             author: {id: authorId},
+    //             receiver: {id: receiverId}
+    //         }
+    //     })
+    // }
+
+    async findDirectMessages(directChannelId: string) {
+
+        // do not allow it if user is not part of the dm
+
         return await this.directMessageRepository.find({
             where: {
-                author: {id: authorId},
-                receiver: {id: receiverId}
+                channel: { id: directChannelId }
             }
         })
     }
 
-    async saveDirectMessage(author: UserDto, receiver: UserDto, content: string) {
+    async saveDirectMessage(author: UserDto, channelId: string, content: string) {
         try {
             return await this.directMessageRepository.save({
                 content: content,
                 author: author,
-                receiver: receiver
+                // receiver: receiver
+                channel: { id: channelId }
             })
 
         } catch(error) {

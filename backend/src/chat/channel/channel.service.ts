@@ -4,7 +4,6 @@ import { Not, Repository } from "typeorm";
 import { ChannelEntity, Channel_Type } from "../entities/channel.entity"
 import { ChannelMembershipEntity, Channel_Member_Role, Channel_Member_State } from "../entities/channelMember.entity";
 import { ChannelDto, MembershipDto, UpdateChannelDto } from "../dtos/channel.dto";
-// import { UserService } from "src/user/user.service";
 import { MessageService } from "../message/message.service"
 import * as bcrypt from "bcryptjs";
 import { UserService } from "src/user/user.service";
@@ -12,6 +11,7 @@ import { UserEntity } from "src/user/entities/user.entity";
 import { WsException } from "@nestjs/websockets";
 import { UserDto } from "src/dto/User.dto";
 import { Relationship_State } from "src/user/entities/relationship.entity";
+import { DirectChannelEntity } from "../entities/directChannel.entity";
 
 @Injectable()
 export class ChannelService {
@@ -19,6 +19,8 @@ export class ChannelService {
     constructor(
         @InjectRepository(ChannelEntity)
             private channelRepository: Repository<ChannelEntity>,
+        @InjectRepository(DirectChannelEntity)
+            private dmRepository: Repository<DirectChannelEntity>,
         @InjectRepository(ChannelMembershipEntity)
             private membershipsRepository: Repository<ChannelMembershipEntity>,
         private userService: UserService
@@ -473,6 +475,17 @@ export class ChannelService {
         allChannels.forEach( async (channel) => {
             await this.channelRepository.remove(channel)
         } )
+    }
+
+    async createDmChannel(userA: number, userB: number) {
+        return await this.dmRepository.save({
+            memberA: { id: userA },
+            memberB: { id: userB }
+        })
+    }
+
+    async findDmChannel(channelId: string) {
+        return await this.dmRepository.findOneBy({id: channelId})
     }
 
 }

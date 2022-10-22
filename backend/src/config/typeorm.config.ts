@@ -8,6 +8,7 @@ import { MessageEntity } from "src/chat/entities/message.entity";
 import { GameEntity } from "src/game/entities/game.entity";
 import { ScoreEntity } from "src/game/entities/score.entity";
 import { DirectMessageEntity } from "src/chat/entities/directMessage.entity";
+import { DirectChannelEntity } from "src/chat/entities/directChannel.entity";
 
 export const typeormConfig :TypeOrmModuleAsyncOptions = {
     imports: [ConfigModule],
@@ -18,7 +19,11 @@ export const typeormConfig :TypeOrmModuleAsyncOptions = {
       username: configService.get('DB_USERNAME'),
       password: configService.get('DB_PASSWORD'),
       database: configService.get('DB_NAME'),
-      entities: [UserEntity, RelationshipEntity, ChannelEntity, ChannelMembershipEntity, MessageEntity, DirectMessageEntity, GameEntity, ScoreEntity],
+      entities: [
+        UserEntity, RelationshipEntity,
+        ChannelEntity, ChannelMembershipEntity,
+        MessageEntity, DirectMessageEntity, DirectChannelEntity,
+        GameEntity, ScoreEntity],
       synchronize: true,
     }),
     inject: [ConfigService],

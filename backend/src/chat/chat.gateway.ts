@@ -117,19 +117,19 @@ export class ChatGateway {
 	@SubscribeMessage('send_direct_message')
 	async sendDirectMessageEvent(
 		@ConnectedSocket() socket: Socket,
-		@MessageBody() {receiverId, content }: sendDirectMsgPayload
+		@MessageBody() {channelId, content }: sendDirectMsgPayload
 	) {
 	
 		const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
 		if ( !id )
 			return { success: false, error: "unauthorized" }
 
-		const { success, error, message } = await this.chatService.sendDirectMessage(id, receiverId, content)
+		const { success, error, message } = await this.chatService.sendDirectMessage(id, channelId, content)
 
 		if (success === false)
 			return { success, error }
 
-		socket.to(String(receiverId)).emit('receive_direct_message', message)
+		// socket.to(String(receiverId)).emit('receive_direct_message', message)
 
 		return { success, message }
 	}
