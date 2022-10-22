@@ -15,9 +15,9 @@ export class IsAdminGuard implements CanActivate {
 		const request = context.switchToHttp().getRequest();
 
 		const { id } = request.user
-		const channelId: number = request.params.channel_id
+		const channelId: string = request.params.channel_id
 
-		const userRole: Channel_Member_Role = await this.channelService.findUserChannelRole(id, Number(channelId))
+		const userRole: Channel_Member_Role = await this.channelService.findUserChannelRole(id, channelId)
 
 		if (userRole === 'member')
             throw new ForbiddenException('only a channel owner or admin is allowed to do this action')

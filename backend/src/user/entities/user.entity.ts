@@ -1,5 +1,6 @@
 import { ChannelMembershipEntity } from 'src/chat/entities/channelMember.entity';
-import { Entity, PrimaryColumn, Column, OneToMany } from 'typeorm'
+import { DirectChannelEntity } from 'src/chat/entities/directChannel.entity';
+import { Entity, PrimaryColumn, Column, OneToMany, ManyToMany } from 'typeorm'
 import { RelationshipEntity } from './relationship.entity';
 
 @Entity('users_table')

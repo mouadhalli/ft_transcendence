@@ -23,7 +23,7 @@ export class MessageService {
         private userService: UserService
     ) {}
 
-    async findChannelMessages(user: UserDto, channelId: number): Promise<MessageEntity[]> {
+    async findChannelMessages(user: UserDto, channelId: string){
     
         const channel: ChannelEntity = await this.channelService.findOneChannel(channelId)
 
@@ -66,27 +66,26 @@ export class MessageService {
                 author: author,
                 channel: channel
             })
-
         } catch(error) {
             throw new WsException("internal server error")
         }
     }
 
-    async findDirectMessages(authorId: number, receiverId: number) {
+    async findDirectMessages(userId: number, directChannelId: string) {
         return await this.directMessageRepository.find({
-            where: {
-                author: {id: authorId},
-                receiver: {id: receiverId}
-            }
+            where: [
+                { channel: { id: directChannelId, memberA: { id: userId } } },
+                { channel: { id: directChannelId, memberB: { id: userId } } }
+            ]
         })
     }
 
-    async saveDirectMessage(author: UserDto, receiver: UserDto, content: string) {
+    async saveDirectMessage(author: UserDto, channelId: string, content: string) {
         try {
             return await this.directMessageRepository.save({
                 content: content,
                 author: author,
-                receiver: receiver
+                channel: { id: channelId }
             })
 
         } catch(error) {

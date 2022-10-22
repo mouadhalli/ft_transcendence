@@ -22,7 +22,7 @@ export class roomMember {
 export class ChatGateway {
 
     constructor(
-		private readonly chatService: ChatService,
+		private chatService: ChatService,
         private connectionService: GatewayConnectionService,
 		private userService: UserService,
 		private channelService: ChannelService
@@ -53,7 +53,7 @@ export class ChatGateway {
 	@SubscribeMessage('leave_channel')
 	async leaveChannelEvent(
 		@ConnectedSocket() socket: Socket,
-		@MessageBody('channelId', ParseIntPipe) channelId: number
+		@MessageBody('channelId') channelId: string
 	) {
 
 		const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
@@ -92,16 +92,18 @@ export class ChatGateway {
 
 		// Users who blocked current user should not receive his messages
 		const roomSockets = await this.server.in(channelName).fetchSockets()
-		const roomMembers: roomMember[] = await this.connectionService.getUsesrIdFromSockets(roomSockets)
 
-		for (let i = 0; i < roomMembers.length; i++) {
-			if (id === roomMembers[i].memberId)
+		for (let i = 0; i < roomSockets.length; i++) {
+			const memberToken = String(roomSockets[i].handshake.headers?.Token)
+			const { id: memberId } = await this.connectionService.getUserFromToken(memberToken)
+			if (!id)
 				continue
-			const isBlockingMe = await this.userService.isUserBlockingMe(id, roomMembers[i].memberId)
-			const membership = await this.channelService.findMembership2(roomMembers[i].memberId, channelId)
+			
+			const isBlockingMe = await this.userService.isUserBlockingMe(id, memberId)
+			const membership = await this.channelService.findMembershipByIds(memberId, channelId)
 
 			if (isBlockingMe === true || (membership && membership.state === 'banned')) {
-				roomMembers[i].memberSocket.join('exceptionRoom')
+				roomSockets[i].join('exceptionRoom')
 			}
 		}
 		// sending the event to all room sockets except those in axceptionRoom
@@ -114,14 +116,13 @@ export class ChatGateway {
 	@SubscribeMessage('send_direct_message')
 	async sendDirectMessageEvent(
 		@ConnectedSocket() socket: Socket,
-		@MessageBody() {receiverId, content }: sendDirectMsgPayload
+		@MessageBody() {channelId, content }: sendDirectMsgPayload
 	) {
-	
 		const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
 		if ( !id )
 			return { success: false, error: "unauthorized" }
 
-		const { success, error, message } = await this.chatService.sendDirectMessage(id, receiverId, content)
+		const { success, error, message, receiverId } = await this.chatService.sendDirectMessage(id, channelId, content)
 
 		if (success === false)
 			return { success, error }

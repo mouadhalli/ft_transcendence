@@ -4,7 +4,6 @@ import { Not, Repository } from "typeorm";
 import { ChannelEntity, Channel_Type } from "../entities/channel.entity"
 import { ChannelMembershipEntity, Channel_Member_Role, Channel_Member_State } from "../entities/channelMember.entity";
 import { ChannelDto, MembershipDto, UpdateChannelDto } from "../dtos/channel.dto";
-// import { UserService } from "src/user/user.service";
 import { MessageService } from "../message/message.service"
 import * as bcrypt from "bcryptjs";
 import { UserService } from "src/user/user.service";
@@ -12,6 +11,7 @@ import { UserEntity } from "src/user/entities/user.entity";
 import { WsException } from "@nestjs/websockets";
 import { UserDto } from "src/dto/User.dto";
 import { Relationship_State } from "src/user/entities/relationship.entity";
+import { DirectChannelEntity } from "../entities/directChannel.entity";
 
 @Injectable()
 export class ChannelService {
@@ -19,12 +19,14 @@ export class ChannelService {
     constructor(
         @InjectRepository(ChannelEntity)
             private channelRepository: Repository<ChannelEntity>,
+        @InjectRepository(DirectChannelEntity)
+            private dmRepository: Repository<DirectChannelEntity>,
         @InjectRepository(ChannelMembershipEntity)
             private membershipsRepository: Repository<ChannelMembershipEntity>,
         private userService: UserService
     ) {}
 
-    async addUserToChannel(user: UserDto, targetId: number, channelId: number) {
+    async addUserToChannel(user: UserDto, targetId: number, channelId: string) {
 
         const channel: ChannelDto = await this.findOneChannel(channelId)
         if (!channel)
@@ -79,7 +81,7 @@ export class ChannelService {
         }
     }
 
-    async findOneChannel(channelId: number): Promise<ChannelEntity> {
+    async findOneChannel(channelId: string): Promise<ChannelEntity> {
         try{
             return await this.channelRepository.findOne({
                 where: {id: channelId}
@@ -89,7 +91,7 @@ export class ChannelService {
         }
     }
 
-    async findChannelWithPassword(channelId: number): Promise<ChannelEntity> {
+    async findChannelWithPassword(channelId: string): Promise<ChannelEntity> {
         try{
             return await this.channelRepository.findOne({
                 select: ['id', 'name', 'imgPath', 'password', 'type', 'membersCount'],
@@ -100,7 +102,7 @@ export class ChannelService {
         }
     }
 
-    async turnChannelPrivate(channelId: number): Promise<ChannelEntity> {
+    async turnChannelPrivate(channelId: string): Promise<ChannelEntity> {
         try{
             const channel: ChannelEntity = await this.findChannelWithPassword(channelId)
 
@@ -118,7 +120,7 @@ export class ChannelService {
         }
     }
 
-    async turnChannelPublic(channelId: number): Promise<ChannelEntity> {
+    async turnChannelPublic(channelId: string): Promise<ChannelEntity> {
         try{
             const channel: ChannelEntity = await this.findChannelWithPassword(channelId)
 
@@ -136,7 +138,7 @@ export class ChannelService {
         }
     }
 
-    async turnChannelProtected(channelId: number, password: string): Promise<ChannelEntity> {
+    async turnChannelProtected(channelId: string, password: string): Promise<ChannelEntity> {
         try{
             const channel: ChannelEntity = await this.findChannelWithPassword(channelId)
 
@@ -155,7 +157,7 @@ export class ChannelService {
         }
     }
 
-    async updateChannel(channelId: number, data: UpdateChannelDto, imgPath: string) {
+    async updateChannel(channelId: string, data: UpdateChannelDto, imgPath: string) {
 
         if (data.type === 'private')
             await this.turnChannelPrivate(channelId)
@@ -170,7 +172,7 @@ export class ChannelService {
             await this.channelRepository.update(channelId, {imgPath: imgPath})
     }
     
-    async findChannelMembers(channelId: number) {
+    async findChannelMembers(channelId: string) {
         
         const members =  await this.membershipsRepository.find({
             relations: ['member'],
@@ -248,7 +250,7 @@ export class ChannelService {
         })
     }
 
-    async findMembership2(memberId: number, channelId: number): Promise<ChannelMembershipEntity> {
+    async findMembershipByIds(memberId: number, channelId: string): Promise<ChannelMembershipEntity> {
         return await this.membershipsRepository.findOne({
             where: {
                 member: { id: memberId },
@@ -297,7 +299,7 @@ export class ChannelService {
         )
     }
 
-    async findChannelAdminMembership(channelId: number): Promise<ChannelMembershipEntity> {
+    async findChannelAdminMembership(channelId: string): Promise<ChannelMembershipEntity> {
         return await this.membershipsRepository.findOne({
             where: {
                 channel: {id: channelId},
@@ -306,7 +308,7 @@ export class ChannelService {
         })
     }
 
-    async deleteChannel(channelId: number) {
+    async deleteChannel(channelId: string) {
         try{
             const channel: ChannelEntity = await this.findOneChannel(channelId)
             if (!channel)
@@ -317,7 +319,7 @@ export class ChannelService {
         }
     }
 
-    async changeChannelOwner(channelId: number) {
+    async changeChannelOwner(channelId: string) {
         let adminMembership: ChannelMembershipEntity = await this.findChannelAdminMembership(channelId)
 
         if (adminMembership)
@@ -338,7 +340,7 @@ export class ChannelService {
         await this.deleteChannel(channelId)
     }
 
-    async changeMembershipRole(memberId: number, channelId: number, role: Channel_Member_Role) {
+    async changeMembershipRole(memberId: number, channelId: string, role: Channel_Member_Role) {
         const membership: MembershipDto = await this.membershipsRepository.findOne({
             where: {
                 member: {id: memberId},
@@ -353,7 +355,7 @@ export class ChannelService {
         return await this.membershipsRepository.save(membership)
     }
 
-    async changeMembershipState(channelId: number, memberId: number, state: Channel_Member_State) {
+    async changeMembershipState(channelId: string, memberId: number, state: Channel_Member_State) {
         const membership: MembershipDto = await this.membershipsRepository.findOne({
             where: {
                 member: {id: memberId},
@@ -371,7 +373,7 @@ export class ChannelService {
         return await this.membershipsRepository.save(membership)
     }
 
-    async removeMemberFromChannel(channelId: number, memberId: number) {
+    async removeMemberFromChannel(channelId: string, memberId: number) {
         const membership: ChannelMembershipEntity = await this.membershipsRepository.findOne({
             where: {
                 member: {id: memberId},
@@ -393,7 +395,7 @@ export class ChannelService {
         )
     }
 
-    async findUserChannelRole(userId: number, channelId: number) {
+    async findUserChannelRole(userId: number, channelId: string) {
         const user: UserDto = await this.userService.findUser(userId)
     
         if (!user)
@@ -411,7 +413,7 @@ export class ChannelService {
         return membership.role
     }
 
-    async removeRestrictionOnChannelMember(channelId: number, memberId: number) {
+    async removeRestrictionOnChannelMember(channelId: string, memberId: number) {
         const membership: MembershipDto = await this.membershipsRepository.findOne({
             where: {
                 channel: { id: channelId },
@@ -433,7 +435,7 @@ export class ChannelService {
     }
 
     async restrictChannelMember(
-        channelId: number,
+        channelId: string,
         memberId: number,
         time: number,
         type: Channel_Member_State
@@ -473,6 +475,23 @@ export class ChannelService {
         allChannels.forEach( async (channel) => {
             await this.channelRepository.remove(channel)
         } )
+    }
+
+    async createDmChannel(userA: number, userB: number) {
+
+        const friendship = await this.userService.findRelationship(userA, userB)
+
+        if (!friendship || friendship.state === 'pending')
+            return new BadRequestException('users are not friends')
+
+        return await this.dmRepository.save({
+            memberA: { id: userA },
+            memberB: { id: userB }
+        })
+    }
+
+    async findDmChannel(channelId: string) {
+        return await this.dmRepository.findOneBy({id: channelId})
     }
 
 }

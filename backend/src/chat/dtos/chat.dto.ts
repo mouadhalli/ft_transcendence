@@ -1,9 +1,9 @@
-import { IsAlphanumeric, IsNumber, IsOptional } from 'class-validator';
+import { IsAlphanumeric, IsNumber, IsOptional, IsUUID } from 'class-validator';
 
 export class joinChannelPayload {
 
-	@IsNumber()
-	channelId: number
+	@IsUUID()
+	channelId: string
 
 	@IsOptional()
 	@IsAlphanumeric()
@@ -12,8 +12,8 @@ export class joinChannelPayload {
 
 export class sendMsgPayload {
 
-	@IsNumber()
-	channelId: number
+	@IsUUID()
+	channelId: string
 
 	@IsOptional()
 	@IsAlphanumeric()
@@ -22,8 +22,8 @@ export class sendMsgPayload {
 
 export class sendDirectMsgPayload {
 
-	@IsNumber()
-	receiverId: number
+	@IsUUID()
+	channelId: string
 
 	@IsOptional()
 	@IsAlphanumeric()

@@ -35,8 +35,8 @@ export class DirectMessageDto {
     @IsNotEmpty()
     author: UserEntity
     
-    @IsNotEmpty()
-    receiver: UserEntity
+    // @IsNotEmpty()
+    // channel: UserEntity
 
     @IsNotEmpty()
     created_at: Date

@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UserDto } from './dto/User.dto';
-import { WsException } from '@nestjs/websockets';
 import { AuthService } from './auth/auth.service';
-import { Socket } from 'socket.io';
-import { roomMember } from './chat/chat.gateway';
 
 export enum ConnectionStatus {
 	ONLINE = 'online',
@@ -25,10 +22,10 @@ export class GatewayConnectionService {
 
 	private ConnectedSockets = new Map<number, Connection>();
 
-    async getUserFromToken(userToken: string): Promise<UserDto> {
+    async getUserFromToken(userToken: string) {
 		const user: UserDto =  await this.authservice.verifyTokenAndExtractUser(userToken)
 		if (!user)
-			return
+			return { id: -1 }
 		return user
     }
 
@@ -37,29 +34,11 @@ export class GatewayConnectionService {
 		if (!userId)
 			return
 		
-		const friendConnection: Connection = this.ConnectedSockets.get(userId)
-		return friendConnection ? friendConnection.status : ConnectionStatus.OFFLINE
+		const userConnection: Connection = this.ConnectedSockets.get(userId)
+		return userConnection ? userConnection.status : ConnectionStatus.OFFLINE
 	}
 
-	async getUsesrIdFromSockets(sockets: any[]) {
-
-		let roomMembers: roomMember[] = []
-
-		for (let i = 0; i < sockets.length; i++) {
-			const token = String(sockets[i].handshake.headers.token)
-			const { id } = await this.getUserFromToken(token)
-			const member: roomMember = {
-				memberId: id,
-				memberSocket: sockets[i]
-			}
-			roomMembers.push(member)
-		}
-
-		return roomMembers
-	
-	}
-
-	saveSocketConnection(socketId: string, userId: number) {
+	saveUserSocketConnection(socketId: string, userId: number) {
 
 		if (!socketId || !userId)
 			return
@@ -77,23 +56,24 @@ export class GatewayConnectionService {
 
 	}
 
-	// updateSocketConectionStatus(userId: number, status: ConnectionStatus) {
+	updateUserSocketConectionStatus(userId: number, newStatus: ConnectionStatus) {
 
-	// 	if (!userId || !status)
-	// 		return
+		if (!userId || !newStatus)
+			return
 
-	// 	let connection: Connection = this.ConnectedSockets.get(userId)
+		let userConnection: Connection = this.ConnectedSockets.get(userId)
 
-	// 	if (!connection)
-	// 		return
+		if (!userConnection)
+			return
+
+		userConnection.status = newStatus
+		this.ConnectedSockets.set(userId, userConnection)
 		
-			
+	}
 
-	// }
+	removeUserSocketConnection(userId: number, socketId: string) {
 
-	removeSocketConnection(userId: number, socketId: string) {
-
-		if (!userId)
+		if (!userId || !socketId)
 			return
 
 		let UserConnection: Connection = this.ConnectedSockets.get(userId)
@@ -104,17 +84,10 @@ export class GatewayConnectionService {
 		if (index != -1)
 			sockets.splice(index)
 		if (!sockets.length)
-			this.ConnectedSockets.delete(userId)
-		else {
-			UserConnection = {
-				sockets: sockets,
-				status: ConnectionStatus.OFFLINE
-			}
-			this.ConnectedSockets.set(userId, UserConnection)
-		}
+			this.removeUserConnection(userId)
 	}
 
-	removeConnection(userId: number) {
+	removeUserConnection(userId: number) {
 		if (!userId)
 			return
 		this.ConnectedSockets.delete(userId)
