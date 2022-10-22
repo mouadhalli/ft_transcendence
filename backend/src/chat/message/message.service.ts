@@ -23,7 +23,7 @@ export class MessageService {
         private userService: UserService
     ) {}
 
-    async findChannelMessages(user: UserDto, channelId: number){
+    async findChannelMessages(user: UserDto, channelId: string){
     
         const channel: ChannelEntity = await this.channelService.findOneChannel(channelId)
 

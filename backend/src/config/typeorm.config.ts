@@ -20,10 +20,9 @@ export const typeormConfig :TypeOrmModuleAsyncOptions = {
       password: configService.get('DB_PASSWORD'),
       database: configService.get('DB_NAME'),
       entities: [
-        UserEntity, RelationshipEntity,
-        ChannelEntity, ChannelMembershipEntity,
-        MessageEntity, DirectMessageEntity, DirectChannelEntity,
-        GameEntity, ScoreEntity],
+        UserEntity, RelationshipEntity, ChannelEntity,
+        ChannelMembershipEntity, MessageEntity, DirectMessageEntity,
+        DirectChannelEntity, GameEntity, ScoreEntity],
       synchronize: true,
     }),
     inject: [ConfigService],

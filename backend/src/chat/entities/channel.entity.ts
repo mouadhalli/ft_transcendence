@@ -14,8 +14,8 @@ export enum Channel_Type {
 @Entity('channel_table')
 export class ChannelEntity {
 
-    @PrimaryGeneratedColumn()
-    id: number
+    @PrimaryGeneratedColumn('uuid')
+    id: string
 
     @Column({
         type: 'varchar',
@@ -50,6 +50,12 @@ export class ChannelEntity {
         onUpdate: 'CASCADE'
     })
     members: ChannelMembershipEntity[]
+
+    @OneToMany(() => MessageEntity, (message) => message.id, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+    })
+    messages: MessageEntity[]
 
     @Column({type: 'int', default: 0})
     membersCount: number

@@ -14,7 +14,7 @@ export class MessageController {
 	@HttpCode(200)
     async getChannelMessages(
         @User() userId: UserDto,
-        @Param('channel_id', ParseIntPipe) channelId: number
+        @Param('channel_id') channelId: string
     ) {
         return await this.messageService.findChannelMessages(userId, channelId)
     }

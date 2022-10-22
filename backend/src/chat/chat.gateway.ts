@@ -22,7 +22,7 @@ export class roomMember {
 export class ChatGateway {
 
     constructor(
-		private readonly chatService: ChatService,
+		private chatService: ChatService,
         private connectionService: GatewayConnectionService,
 		private userService: UserService,
 		private channelService: ChannelService
@@ -53,7 +53,7 @@ export class ChatGateway {
 	@SubscribeMessage('leave_channel')
 	async leaveChannelEvent(
 		@ConnectedSocket() socket: Socket,
-		@MessageBody('channelId', ParseIntPipe) channelId: number
+		@MessageBody('channelId') channelId: string
 	) {
 
 		const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
@@ -106,7 +106,6 @@ export class ChatGateway {
 				roomSockets[i].join('exceptionRoom')
 			}
 		}
-
 		// sending the event to all room sockets except those in axceptionRoom
 		socket.to(channelName).except('exceptionRoom').emit('receive_message', message)
 		this.server.socketsLeave('exceptionRoom')
@@ -119,17 +118,16 @@ export class ChatGateway {
 		@ConnectedSocket() socket: Socket,
 		@MessageBody() {channelId, content }: sendDirectMsgPayload
 	) {
-	
 		const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
 		if ( !id )
 			return { success: false, error: "unauthorized" }
 
-		const { success, error, message } = await this.chatService.sendDirectMessage(id, channelId, content)
+		const { success, error, message, receiverId } = await this.chatService.sendDirectMessage(id, channelId, content)
 
 		if (success === false)
 			return { success, error }
 
-		// socket.to(String(receiverId)).emit('receive_direct_message', message)
+		socket.to(String(receiverId)).emit('receive_direct_message', message)
 
 		return { success, message }
 	}

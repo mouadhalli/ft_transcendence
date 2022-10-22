@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Like, Repository } from 'typeorm';
 import { UserDto } from 'src/dto/User.dto';
 import { RelationshipEntity, Relationship_State } from './entities/relationship.entity';
+import { ChannelService } from 'src/chat/channel/channel.service';
 
 @Injectable()
 export class UserService {
@@ -11,9 +12,8 @@ export class UserService {
 		@InjectRepository(UserEntity)
 			private usersRepository: Repository<UserEntity>,
 		@InjectRepository(RelationshipEntity)
-			private relationshipRepository: Repository<RelationshipEntity>
+			private relationshipRepository: Repository<RelationshipEntity>,
 	) {}
-
 
 	async getUsersWhoBlockedMe(userId: number) {
 		const result: RelationshipEntity[] = await this.relationshipRepository.find({
@@ -145,6 +145,10 @@ export class UserService {
 	// }
 
 	async acceptFriendship(userId: number, friendId: number) {
+
+		if (!await this.findUser(friendId))
+			throw new BadRequestException('cannot find user')
+
 		let Relationship = await this.findRelationship(userId, friendId)
 
 		if (!Relationship)
@@ -158,6 +162,7 @@ export class UserService {
 		Relationship = await this.relationshipRepository.save(Relationship).catch(error => {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
 		})
+
 		return Relationship
 	}
 

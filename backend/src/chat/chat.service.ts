@@ -24,7 +24,7 @@ export class ChatService {
         private connectionService: GatewayConnectionService
     ) {}
 
-    async joinChannel(userId: number, channelId: number, password: string) {
+    async joinChannel(userId: number, channelId: string, password: string) {
 
         const member: UserDto = await this.userService.findUser(userId)
         const channel: ChannelDto = await this.channelService.findChannelWithPassword(channelId)
@@ -49,7 +49,7 @@ export class ChatService {
         return {success: true, channelName: channel.name}
     }
 
-    async leaveChannel(userId: number, channelId: number) {
+    async leaveChannel(userId: number, channelId: string) {
         const member: UserDto = await this.userService.findUser(userId)
         const channel: ChannelDto = await this.channelService.findOneChannel(channelId)
         const membership: MembershipDto = await this.channelService.findMembership(member, channel)
@@ -65,7 +65,7 @@ export class ChatService {
         return {success: true, channelName: channel.name}
     }
 
-    async sendMessage(userId: number, channelId: number, msgContent: string) {
+    async sendMessage(userId: number, channelId: string, msgContent: string) {
         const author: UserDto = await this.userService.findUser(userId)
         const channel: ChannelDto = await this.channelService.findOneChannel(channelId)
         const membership: MembershipDto = await this.channelService.findMembership(author, channel)
@@ -95,21 +95,22 @@ export class ChatService {
     async sendDirectMessage(userId: number, channelId: string, content: string) {
         const author: UserDto = await this.userService.findUser(userId)
         const channel = await this.channelService.findDmChannel(channelId)
-        // const receiver: UserDto = await this.userService.findUser(receiverId)
-        // const friendship = await this.userService.findRelationship(author.id, receiver.id)
 
         if (!author || !channel)
             return {success: false, error: "ressources not found" }
-
-        // if (!friendship || friendship.state !== 'friends')
-        //     return {success: false, error: "you can only dm your friends" }
         
+        const receiverId = userId === channel.memberA.id ? userId : channel.memberB.id
+        const relationship = await this.userService.findRelationship(userId, receiverId)
+
+        if (!relationship || relationship.state !== 'friends')
+            return {success: false, error: "you can only dm your friends" }
+
         const message = await this.messageService.saveDirectMessage(
             author,
             channel.id,
             content
         )
 
-        return { success: true, message }
+        return { success: true, message, receiverId}
     }
 }

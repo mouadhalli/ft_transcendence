@@ -22,6 +22,14 @@ export class DirectMessageEntity {
     @JoinColumn({ name: "author_id" })
     author: UserEntity
 
+    // @ManyToOne(() => UserEntity, {
+    //     // eager: true,
+    //     onDelete: 'CASCADE',
+    //     onUpdate: 'CASCADE'
+    // })
+    // @JoinColumn({ name: "receiver_id" })
+    // receiver: UserEntity
+
     @ManyToOne(() => DirectChannelEntity, {
         // eager: true,
         onDelete: 'CASCADE',
