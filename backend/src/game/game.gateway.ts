@@ -1,6 +1,6 @@
 import { OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import { Server, Socket } from 'socket.io';
-// import { GatewayConnectionService } from "src/connection.service";
+import { GatewayConnectionService } from "src/connection.service";
 // import { UserService } from "src/user/user.service";
 import { GameService } from "./game.service";
 import { ScoreEntity } from "./entities/score.entity";
@@ -71,7 +71,8 @@ function init_data() {
 export class gameGateway implements OnGatewayDisconnect {
     constructor(
         // private userService: UserService,
-        private gameService: GameService
+        private gameService: GameService,
+        private connectionService: GatewayConnectionService
     ) {}
 
     @WebSocketServer()
@@ -92,6 +93,10 @@ export class gameGateway implements OnGatewayDisconnect {
         }
         if (Data.mode !== "watch")
         {
+            const token = String(socket.handshake.headers.token)
+            const user = await this.connectionService.getUserFromToken(token)
+            //if (user === -1)
+            Data.id = user.id;
             // get id from token
             // check invalid token
         }
@@ -188,7 +193,8 @@ export class gameGateway implements OnGatewayDisconnect {
                         players[socketright.id] = "";
                         console.log(ball_room[socketleft.id].score1 + " " + ball_room[socketleft.id].score2);
                         // await func(62741, 62742, 5, 2);
-                        await func(playerID[socketright.id].id, playerID[socketleft.id].id, ball_room[socketleft.id].score1, ball_room[socketleft.id].score2);
+                        // await func(playerID[socketright.id].id, playerID[socketleft.id].id, ball_room[socketleft.id].score1, ball_room[socketleft.id].score2);
+                        await func(ball_room[socketleft.id].playerright, ball_room[socketleft.id].playerleft, ball_room[socketleft.id].score1, ball_room[socketleft.id].score2);
                         clearInterval(Intervals[socketleft.id]);
                     }
                 }
@@ -275,7 +281,9 @@ export class gameGateway implements OnGatewayDisconnect {
                         console.log(ball_room[socketleft.id].score1 + " " + ball_room[socketleft.id].score2);
                         
                         // await func(playerID[socketright.id], playerID[socketleft.id], ball_room[socketleft.id].score1, ball_room[socketleft.id].score2);
-                        await func(playerID[socketright.id].id, playerID[socketleft.id].id, ball_room[socketleft.id].score1, ball_room[socketleft.id].score2);
+                        // ball_room[socketleft.id].playerleft
+                        // await func(playerID[socketright.id].id, playerID[socketleft.id].id, ball_room[socketleft.id].score1, ball_room[socketleft.id].score2);
+                        await func(ball_room[socketleft.id].playerright, ball_room[socketleft.id].playerleft, ball_room[socketleft.id].score1, ball_room[socketleft.id].score2);
                         clearInterval(Intervals[socketleft.id]);
                     }
                 }
