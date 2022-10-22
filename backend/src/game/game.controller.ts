@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from "@nestjs/common";
+import { Controller, Get, Param, ParseIntPipe, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { User } from "src/user/decorators/user.decorator";
 import { GameService } from "./game.service";
@@ -11,16 +11,19 @@ export class GameController {
         private gameService: GameService,
     ) {}
 
-    @Get('user-games')
+    @Get('user-games/:user_id')
     @UseGuards(JwtAuthGuard)
-    async getUserGames(@User('id') userId: number) {
+    async getUserGames(
+        @Param('user_id', ParseIntPipe) userId: number,
+    ) {
         return await this.gameService.findUserGames(userId)
     }
 
-    @Get('user-profile')
+    @Get('user-profile/:user_id')
     @UseGuards(JwtAuthGuard)
-    async getUserProfile(@User('id') userId: number) {
-
+    async getUserProfile(
+        @Param('user_id', ParseIntPipe) userId: number,
+    ) {
         const totalWins: number = await this.gameService.countUserWins(userId)
         const totalDefeats: number = await this.gameService.countUserDefeats(userId)
         const totalGamesPlayed: number = await this.gameService.countUserTotalGamesPlayed(userId)
