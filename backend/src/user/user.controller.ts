@@ -25,29 +25,29 @@ export class UserController {
 		return await this.userService.findUsersByDisplayNameLike(userId, q)
 	}
 
-	@Post('add-friend')
-	@UseGuards(JwtAuthGuard)
-	@HttpCode(201)
-	async sendFriendRequest(
-		@User() user: UserDto,
-		@Body('target_id', ParseIntPipe) friendId: number ) {
-			if (!friendId || user.id === friendId)
-				throw new BadRequestException("invalid target id")
-			await this.userService.addFriend(user, friendId)
-			return "friend request sent"
-	}
+	// @Post('add-friend')
+	// @UseGuards(JwtAuthGuard)
+	// @HttpCode(201)
+	// async sendFriendRequest(
+	// 	@User() user: UserDto,
+	// 	@Body('target_id', ParseIntPipe) friendId: number ) {
+	// 		if (!friendId || user.id === friendId)
+	// 			throw new BadRequestException("invalid target id")
+	// 		await this.userService.addFriend(user, friendId)
+	// 		return "friend request sent"
+	// }
 
-	@Post('accept-friend')
-	@UseGuards(JwtAuthGuard)
-	@HttpCode(201)
-	async acceptFriendRequest(
-		@User('id') userId: number,
-		@Body('target_id', ParseIntPipe) friendId: number ) {
-			if (!friendId || userId === friendId)
-				throw new BadRequestException("invalid friend id")
-			await this.userService.acceptFriendship(userId, friendId)
-			return "friend Request accepted"
-	}
+	// @Post('accept-friend')
+	// @UseGuards(JwtAuthGuard)
+	// @HttpCode(201)
+	// async acceptFriendRequest(
+	// 	@User('id') userId: number,
+	// 	@Body('target_id', ParseIntPipe) friendId: number ) {
+	// 		if (!friendId || userId === friendId)
+	// 			throw new BadRequestException("invalid friend id")
+	// 		await this.userService.acceptFriendship(userId, friendId)
+	// 		return "friend Request accepted"
+	// }
 
 	@Post('remove-friend')
 	@UseGuards(JwtAuthGuard)

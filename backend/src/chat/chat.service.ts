@@ -49,6 +49,15 @@ export class ChatService {
         return {success: true, channelName: channel.name}
     }
 
+    async joinDirectChannel(userId: number, channelId: string) {
+
+        const channel = await this.channelService.findUserDmchannel(userId, channelId)
+
+        if (!channel)
+            return {success: false, error: "ressources not found"}
+        return {success: true}
+    }
+
     async leaveChannel(userId: number, channelId: string) {
         const member: UserDto = await this.userService.findUser(userId)
         const channel: ChannelDto = await this.channelService.findOneChannel(channelId)
@@ -98,9 +107,12 @@ export class ChatService {
 
         if (!author || !channel)
             return {success: false, error: "ressources not found" }
+
+        const receiverId = userId === channel.memberA.id ?
+            channel.memberB.id : channel.memberA.id
         
-        const receiverId = userId === channel.memberA.id ? userId : channel.memberB.id
         const relationship = await this.userService.findRelationship(userId, receiverId)
+
 
         if (!relationship || relationship.state !== 'friends')
             return {success: false, error: "you can only dm your friends" }
@@ -111,6 +123,6 @@ export class ChatService {
             content
         )
 
-        return { success: true, message, receiverId}
+        return { success: true, message}
     }
 }

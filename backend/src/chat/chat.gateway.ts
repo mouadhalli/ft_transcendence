@@ -50,6 +50,25 @@ export class ChatGateway {
 		return { success }
 	}
 
+	// @SubscribeMessage('join_channel')
+	// async joinDirectChannelEvent(
+	// 	@ConnectedSocket() socket: Socket,
+	// 	@MessageBody() channelId: string
+	// ) {
+
+	// 	const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
+	// 	if ( !id )
+	// 		return { success: false, error: "unauthorized" }
+
+	// 	const {success, error} = await this.chatService.joinDirectChannel(id, channelId)
+
+	// 	if (success === false)
+	// 		return { success, error }
+
+	// 	socket.join(channelId)
+	// 	return { success }
+	// }
+
 	@SubscribeMessage('leave_channel')
 	async leaveChannelEvent(
 		@ConnectedSocket() socket: Socket,
@@ -122,12 +141,12 @@ export class ChatGateway {
 		if ( !id )
 			return { success: false, error: "unauthorized" }
 
-		const { success, error, message, receiverId } = await this.chatService.sendDirectMessage(id, channelId, content)
+		const { success, error, message } = await this.chatService.sendDirectMessage(id, channelId, content)
 
 		if (success === false)
 			return { success, error }
 
-		socket.to(String(receiverId)).emit('receive_direct_message', message)
+		socket.to(channelId).emit('receive_direct_message', message)
 
 		return { success, message }
 	}

@@ -481,8 +481,8 @@ export class ChannelService {
 
         const friendship = await this.userService.findRelationship(userA, userB)
 
-        if (!friendship || friendship.state === 'pending')
-            return new BadRequestException('users are not friends')
+        // if (!friendship || friendship.state === 'pending')
+        //     throw new BadRequestException('users are not friends')
 
         return await this.dmRepository.save({
             memberA: { id: userA },
@@ -491,7 +491,37 @@ export class ChannelService {
     }
 
     async findDmChannel(channelId: string) {
-        return await this.dmRepository.findOneBy({id: channelId})
+        return await this.dmRepository.findOne({
+            relations: ['memberA', 'memberB'],
+            where: {id: channelId}
+        })
+    }
+
+    async findUserDmChannels(userId: number) {
+        return await this.dmRepository.find({
+            where: [
+                {memberA: {id: userId}},
+                {memberB: {id: userId}},
+            ]
+        })
+    }
+
+    async findUserDmchannel(userId: number, channelId: string) {
+        return await this.dmRepository.findOne({
+            where: [
+                {id: channelId, memberA: { id: userId }},
+                {id: channelId, memberB: { id: userId }}
+            ]
+        })
+    }
+
+    async findDmchannelByMembers(memberA: number, memberB: number) {
+        return await this.dmRepository.findOne({
+            where: [
+                {memberA: { id: memberA }, memberB: { id: memberB }},
+                {memberA: { id: memberB }, memberB: { id: memberA }},
+            ]
+        })
     }
 
 }

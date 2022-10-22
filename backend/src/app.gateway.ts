@@ -8,6 +8,7 @@ import {
 
 import { Server, Socket } from 'socket.io';
 import { ChannelService } from './chat/channel/channel.service';
+import { directChannelDto } from './chat/dtos/channel.dto';
 import { GatewayConnectionService, ConnectionStatus } from './connection.service';
 import { HttpExceptionFilter } from './gateway.filter';
 import { Relationship_State } from './user/entities/relationship.entity';
@@ -52,7 +53,9 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			socket.join(String(id))
 
 			const channels = await this.channelService.findJoinedChannels(id)
+			const dms = await this.channelService.findUserDmChannels(id)
 			channels.forEach(channel => socket.join(channel.name))
+			dms.forEach(channel => socket.join(channel.id))
 
 		} catch(error) {
 			socket._error(error)
@@ -111,4 +114,52 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 
 		socket.emit('user-status', userStatus)
 	}
+
+	@SubscribeMessage('send-friend-request')
+	async sendFriendRequest(@ConnectedSocket() socket: Socket, @MessageBody(ParseIntPipe) targetId: number) {
+
+		const userToken: any = socket.handshake.headers.token
+		const { id } = await this.connectionService.getUserFromToken(userToken)
+
+		if (!id)
+			return {success: false, error: 'unAuthorized'}
+
+		if (!targetId || id === targetId)
+			return {success: false, error: 'invalid target id'}
+		
+		const { success, error } = await this.userService.addFriend(id, targetId)
+
+		if (success === false)
+			return { success, error }
+
+		const channel = await this.channelService.createDmChannel(id, targetId)
+		socket.join(channel.id)
+
+		return { success }
+	}
+
+	@SubscribeMessage('accept-friend-request')
+	async acceptFriendRequest(@ConnectedSocket() socket: Socket, @MessageBody(ParseIntPipe) targetId: number) {
+		
+		const userToken: any = socket.handshake.headers.token
+		const { id } = await this.connectionService.getUserFromToken(userToken)
+
+		if (!id)
+			return {success: false, error: 'unAuthorized'}
+		
+		if (!targetId || id === targetId)
+			return {success: false, error: 'invalid target id'}
+		
+		const { success, error } = await this.userService.acceptFriendship(id, targetId)
+
+		if (success === false)
+			return { success, error }
+	
+		const channel = await this.channelService.findDmchannelByMembers(id, targetId)
+		
+		socket.join(channel.id)
+
+		return { success }
+	}
+
 }
