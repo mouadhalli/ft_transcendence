@@ -5,6 +5,7 @@ import { ILike, Like, Repository } from 'typeorm';
 import { UserDto } from 'src/dto/User.dto';
 import { RelationshipEntity, Relationship_State } from './entities/relationship.entity';
 import { ChannelService } from 'src/chat/channel/channel.service';
+import { WsException } from '@nestjs/websockets';
 
 @Injectable()
 export class UserService {
@@ -168,25 +169,24 @@ export class UserService {
 
 	async acceptFriendship(userId: number, friendId: number) {
 
-		console.log('1')
 		if (!await this.findUser(friendId))
-			return {success: false, error: 'cannot find user'}
+			throw new WsException('cannot find user')
 
 		let Relationship = await this.findRelationship(userId, friendId)
 
 		if (!Relationship)
-			return {success: false, error: 'users are not friends'}
+			throw new WsException('users are not friends')
 		if (Relationship.sender.id === userId)
-			return {success: false, error: 'only the receiver can accept the friendship'}
+			throw new WsException('only the receiver can accept the friendship')
 		if (Relationship.state === 'friends')
-			return {success: false, error: 'already friends'}
+			throw new WsException('already friends')
 
 		Relationship.state = Relationship_State.FRIENDS
 		Relationship = await this.relationshipRepository.save(Relationship).catch(error => {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
 		})
 
-		return { success: true }
+		// return { success: true }
 		// return Relationship
 	}
 
@@ -236,12 +236,12 @@ export class UserService {
 		let Friendship = await this.findRelationship(userId, targetId)
 
 		if (Friendship)
-			return {success: false, error: 'User already Friend'}
+			throw new WsException('User already Friend')
 		
 		const receiver = await this.findUser(targetId)
 
 		if (!receiver)
-			return {success: false, error: 'User not found'}
+			throw new WsException('User not found')
 
 		Friendship = this.relationshipRepository.create({sender: user, receiver: receiver})
 		
@@ -249,7 +249,7 @@ export class UserService {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
 		})
 
-		return { success: true, user}
+		// return { success: true, user}
 		// return Friendship
 	}
 
@@ -258,17 +258,18 @@ export class UserService {
 
 		if (relationship) {
 
-			if (relationship.state === 'blocked' && relationship.receiver.id === senderId)
-				return
-			if (relationship.state === 'blocked')
-				return relationship
-
+			if (relationship.state === 'blocked') {
+				let error: string = 'user already blocked'
+				if (relationship.receiver.id === senderId)
+					error = 'you are blocked by this user'
+				throw new WsException(error)
+			}
 			relationship.state = Relationship_State.BLOCKED
 		}
 		else {
 
 			if (!await this.findUser(targetId))
-				throw new BadRequestException("User not found")
+				throw new WsException('user not found')
 
 			relationship = this.relationshipRepository.create({
 				sender: {id: senderId},
@@ -277,9 +278,10 @@ export class UserService {
 			})
 		}
 	
-		return await this.relationshipRepository.save(relationship).catch(error => {
+		await this.relationshipRepository.save(relationship).catch(error => {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
 		})
+		// return { success: true }
 	}
 
 	async findAll(): Promise<UserEntity[]> {

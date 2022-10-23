@@ -36,38 +36,20 @@ export class ChatGateway {
 		@ConnectedSocket() socket: Socket,
 		@MessageBody() { channelId, password }: joinChannelPayload
 	) {
-
-		const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
-		if ( !id )
-			return { success: false, error: "unauthorized" }
-
-		const { success, channelName, error } = await this.chatService.joinChannel(id, channelId, password)
+		try {
+			const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
+			if ( !id )
+				throw new WsException('unauthorized')
 	
-		if (success === false)
-			return { success, error }
+			const channelName: string = await this.chatService.joinChannel(id, channelId, password)
+	
+			socket.join(channelName)
+			return { success: true }
 
-		socket.join(channelName)
-		return { success }
+		} catch (error) {
+			return { success: false, error }
+		}
 	}
-
-	// @SubscribeMessage('join_direct_channel')
-	// async joinDirectChannelEvent(
-	// 	@ConnectedSocket() socket: Socket,
-	// 	@MessageBody() channelId: string
-	// ) {
-
-	// 	const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
-	// 	if ( !id )
-	// 		return { success: false, error: "unauthorized" }
-
-	// 	const {success, error} = await this.chatService.joinDirectChannel(id, channelId)
-
-	// 	if (success === false)
-	// 		return { success, error }
-
-	// 	socket.join(channelId)
-	// 	return { success }
-	// }
 
 	@SubscribeMessage('leave_channel')
 	async leaveChannelEvent(
@@ -75,18 +57,21 @@ export class ChatGateway {
 		@MessageBody('channelId') channelId: string
 	) {
 
-		const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
+		try {
 
-		if ( !id )
-			return { success: false, error: "unauthorized" }
+			const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
+			if ( !id )
+				throw new WsException('unauthorized')
+		
+			const channelName: string = await this.chatService.leaveChannel(id, channelId)
+			
+			socket.leave(channelName)
+			return { success: true }
 
-		const { success, error, channelName } = await this.chatService.leaveChannel(id, channelId)
-	
-		if (success === false)
-			return { success, error }
 
-		socket.leave(channelName)
-		return { success }
+		} catch (error) {
+			return { success: false, error }
+		}
 	}
 
 	@SubscribeMessage('send_message')
@@ -94,42 +79,44 @@ export class ChatGateway {
 		@ConnectedSocket() socket: Socket,
 		@MessageBody() {channelId, content }: sendMsgPayload,
 	) {
-			
-		const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
-		if ( !id )
-			return { success: false, error: "unauthorized" }
-
-		const {success, cause, time, channelName, message} = await this.chatService.sendMessage(id, channelId, content)
-
-		if (success === false) {
-			if (cause === 'kicked') {
-				this.server.to(String(id)).socketsLeave(channelName)
-				return { success, cause }
-			}
-			return {success, cause, time}
-		}
-
-		// Users who blocked current user should not receive his messages
-		const roomSockets = await this.server.in(channelName).fetchSockets()
-
-		for (let i = 0; i < roomSockets.length; i++) {
-			const memberToken = String(roomSockets[i].handshake.headers?.Token)
-			const { id: memberId } = await this.connectionService.getUserFromToken(memberToken)
-			if (!id)
-				continue
-			
-			const isBlockingMe = await this.userService.isUserBlockingMe(id, memberId)
-			const membership = await this.channelService.findMembershipByIds(memberId, channelId)
-
-			if (isBlockingMe === true || (membership && membership.state === 'banned')) {
-				roomSockets[i].join('exceptionRoom')
-			}
-		}
-		// sending the event to all room sockets except those in axceptionRoom
-		socket.to(channelName).except('exceptionRoom').emit('receive_message', message)
-		this.server.socketsLeave('exceptionRoom')
 		
-		return { success } 
+		try {
+			const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
+			if ( !id )
+				throw new WsException('unauthorized')
+		 
+			const {success, error, channelName, message} = await this.chatService.sendMessage(id, channelId, content)
+			if (success === false) {
+				this.server.to(String(id)).socketsLeave(channelName)
+				throw new WsException(error)
+			}
+		
+			// Users who blocked current user should not receive his messages
+			const roomSockets = await this.server.in(channelName).fetchSockets()
+		
+			for (let i = 0; i < roomSockets.length; i++) {
+				const memberToken = String(roomSockets[i].handshake.headers?.Token)
+				const { id: memberId } = await this.connectionService.getUserFromToken(memberToken)
+				if (!id)
+					continue
+					
+				const isBlockingMe = await this.userService.isUserBlockingMe(id, memberId)
+				const membership = await this.channelService.findMembershipByIds(memberId, channelId)
+		
+				if (isBlockingMe === true || (membership && membership.state === 'banned')) {
+					roomSockets[i].join('exceptionRoom')
+				}
+			}
+			// sending the event to all room sockets except those in axceptionRoom
+			socket.to(channelName).except('exceptionRoom').emit('receive_message', message)
+			this.server.socketsLeave('exceptionRoom')
+				
+			return { success: true } 
+
+		} catch (error) {
+			return { success: false, error }
+		}
+
 	}
 
 	@SubscribeMessage('send_direct_message')
@@ -137,18 +124,20 @@ export class ChatGateway {
 		@ConnectedSocket() socket: Socket,
 		@MessageBody() {channelId, content }: sendDirectMsgPayload
 	) {
-		const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
-		if ( !id )
-			return { success: false, error: "unauthorized" }
 
-		const { success, error, message } = await this.chatService.sendDirectMessage(id, channelId, content)
+		try {
+			const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
+			if ( !id )
+				throw new WsException('unauthorized')
 
-		if (success === false)
-			return { success, error }
+			const message = await this.chatService.sendDirectMessage(id, channelId, content)
+	
+			socket.to(channelId).emit('receive_direct_message', message)
+			return { success: true }
 
-		socket.to(channelId).emit('receive_direct_message', message)
-
-		return { success, message }
+		} catch (error) {
+			return { success: false, error }
+		}
 	}
 
 }

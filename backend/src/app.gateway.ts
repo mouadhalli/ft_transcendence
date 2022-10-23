@@ -104,89 +104,122 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 	@SubscribeMessage('user-status')
 	async getUserConnectionStatus(@ConnectedSocket() socket: Socket, @MessageBody(ParseIntPipe) userId: number) {
 
-		const userToken: any = socket.handshake.headers.token
-		const { id } = await this.connectionService.getUserFromToken(userToken)
+		try {
+			const userToken: any = socket.handshake.headers.token
+			const { id } = await this.connectionService.getUserFromToken(userToken)
+	
+			if (!id)
+				throw new WsException('unAuthorized')
+	
+			const userStatus = this.connectionService.getUserConectionStatus(userId)
+	
+			socket.emit('user-status', userStatus)
 
-		if (!id)
-			return {success: false, error: 'unAuthorized'}
+		} catch (error) {
+			return { success: false, error }
+		}
 
-		const userStatus = this.connectionService.getUserConectionStatus(userId)
-
-		socket.emit('user-status', userStatus)
 	}
 
 	@SubscribeMessage('send-friend-request')
 	async sendFriendRequest(@ConnectedSocket() socket: Socket, @MessageBody(ParseIntPipe) targetId: number) {
 
-		const userToken: any = socket.handshake.headers.token
-		const { id } = await this.connectionService.getUserFromToken(userToken)
+		try {
 
-		if (!id)
-			return {success: false, error: 'unAuthorized'}
+			const userToken: any = socket.handshake.headers.token
+			const { id } = await this.connectionService.getUserFromToken(userToken)
+	
+			if (!id)
+				throw new WsException('unAuthorized')
+			
+			if (id === targetId)
+				throw new WsException('invalid target id')
+			
+			await this.userService.addFriend(id, targetId)
+	
+			const channel = await this.channelService.createDmChannel(id, targetId)
+			socket.join(channel.id)
+	
+			socket.to(String(targetId)).emit('update-friends')
+	
+			return { success: true }
 
-		if (!targetId || id === targetId)
-			return {success: false, error: 'invalid target id'}
-		
-		const { success, error, user } = await this.userService.addFriend(id, targetId)
-
-		if (success === false)
-			return { success, error }
-
-		const channel = await this.channelService.createDmChannel(id, targetId)
-		socket.join(channel.id)
-
-		socket.to(String(targetId)).emit('update-requests', user)
-
-		return { success }
+		} catch (error) {
+			return { success: false, error }
+		}
 	}
 
 	@SubscribeMessage('accept-friend-request')
 	async acceptFriendRequest(@ConnectedSocket() socket: Socket, @MessageBody(ParseIntPipe) targetId: number) {
-		
-		const userToken: any = socket.handshake.headers.token
-		const { id } = await this.connectionService.getUserFromToken(userToken)
-
-		if (!id)
-			return {success: false, error: 'unAuthorized'}
-		
-		if (!targetId || id === targetId)
-			return {success: false, error: 'invalid target id'}
-		
-		const { success, error } = await this.userService.acceptFriendship(id, targetId)
-
-		if (success === false)
-			return { success, error }
+		try {
+			const userToken: any = socket.handshake.headers.token
+			const { id } = await this.connectionService.getUserFromToken(userToken)
 	
-		const channel = await this.channelService.findDmchannelByMembers(id, targetId)
+			if (!id)
+				throw new WsException('unAuthorized')
+			
+			if (id === targetId)
+				throw new WsException('invalid target id')
+			
+			await this.userService.acceptFriendship(id, targetId)
 		
-		socket.join(channel.id)
-		socket.to(String(targetId)).emit('', channel)
+			const channel = await this.channelService.findDmchannelByMembers(id, targetId)
+			
+			socket.join(channel.id)
+			socket.to(String(targetId)).emit('update-friends')
+	
+			return { success: true }
 
-		return { success }
+		} catch (error) {
+			return { success: false, error }
+		}
 	}
 
-	@SubscribeMessage('remove-from-friends')
+	@SubscribeMessage('remove-relationship')
 	async removeUserFromFriends(@ConnectedSocket() socket: Socket, @MessageBody(ParseIntPipe) targetId: number) {
 		
-		const userToken: any = socket.handshake.headers.token
-		const { id } = await this.connectionService.getUserFromToken(userToken)
-
-		if (!id)
-			return {success: false, error: 'unAuthorized'}
-		
-		if (!targetId || id === targetId)
-			return {success: false, error: 'invalid target id'}
-		
-		// const { success, error } = await this.userService.acceptFriendship(id, targetId)
-		const { success, error } = await this.channelService.deleteDmChannel(id, targetId)
-
-		if (success === false)
-			return { success, error }
+		try {
+			const userToken: any = socket.handshake.headers.token
+			const { id } = await this.connectionService.getUserFromToken(userToken)
 	
-		
-		socket.to(String(targetId)).emit('')
+			if (!id)
+				throw new WsException('unAuthorized')
+			
+			if (id === targetId)
+				throw new WsException('invalid target id')
+			
+			await this.channelService.deleteDmChannel(id, targetId)
+	
+			socket.to(String(targetId)).emit('update-friends')
+			return { success: true }
 
-		return { success }
+		} catch (error) {
+			return { success: false, error }
+		}
+	}
+
+	@SubscribeMessage('block-user')
+	async blockUser(@ConnectedSocket() socket: Socket, @MessageBody(ParseIntPipe) targetId: number) {
+		
+		try {
+			const userToken: any = socket.handshake.headers.token
+			const { id } = await this.connectionService.getUserFromToken(userToken)
+	
+			if (!id)
+				throw new WsException('unAuthorized')
+			
+			if (id === targetId)
+				throw new WsException('invalid target id')
+			
+			await this.userService.blockUser(id, targetId)
+	
+			socket.to(String(targetId)).emit('update-friends')
+
+			return { success: true }
+
+		} catch (error) {
+			return { success: false, error }
+		}
 	}
 
 }

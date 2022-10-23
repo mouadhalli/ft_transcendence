@@ -540,19 +540,19 @@ export class ChannelService {
     async deleteDmChannel(memberA: number, memberB: number) {
 
         if (!await this.userService.findUser(memberB))
-            return { success: false, error: "user not found" }
+			throw new WsException('user not found')
 
         const relationship = await this.userService.findRelationship(memberA, memberB)
         if (!relationship)
-            return { success: false, error: "relationship not found" }
+			throw new WsException('relationship not found')
 
         const dmChannel = await this.findDmchannelByMembers(memberA, memberB)
         if (!dmChannel)
-            return {success: false, error: 'dm channel not found'}
+			throw new WsException('dm channel not found')
     
         await this.dmRepository.remove(dmChannel)
         await this.userService.removeRelationShip(relationship)
-        return { sucess: true }
+        // return { sucess: true }
     }
 
 }
