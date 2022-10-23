@@ -190,14 +190,23 @@ export class UserService {
 		// return Relationship
 	}
 
-	async removeRelationship(userId: number, targetId: number) {
+	// async removeRelationship(userId: number, targetId: number) {
 
-		let Relationship = await this.findRelationship(userId, targetId)
+	// 	let Relationship = await this.findRelationship(userId, targetId)
 
-		if (!Relationship)
-			throw new BadRequestException("relationship not found")
+	// 	if (!Relationship)
+	// 		return { success: false, error: "users are not friends" }
+	// 		// throw new BadRequestException("relationship not found")
 		
-		await this.relationshipRepository.remove(Relationship).catch((error) => {
+	// 	await this.relationshipRepository.remove(Relationship).catch((error) => {
+	// 		throw new InternalServerErrorException(error.message)
+	// 	})
+
+	// 	return { success: true }
+	// }
+
+	async removeRelationShip(relationship: RelationshipEntity) {
+		await this.relationshipRepository.remove(relationship).catch((error) => {
 			throw new InternalServerErrorException(error.message)
 		})
 	}
@@ -240,7 +249,7 @@ export class UserService {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
 		})
 
-		return { success: true }
+		return { success: true, user}
 		// return Friendship
 	}
 

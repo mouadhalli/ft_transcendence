@@ -127,13 +127,15 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 		if (!targetId || id === targetId)
 			return {success: false, error: 'invalid target id'}
 		
-		const { success, error } = await this.userService.addFriend(id, targetId)
+		const { success, error, user } = await this.userService.addFriend(id, targetId)
 
 		if (success === false)
 			return { success, error }
 
 		const channel = await this.channelService.createDmChannel(id, targetId)
 		socket.join(channel.id)
+
+		socket.to(String(targetId)).emit('update-requests', user)
 
 		return { success }
 	}
@@ -158,6 +160,31 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 		const channel = await this.channelService.findDmchannelByMembers(id, targetId)
 		
 		socket.join(channel.id)
+		socket.to(String(targetId)).emit('', channel)
+
+		return { success }
+	}
+
+	@SubscribeMessage('remove-from-friends')
+	async removeUserFromFriends(@ConnectedSocket() socket: Socket, @MessageBody(ParseIntPipe) targetId: number) {
+		
+		const userToken: any = socket.handshake.headers.token
+		const { id } = await this.connectionService.getUserFromToken(userToken)
+
+		if (!id)
+			return {success: false, error: 'unAuthorized'}
+		
+		if (!targetId || id === targetId)
+			return {success: false, error: 'invalid target id'}
+		
+		// const { success, error } = await this.userService.acceptFriendship(id, targetId)
+		const { success, error } = await this.channelService.deleteDmChannel(id, targetId)
+
+		if (success === false)
+			return { success, error }
+	
+		
+		socket.to(String(targetId)).emit('')
 
 		return { success }
 	}

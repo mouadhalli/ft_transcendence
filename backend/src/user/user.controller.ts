@@ -49,17 +49,17 @@ export class UserController {
 	// 		return "friend Request accepted"
 	// }
 
-	@Post('remove-friend')
-	@UseGuards(JwtAuthGuard)
-	@HttpCode(201)
-	async removeFromFriends(
-		@User('id') userId: number,
-		@Body('target_id', ParseIntPipe) friendId: number ) {
-			if (userId === friendId)
-				throw new BadRequestException("invalid friend id")
-			await this.userService.removeRelationship(userId, friendId)
-			return "friendship removed"
-	}
+	// @Post('remove-friend')
+	// @UseGuards(JwtAuthGuard)
+	// @HttpCode(201)
+	// async removeFromFriends(
+	// 	@User('id') userId: number,
+	// 	@Body('target_id', ParseIntPipe) friendId: number ) {
+	// 		if (userId === friendId)
+	// 			throw new BadRequestException("invalid friend id")
+	// 		await this.userService.removeRelationship(userId, friendId)
+	// 		return "friendship removed"
+	// }
 
 	@Post('block-user')
 	@UseGuards(JwtAuthGuard)
@@ -73,17 +73,17 @@ export class UserController {
 			return "user blocked"
 	}
 
-	@Post('unblock-user')
-	@UseGuards(JwtAuthGuard)
-	@HttpCode(201)
-	async unblock(
-		@User('id') userId: number,
-		@Body('target_id', ParseIntPipe) friendId: number ) {
-			if (userId === friendId)
-				throw new BadRequestException("invalid friend id")
-			await this.userService.removeRelationship(userId, friendId)
-			return "user unblocked"
-	}
+	// @Post('unblock-user')
+	// @UseGuards(JwtAuthGuard)
+	// @HttpCode(201)
+	// async unblock(
+	// 	@User('id') userId: number,
+	// 	@Body('target_id', ParseIntPipe) friendId: number ) {
+	// 		if (userId === friendId)
+	// 			throw new BadRequestException("invalid friend id")
+	// 		await this.userService.removeRelationship(userId, friendId)
+	// 		return "user unblocked"
+	// }
 
 	@Get('friends')
 	@UseGuards(JwtAuthGuard)

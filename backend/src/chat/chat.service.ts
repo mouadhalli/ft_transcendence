@@ -38,25 +38,26 @@ export class ChatService {
                 return { success: true, channelName: channel.name }
             return {success: false, error: "already a member"}
         }
-        if (channel.type !== 'public') {
-            if (channel.type === 'private')
-                return {success: false, error: "you can't join a private channel"}
-            if ( password && (!await bcrypt.compare(password, channel.password)))
-                    return {success: false, error: "incorrect password"}
-            return {success: false, error: "password is required"}
+        if (channel.type === 'private')
+            return {success: false, error: "you can't join a private channel"}
+        if (channel.type === 'protected') {
+            if (!password)
+                return {success: false, error: "password is required"}
+            if (!await bcrypt.compare(password, channel.password))
+                return {success: false, error: "incorrect password"}
         }
         await this.channelService.createMembership(member, channel, Channel_Member_Role.MEMBER)
         return {success: true, channelName: channel.name}
     }
 
-    async joinDirectChannel(userId: number, channelId: string) {
+    // async joinDirectChannel(userId: number, channelId: string) {
 
-        const channel = await this.channelService.findUserDmchannel(userId, channelId)
+    //     const channel = await this.channelService.findUserDmchannel(userId, channelId)
 
-        if (!channel)
-            return {success: false, error: "ressources not found"}
-        return {success: true}
-    }
+    //     if (!channel)
+    //         return {success: false, error: "ressources not found"}
+    //     return {success: true}
+    // }
 
     async leaveChannel(userId: number, channelId: string) {
         const member: UserDto = await this.userService.findUser(userId)
@@ -112,7 +113,6 @@ export class ChatService {
             channel.memberB.id : channel.memberA.id
         
         const relationship = await this.userService.findRelationship(userId, receiverId)
-
 
         if (!relationship || relationship.state !== 'friends')
             return {success: false, error: "you can only dm your friends" }

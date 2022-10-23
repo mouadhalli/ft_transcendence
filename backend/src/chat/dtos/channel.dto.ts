@@ -8,7 +8,7 @@ import {PartialType} from '@nestjs/swagger'
 
 export class ChannelDto {
 
-    @IsUUID()
+    // @IsUUID()
     id: string
 
     @IsNotEmpty()

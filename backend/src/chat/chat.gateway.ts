@@ -50,7 +50,7 @@ export class ChatGateway {
 		return { success }
 	}
 
-	// @SubscribeMessage('join_channel')
+	// @SubscribeMessage('join_direct_channel')
 	// async joinDirectChannelEvent(
 	// 	@ConnectedSocket() socket: Socket,
 	// 	@MessageBody() channelId: string

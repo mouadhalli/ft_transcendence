@@ -32,8 +32,8 @@ export class ChannelService {
         if (!channel)
             throw new BadRequestException('channel not found')
         
-        if (channel.type === 'direct')
-            throw new BadRequestException('cannot add members to a direct channel')
+        // if (channel.type === 'direct')
+        //     throw new BadRequestException('cannot add members to a direct channel')
 
         if (!await this.findMembership(user, channel))
             throw new BadRequestException(`${user.displayName} is not a member of this channel`)
@@ -108,7 +108,7 @@ export class ChannelService {
 
             if (!channel)
                 throw new BadRequestException("channel not found")
-            if (channel.type === "private" || channel.type === "direct")
+            if (channel.type === "private")
                 return channel
             if (channel.type === "protected" && channel.password)
                 channel.password = null
@@ -126,7 +126,7 @@ export class ChannelService {
 
             if (!channel)
                 throw new BadRequestException("channel not found")
-            if (channel.type === "public" || channel.type === "direct")
+            if (channel.type === "public")
                 return channel
             channel.password = null
             channel.type = Channel_Type.PUBLIC
@@ -144,9 +144,6 @@ export class ChannelService {
 
             if (!channel)
                 throw new BadRequestException("channel not found")
-            if (channel.type === "protected" || channel.type === "direct")
-                return channel
-    
             channel.password = await bcrypt.hash(password, 10);
             channel.type = Channel_Type.PROTECTED
 
@@ -498,12 +495,28 @@ export class ChannelService {
     }
 
     async findUserDmChannels(userId: number) {
-        return await this.dmRepository.find({
+        const dms = await this.dmRepository.find({
+            relations: {
+                memberA: true,
+                memberB: true
+                // memberA: { id: true, displayName: true, imgPath: true },
+                // memberB: { id: true, displayName: true, imgPath: true }
+            },
             where: [
                 {memberA: {id: userId}},
                 {memberB: {id: userId}},
             ]
         })
+
+        return dms.map(dm => {
+            const { id, memberA, memberB } = dm
+
+            if (memberA.id === userId)
+                return { id, memberB }
+            return { id, memberA }
+
+        })
+
     }
 
     async findUserDmchannel(userId: number, channelId: string) {
@@ -522,6 +535,24 @@ export class ChannelService {
                 {memberA: { id: memberB }, memberB: { id: memberA }},
             ]
         })
+    }
+
+    async deleteDmChannel(memberA: number, memberB: number) {
+
+        if (!await this.userService.findUser(memberB))
+            return { success: false, error: "user not found" }
+
+        const relationship = await this.userService.findRelationship(memberA, memberB)
+        if (!relationship)
+            return { success: false, error: "relationship not found" }
+
+        const dmChannel = await this.findDmchannelByMembers(memberA, memberB)
+        if (!dmChannel)
+            return {success: false, error: 'dm channel not found'}
+    
+        await this.dmRepository.remove(dmChannel)
+        await this.userService.removeRelationShip(relationship)
+        return { sucess: true }
     }
 
 }
