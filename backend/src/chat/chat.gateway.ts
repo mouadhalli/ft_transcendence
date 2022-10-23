@@ -37,9 +37,7 @@ export class ChatGateway {
 		@MessageBody() { channelId, password }: joinChannelPayload
 	) {
 		try {
-			const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
-			if ( !id )
-				throw new WsException('unauthorized')
+			const { id } = await this.connectionService.authenticateSocket(socket)
 	
 			const channelName: string = await this.chatService.joinChannel(id, channelId, password)
 	
@@ -59,9 +57,7 @@ export class ChatGateway {
 
 		try {
 
-			const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
-			if ( !id )
-				throw new WsException('unauthorized')
+			const { id } = await this.connectionService.authenticateSocket(socket)
 		
 			const channelName: string = await this.chatService.leaveChannel(id, channelId)
 			
@@ -81,9 +77,7 @@ export class ChatGateway {
 	) {
 		
 		try {
-			const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
-			if ( !id )
-				throw new WsException('unauthorized')
+			const { id } = await this.connectionService.authenticateSocket(socket)
 		 
 			const {success, error, channelName, message} = await this.chatService.sendMessage(id, channelId, content)
 			if (success === false) {
@@ -126,9 +120,7 @@ export class ChatGateway {
 	) {
 
 		try {
-			const { id } = await this.connectionService.getUserFromToken(String(socket.handshake.headers?.token))
-			if ( !id )
-				throw new WsException('unauthorized')
+			const { id } = await this.connectionService.authenticateSocket(socket)
 
 			const message = await this.chatService.sendDirectMessage(id, channelId, content)
 	

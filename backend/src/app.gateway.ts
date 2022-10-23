@@ -41,11 +41,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 
 			this.logger.log(socket.id + ' connected')
 
-			const userToken: string = String(socket.handshake.headers.token)
-			const { id } = await this.connectionService.getUserFromToken(userToken)
-
-			if (!id)
-				throw new WsException('unAuthorized')
+			const { id } = await this.connectionService.authenticateSocket(socket)
 
 			this.connectionService.saveUserSocketConnection(socket.id, id)
 
@@ -67,11 +63,8 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 	async handleDisconnect(socket: Socket) {
 		try {
 			this.logger.log(socket.id + ' disconnected')
-			const userToken: any = socket.handshake.headers.token
-			const { id } = await this.connectionService.getUserFromToken(userToken)
-
-			if (!id)
-				throw new WsException('invalid access token')
+		
+			const { id } = await this.connectionService.authenticateSocket(socket)
 
 			this.connectionService.removeUserSocketConnection(id, socket.id)
 			socket.leave(String(id))
@@ -85,11 +78,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 	@SubscribeMessage('logout')
 	async logoutSocket(@ConnectedSocket() socket: Socket) {
 		try {
-			const userToken: any = socket.handshake.headers.token
-			const { id } = await this.connectionService.getUserFromToken(userToken)
-
-			if (!id)
-				throw new WsException('unAuthorized')
+			const { id } = await this.connectionService.authenticateSocket(socket)
 
 			this.connectionService.removeUserConnection(id)
 			this.server.to(String(id)).disconnectSockets()
@@ -105,11 +94,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 	async getUserConnectionStatus(@ConnectedSocket() socket: Socket, @MessageBody(ParseIntPipe) userId: number) {
 
 		try {
-			const userToken: any = socket.handshake.headers.token
-			const { id } = await this.connectionService.getUserFromToken(userToken)
-	
-			if (!id)
-				throw new WsException('unAuthorized')
+			const { id } = await this.connectionService.authenticateSocket(socket)
 	
 			const userStatus = this.connectionService.getUserConectionStatus(userId)
 	
@@ -126,11 +111,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 
 		try {
 
-			const userToken: any = socket.handshake.headers.token
-			const { id } = await this.connectionService.getUserFromToken(userToken)
-	
-			if (!id)
-				throw new WsException('unAuthorized')
+			const { id } = await this.connectionService.authenticateSocket(socket)
 			
 			if (id === targetId)
 				throw new WsException('invalid target id')
@@ -152,11 +133,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 	@SubscribeMessage('accept-friend-request')
 	async acceptFriendRequest(@ConnectedSocket() socket: Socket, @MessageBody(ParseIntPipe) targetId: number) {
 		try {
-			const userToken: any = socket.handshake.headers.token
-			const { id } = await this.connectionService.getUserFromToken(userToken)
-	
-			if (!id)
-				throw new WsException('unAuthorized')
+			const { id } = await this.connectionService.authenticateSocket(socket)
 			
 			if (id === targetId)
 				throw new WsException('invalid target id')
@@ -179,11 +156,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 	async removeUserFromFriends(@ConnectedSocket() socket: Socket, @MessageBody(ParseIntPipe) targetId: number) {
 		
 		try {
-			const userToken: any = socket.handshake.headers.token
-			const { id } = await this.connectionService.getUserFromToken(userToken)
-	
-			if (!id)
-				throw new WsException('unAuthorized')
+			const { id } = await this.connectionService.authenticateSocket(socket)
 			
 			if (id === targetId)
 				throw new WsException('invalid target id')
@@ -202,11 +175,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 	async blockUser(@ConnectedSocket() socket: Socket, @MessageBody(ParseIntPipe) targetId: number) {
 		
 		try {
-			const userToken: any = socket.handshake.headers.token
-			const { id } = await this.connectionService.getUserFromToken(userToken)
-	
-			if (!id)
-				throw new WsException('unAuthorized')
+			const { id } = await this.connectionService.authenticateSocket(socket)
 			
 			if (id === targetId)
 				throw new WsException('invalid target id')
