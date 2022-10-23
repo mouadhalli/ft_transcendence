@@ -30,23 +30,22 @@ export class ChatService {
         const channel: ChannelDto = await this.channelService.findChannelWithPassword(channelId)
         const membership: MembershipDto = await this.channelService.findMembership(member, channel)
         if (!member || !channel)
-            return {success: false, error: "ressources not found"}
-        // when someone create a channel i make an owner membership for him right away
-        // this condition prevent creating a new membership for the owner
+				throw new WsException('ressources not found')
         if (membership) {
             if (membership.role === 'owner')
-                return { success: true, channelName: channel.name }
-            return {success: false, error: "already a member"}
+                return channel.name
+			throw new WsException('already a member')
         }
-        if (channel.type !== 'public') {
-            if (channel.type === 'private')
-                return {success: false, error: "you can't join a private channel"}
-            if ( password && (!await bcrypt.compare(password, channel.password)))
-                    return {success: false, error: "incorrect password"}
-            return {success: false, error: "password is required"}
+        if (channel.type === 'private')
+			throw new WsException("you can't join a private channel")
+        if (channel.type === 'protected') {
+            if (!password)
+			    throw new WsException('password is required')
+            if (!await bcrypt.compare(password, channel.password))
+			    throw new WsException('incorrect password')
         }
         await this.channelService.createMembership(member, channel, Channel_Member_Role.MEMBER)
-        return {success: true, channelName: channel.name}
+        return channel.name
     }
 
     async leaveChannel(userId: number, channelId: string) {
@@ -55,14 +54,14 @@ export class ChatService {
         const membership: MembershipDto = await this.channelService.findMembership(member, channel)
 
         if (!member || !channel || !membership)
-            return { success: false, error: 'ressource not found' }
+			throw new WsException('ressource not found')
 
         await this.channelService.deleteMembership(member, channel)
 
         if (membership.role === 'owner')
             await this.channelService.changeChannelOwner(channel.id)
 
-        return {success: true, channelName: channel.name}
+        return channel.name
     }
 
     async sendMessage(userId: number, channelId: string, msgContent: string) {
@@ -71,14 +70,14 @@ export class ChatService {
         const membership: MembershipDto = await this.channelService.findMembership(author, channel)
 
         if (!author || !channel)
-            return { success: false, cause: "ressources not found" }
-        
+			throw new WsException('ressources not found')
+
         if (!membership)
-            return { success: false, cause: "kicked", channelName: channel.name }
+            return { success: false, error: "kicked", channelName: channel.name }
 
         if (membership.state !== 'active') {
             if (membership.restricitonEnd.getTime() > Date.now())
-                return {success: false, cause: membership.state, time: membership.restricitonEnd.getTime() - Date.now(), channelName: channel.name}
+                throw new WsException(membership.state + ' for ' + String(membership.restricitonEnd.getTime() - Date.now()) + ' ms')
             this.channelService.removeRestrictionOnChannelMember(channelId, userId)
         }
 
@@ -97,13 +96,15 @@ export class ChatService {
         const channel = await this.channelService.findDmChannel(channelId)
 
         if (!author || !channel)
-            return {success: false, error: "ressources not found" }
+			throw new WsException('ressources not found')
+
+        const receiverId = userId === channel.memberA.id ?
+            channel.memberB.id : channel.memberA.id
         
-        const receiverId = userId === channel.memberA.id ? userId : channel.memberB.id
         const relationship = await this.userService.findRelationship(userId, receiverId)
 
         if (!relationship || relationship.state !== 'friends')
-            return {success: false, error: "you can only dm your friends" }
+			throw new WsException('you can only dm your friends"')
 
         const message = await this.messageService.saveDirectMessage(
             author,
@@ -111,6 +112,6 @@ export class ChatService {
             content
         )
 
-        return { success: true, message, receiverId}
+        return message
     }
 }

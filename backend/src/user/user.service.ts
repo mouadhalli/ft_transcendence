@@ -5,6 +5,7 @@ import { ILike, Like, Repository } from 'typeorm';
 import { UserDto } from 'src/dto/User.dto';
 import { RelationshipEntity, Relationship_State } from './entities/relationship.entity';
 import { ChannelService } from 'src/chat/channel/channel.service';
+import { WsException } from '@nestjs/websockets';
 
 @Injectable()
 export class UserService {
@@ -144,58 +145,112 @@ export class UserService {
 	// 	return Relationship
 	// }
 
+	// async acceptFriendship(userId: number, friendId: number) {
+
+	// 	if (!await this.findUser(friendId))
+	// 		throw new BadRequestException('cannot find user')
+
+	// 	let Relationship = await this.findRelationship(userId, friendId)
+
+	// 	if (!Relationship)
+	// 		throw new BadRequestException("users are not friends")
+	// 	if (Relationship.sender.id === userId)
+	// 		throw new BadRequestException("only the receiver can accept the friendship")
+	// 	if (Relationship.state === 'friends')
+	// 		return Relationship
+
+	// 	Relationship.state = Relationship_State.FRIENDS
+	// 	Relationship = await this.relationshipRepository.save(Relationship).catch(error => {
+	// 		throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+	// 	})
+
+	// 	return Relationship
+	// }
+
 	async acceptFriendship(userId: number, friendId: number) {
 
 		if (!await this.findUser(friendId))
-			throw new BadRequestException('cannot find user')
+			throw new WsException('cannot find user')
 
 		let Relationship = await this.findRelationship(userId, friendId)
 
 		if (!Relationship)
-			throw new BadRequestException("users are not friends")
+			throw new WsException('users are not friends')
 		if (Relationship.sender.id === userId)
-			throw new BadRequestException("only the receiver can accept the friendship")
+			throw new WsException('only the receiver can accept the friendship')
 		if (Relationship.state === 'friends')
-			return Relationship
+			throw new WsException('already friends')
 
 		Relationship.state = Relationship_State.FRIENDS
 		Relationship = await this.relationshipRepository.save(Relationship).catch(error => {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
 		})
 
-		return Relationship
+		// return { success: true }
+		// return Relationship
 	}
 
-	async removeRelationship(userId: number, targetId: number) {
+	// async removeRelationship(userId: number, targetId: number) {
 
-		let Relationship = await this.findRelationship(userId, targetId)
+	// 	let Relationship = await this.findRelationship(userId, targetId)
 
-		if (!Relationship)
-			throw new BadRequestException("relationship not found")
+	// 	if (!Relationship)
+	// 		return { success: false, error: "users are not friends" }
+	// 		// throw new BadRequestException("relationship not found")
 		
-		await this.relationshipRepository.remove(Relationship).catch((error) => {
+	// 	await this.relationshipRepository.remove(Relationship).catch((error) => {
+	// 		throw new InternalServerErrorException(error.message)
+	// 	})
+
+	// 	return { success: true }
+	// }
+
+	async removeRelationShip(relationship: RelationshipEntity) {
+		await this.relationshipRepository.remove(relationship).catch((error) => {
 			throw new InternalServerErrorException(error.message)
 		})
 	}
 
-	async addFriend(user: UserDto, targetId: number) {
-		let Friendship = await this.findRelationship(user.id, targetId)
+	// async addFriend(user: UserDto, targetId: number) {
+	// 	let Friendship = await this.findRelationship(user.id, targetId)
+
+	// 	if (Friendship)
+	// 		throw new BadRequestException("User already Friend")
+		
+	// 	const receiver = await this.findUser(targetId)
+
+	// 	if (!receiver)
+	// 		throw new BadRequestException("User not found")
+
+	// 	Friendship = this.relationshipRepository.create({sender: user, receiver: receiver})
+		
+	// 	Friendship = await this.relationshipRepository.save(Friendship).catch(error => {
+	// 		throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+	// 	})
+		
+	// 	return Friendship
+	// }
+
+	async addFriend(userId: number, targetId: number) {
+		const user: UserDto = await this.findUser(userId)
+		let Friendship = await this.findRelationship(userId, targetId)
 
 		if (Friendship)
-			throw new BadRequestException("User already Friend")
+			throw new WsException('User already Friend')
 		
 		const receiver = await this.findUser(targetId)
 
 		if (!receiver)
-			throw new BadRequestException("User not found")
+			throw new WsException('User not found')
 
 		Friendship = this.relationshipRepository.create({sender: user, receiver: receiver})
 		
 		Friendship = await this.relationshipRepository.save(Friendship).catch(error => {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
 		})
-		
-		return Friendship
+
+		// return { success: true, user}
+		// return Friendship
 	}
 
 	async blockUser(senderId: number, targetId: number) {
@@ -203,17 +258,18 @@ export class UserService {
 
 		if (relationship) {
 
-			if (relationship.state === 'blocked' && relationship.receiver.id === senderId)
-				return
-			if (relationship.state === 'blocked')
-				return relationship
-
+			if (relationship.state === 'blocked') {
+				let error: string = 'user already blocked'
+				if (relationship.receiver.id === senderId)
+					error = 'you are blocked by this user'
+				throw new WsException(error)
+			}
 			relationship.state = Relationship_State.BLOCKED
 		}
 		else {
 
 			if (!await this.findUser(targetId))
-				throw new BadRequestException("User not found")
+				throw new WsException('user not found')
 
 			relationship = this.relationshipRepository.create({
 				sender: {id: senderId},
@@ -222,9 +278,10 @@ export class UserService {
 			})
 		}
 	
-		return await this.relationshipRepository.save(relationship).catch(error => {
+		await this.relationshipRepository.save(relationship).catch(error => {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
 		})
+		// return { success: true }
 	}
 
 	async findAll(): Promise<UserEntity[]> {
@@ -280,7 +337,7 @@ export class UserService {
 	}
 
 	async set2faState(userId: number, state: boolean) {
-		let user = await this.findUser( userId )
+		let user = await this.findUserWithAuthData( userId )
 		if (!user)
 			throw new HttpException('user not found', HttpStatus.NOT_FOUND)
 		user.is2faEnabled = state

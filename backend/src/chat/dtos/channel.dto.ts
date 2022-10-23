@@ -8,26 +8,17 @@ import {PartialType} from '@nestjs/swagger'
 
 export class ChannelDto {
 
-    @IsUUID()
+    // @IsUUID()
     id: string
 
     @IsNotEmpty()
-    // @IsString()
     @IsAlphanumeric()
     name: string
 
     @IsOptional()
     @IsNotEmpty()
-    // @IsString()
     @IsAlphanumeric()
     password?: string
-
-    // @IsOptional()
-    // @IsNotEmpty()
-    // @IsUrl() // also handles IsString case
-    // imgPath: string
-    // @IsNumber()
-    // membersCount: number
 
     @IsNotEmpty()
     @IsString()

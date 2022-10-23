@@ -8,7 +8,7 @@ export enum Channel_Type {
     PRIVATE = 'private',    // private groupe channel accessible on invite only
     PUBLIC = 'public',      // public  groupe channel without a password
     PROTECTED = 'protected', // public groupe channel protected with a password
-    DIRECT = 'direct'        // this type of channels isn't done yet
+    // DIRECT = 'direct'        // this type of channels isn't done yet
 }
 
 @Entity('channel_table')

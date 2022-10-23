@@ -81,6 +81,13 @@ export class ChannelController {
         return await this.channelService.findJoinedChannels(userId)
     }
 
+    @Get('dms')
+    @UseGuards(JwtAuthGuard)
+	@HttpCode(200)
+    async getDirectChannels(@User('id') userId: number) {
+        return await this.channelService.findUserDmChannels(userId)
+    }
+
     @Get('non-joined')
     @UseGuards(JwtAuthGuard)
 	@HttpCode(200)

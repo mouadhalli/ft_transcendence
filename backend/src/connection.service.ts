@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { UserDto } from './dto/User.dto';
 import { AuthService } from './auth/auth.service';
+import { Socket } from 'socket.io'
+import { WsException } from '@nestjs/websockets';
 
 export enum ConnectionStatus {
 	ONLINE = 'online',
@@ -20,7 +22,7 @@ export class GatewayConnectionService {
 		private authservice: AuthService,
 	) {}
 
-	private ConnectedSockets = new Map<number, Connection>();
+	private ConnectedSockets: Map<number, Connection> = new Map<number, Connection>();
 
     async getUserFromToken(userToken: string) {
 		const user: UserDto =  await this.authservice.verifyTokenAndExtractUser(userToken)
@@ -28,6 +30,15 @@ export class GatewayConnectionService {
 			return { id: -1 }
 		return user
     }
+
+	async authenticateSocket(socket: Socket) {
+		const userToken: string = String(socket.handshake.headers.token)
+		const user = await this.getUserFromToken(userToken)
+
+		if (!user.id)
+			throw new WsException('unAuthorized')
+		return user
+	}
 
 	getUserConectionStatus(userId: number) {
 

@@ -28,7 +28,7 @@ export class AuthService {
         let user: UserEntity
         let redirectUrl: string
         let twofaStatus: twoFactorState = twoFactorState.NOT_ACTIVE
-        user = await this.userService.findUser(userData.id)
+        user = await this.userService.findUserWithAuthData(userData.id)
         if (!user) { // first auth -> save user then redirect him to chose a displayName && 2fa state
             user = await this.userService.saveUser(userData)
             redirectUrl = "http://localhost:8080/register"
