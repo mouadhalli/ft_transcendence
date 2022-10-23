@@ -101,7 +101,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			socket.emit('user-status', userStatus)
 
 		} catch (error) {
-			return { success: false, error }
+			return { success: false, error: error.error }
 		}
 
 	}
@@ -126,7 +126,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			return { success: true }
 
 		} catch (error) {
-			return { success: false, error }
+			return { success: false, error: error.error }
 		}
 	}
 
@@ -148,7 +148,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			return { success: true }
 
 		} catch (error) {
-			return { success: false, error }
+			return { success: false, error: error.error }
 		}
 	}
 
@@ -167,7 +167,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			return { success: true }
 
 		} catch (error) {
-			return { success: false, error }
+			return { success: false, error: error.error }
 		}
 	}
 
@@ -187,7 +187,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			return { success: true }
 
 		} catch (error) {
-			return { success: false, error }
+			return { success: false, error: error.error }
 		}
 	}
 

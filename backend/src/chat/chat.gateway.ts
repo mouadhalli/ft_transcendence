@@ -38,14 +38,12 @@ export class ChatGateway {
 	) {
 		try {
 			const { id } = await this.connectionService.authenticateSocket(socket)
-	
 			const channelName: string = await this.chatService.joinChannel(id, channelId, password)
-	
 			socket.join(channelName)
 			return { success: true }
 
 		} catch (error) {
-			return { success: false, error }
+			return { success: false, error: error?.error }
 		}
 	}
 
@@ -56,17 +54,14 @@ export class ChatGateway {
 	) {
 
 		try {
-
 			const { id } = await this.connectionService.authenticateSocket(socket)
-		
 			const channelName: string = await this.chatService.leaveChannel(id, channelId)
-			
 			socket.leave(channelName)
 			return { success: true }
 
 
 		} catch (error) {
-			return { success: false, error }
+			return { success: false, error: error?.error }
 		}
 	}
 
@@ -108,7 +103,7 @@ export class ChatGateway {
 			return { success: true } 
 
 		} catch (error) {
-			return { success: false, error }
+			return { success: false, error: error?.error }
 		}
 
 	}
@@ -118,17 +113,14 @@ export class ChatGateway {
 		@ConnectedSocket() socket: Socket,
 		@MessageBody() {channelId, content }: sendDirectMsgPayload
 	) {
-
 		try {
 			const { id } = await this.connectionService.authenticateSocket(socket)
-
 			const message = await this.chatService.sendDirectMessage(id, channelId, content)
-	
 			socket.to(channelId).emit('receive_direct_message', message)
 			return { success: true }
 
 		} catch (error) {
-			return { success: false, error }
+			return { success: false, error: error?.error }
 		}
 	}
 
