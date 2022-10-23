@@ -61,17 +61,17 @@ export class UserController {
 	// 		return "friendship removed"
 	// }
 
-	@Post('block-user')
-	@UseGuards(JwtAuthGuard)
-	@HttpCode(201)
-	async BlockUser(
-		@User('id') userId: number,
-		@Body('target_id', ParseIntPipe) friendId: number ) {
-			if (userId === friendId)
-				throw new BadRequestException("invalid friend id")
-			await this.userService.blockUser(userId, friendId)
-			return "user blocked"
-	}
+	// @Post('block-user')
+	// @UseGuards(JwtAuthGuard)
+	// @HttpCode(201)
+	// async BlockUser(
+	// 	@User('id') userId: number,
+	// 	@Body('target_id', ParseIntPipe) friendId: number ) {
+	// 		if (userId === friendId)
+	// 			throw new BadRequestException("invalid friend id")
+	// 		await this.userService.blockUser(userId, friendId)
+	// 		return "user blocked"
+	// }
 
 	// @Post('unblock-user')
 	// @UseGuards(JwtAuthGuard)

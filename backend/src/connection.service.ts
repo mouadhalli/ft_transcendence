@@ -22,7 +22,7 @@ export class GatewayConnectionService {
 		private authservice: AuthService,
 	) {}
 
-	private ConnectedSockets = new Map<number, Connection>();
+	private ConnectedSockets: Map<number, Connection> = new Map<number, Connection>();
 
     async getUserFromToken(userToken: string) {
 		const user: UserDto =  await this.authservice.verifyTokenAndExtractUser(userToken)

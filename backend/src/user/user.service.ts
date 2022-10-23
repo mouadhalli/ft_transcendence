@@ -337,7 +337,7 @@ export class UserService {
 	}
 
 	async set2faState(userId: number, state: boolean) {
-		let user = await this.findUser( userId )
+		let user = await this.findUserWithAuthData( userId )
 		if (!user)
 			throw new HttpException('user not found', HttpStatus.NOT_FOUND)
 		user.is2faEnabled = state
