@@ -23,10 +23,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(jwtPayload: any) {
     const user: UserEntity = await this.userService.findUserWithAuthData(jwtPayload.id)
 
-    if (user) {
-      console.log("user: 2fa state -> ", user.is2faEnabled)
-      console.log("jwt : 2fa state -> ", jwtPayload.twofaState)
-    }
+    // if (user) {
+    //   console.log("user: 2fa state -> ", user.is2faEnabled)
+    //   console.log("jwt : 2fa state -> ", jwtPayload.twofaState)
+    // }
   
     if ( !user ||
       ( user.is2faEnabled && (jwtPayload.twofaState === "not_confirmed" || jwtPayload.twofaState === "not_active" )) )

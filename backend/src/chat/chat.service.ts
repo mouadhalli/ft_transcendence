@@ -98,13 +98,14 @@ export class ChatService {
         if (!author || !channel)
 			throw new WsException('ressources not found')
 
-        const receiverId = userId === channel.memberA.id ?
-            channel.memberB.id : channel.memberA.id
-        
-        const relationship = await this.userService.findRelationship(userId, receiverId)
+        // const { relationship } = channel
 
-        if (!relationship || relationship.state !== 'friends')
-			throw new WsException('you can only dm your friends"')
+        // const receiverId = userId === relationship.sender.id ? relationship.receiver.id :
+        //                                 relationship.sender.id        
+        // const relationship = await this.userService.findRelationship(userId, receiverId)
+
+        // if (!relationship || relationship.state !== 'friends')
+		// 	throw new WsException('you can only dm your friends"')
 
         const message = await this.messageService.saveDirectMessage(
             author,

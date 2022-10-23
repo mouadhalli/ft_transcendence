@@ -109,12 +109,13 @@ export class UserService {
 				],
 				skip: skip,
 				take: take,
-				relations: ['sender', 'receiver'],
+				relations: ['sender', 'receiver', 'dm'],
 			}
 		)
 		return result.map(relationship => {
-				const {sender, receiver} = relationship
-				return sender.id !== userId ? sender : receiver
+			const {sender, receiver, dm} = relationship
+			const friend: UserDto = sender.id !== userId ? sender : receiver
+			return { friend, dmId: dm.id}
 		})
 	}
 
@@ -235,8 +236,11 @@ export class UserService {
 		const user: UserDto = await this.findUser(userId)
 		let Friendship = await this.findRelationship(userId, targetId)
 
-		if (Friendship)
-			throw new WsException('User already Friend')
+		if (Friendship) {
+			if (Friendship.state === 'friends')
+				throw new WsException('User already Friend')
+			throw new WsException('an invitation already sent')
+		}
 		
 		const receiver = await this.findUser(targetId)
 

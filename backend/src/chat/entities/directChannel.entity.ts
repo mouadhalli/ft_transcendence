@@ -3,6 +3,7 @@ import { AfterUpdate, BeforeUpdate, Column, Entity, JoinColumn, JoinTable, ManyT
 import { RelationCountAttribute } from "typeorm/query-builder/relation-count/RelationCountAttribute"
 import { ChannelMembershipEntity } from "./channelMember.entity"
 import { MessageEntity } from "./message.entity"
+import { RelationshipEntity } from '../../user/entities/relationship.entity'
 
 @Entity('direct_channel_table')
 export class DirectChannelEntity {
@@ -10,18 +11,24 @@ export class DirectChannelEntity {
     @PrimaryGeneratedColumn('uuid')
     id: string
 
-    @ManyToOne(() => UserEntity, {
+    @OneToOne(() => RelationshipEntity, (relationship) => relationship.dm, {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
     })
-    @JoinTable()
-    memberA: UserEntity
+    relationship: RelationshipEntity
 
-    @ManyToOne(() => UserEntity, {
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
-    })
-    @JoinTable()
-    memberB: UserEntity
+    // @ManyToOne(() => UserEntity, {
+    //     onDelete: 'CASCADE',
+    //     onUpdate: 'CASCADE'
+    // })
+    // @JoinTable()
+    // memberA: UserEntity
+
+    // @ManyToOne(() => UserEntity, {
+    //     onDelete: 'CASCADE',
+    //     onUpdate: 'CASCADE'
+    // })
+    // @JoinTable()
+    // memberB: UserEntity
 
 }

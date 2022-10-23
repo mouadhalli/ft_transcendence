@@ -74,8 +74,8 @@ export class MessageService {
     async findDirectMessages(userId: number, directChannelId: string) {
         return await this.directMessageRepository.find({
             where: [
-                { channel: { id: directChannelId, memberA: { id: userId } } },
-                { channel: { id: directChannelId, memberB: { id: userId } } }
+                { channel: { id: directChannelId, relationship: { sender: {id: userId} } }},
+                { channel: { id: directChannelId, relationship: { receiver: {id: userId} } }}
             ]
         })
     }

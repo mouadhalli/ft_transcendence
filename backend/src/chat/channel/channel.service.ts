@@ -482,14 +482,15 @@ export class ChannelService {
         //     throw new BadRequestException('users are not friends')
 
         return await this.dmRepository.save({
-            memberA: { id: userA },
-            memberB: { id: userB }
+            relationship: friendship
         })
     }
 
     async findDmChannel(channelId: string) {
         return await this.dmRepository.findOne({
-            relations: ['memberA', 'memberB'],
+            // relations: {
+            //     relationship: { sender: true, receiver: true }
+            // },
             where: {id: channelId}
         })
     }
@@ -497,24 +498,20 @@ export class ChannelService {
     async findUserDmChannels(userId: number) {
         const dms = await this.dmRepository.find({
             relations: {
-                memberA: true,
-                memberB: true
-                // memberA: { id: true, displayName: true, imgPath: true },
-                // memberB: { id: true, displayName: true, imgPath: true }
+                relationship: { sender: true, receiver: true }
             },
             where: [
-                {memberA: {id: userId}},
-                {memberB: {id: userId}},
+                { relationship: { sender: { id: userId } } },
+                { relationship: { receiver: { id: userId } } }
             ]
         })
 
         return dms.map(dm => {
-            const { id, memberA, memberB } = dm
+            const { id, relationship} = dm
 
-            if (memberA.id === userId)
-                return { id, memberB }
-            return { id, memberA }
-
+            if (relationship.sender.id === userId)
+                return { id, friend: relationship.receiver }
+            return { id, friend: relationship.sender }
         })
 
     }
@@ -522,8 +519,8 @@ export class ChannelService {
     async findUserDmchannel(userId: number, channelId: string) {
         return await this.dmRepository.findOne({
             where: [
-                {id: channelId, memberA: { id: userId }},
-                {id: channelId, memberB: { id: userId }}
+                {id: channelId, relationship: { sender: { id: userId }}},
+                {id: channelId, relationship: { receiver: { id: userId }}}
             ]
         })
     }
@@ -531,8 +528,8 @@ export class ChannelService {
     async findDmchannelByMembers(memberA: number, memberB: number) {
         return await this.dmRepository.findOne({
             where: [
-                {memberA: { id: memberA }, memberB: { id: memberB }},
-                {memberA: { id: memberB }, memberB: { id: memberA }},
+                { relationship: { sender: {id: memberA}, receiver: {id: memberB} }},
+                { relationship: { sender: {id: memberB}, receiver: {id: memberA} }},
             ]
         })
     }
