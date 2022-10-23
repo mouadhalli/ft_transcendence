@@ -4,6 +4,9 @@ import { GatewayConnectionService } from "src/connection.service";
 // import { UserService } from "src/user/user.service";
 import { GameService } from "./game.service";
 import { ScoreEntity } from "./entities/score.entity";
+import { ConnectionStatus } from "../connection.service"
+import { Inject } from "@nestjs/common";
+import { emit } from "process";
 
 let players: any = {}
 let waiting: any[] = [];
@@ -69,6 +72,7 @@ function init_data() {
 })
 
 export class gameGateway implements OnGatewayDisconnect {
+    
     constructor(
         // private userService: UserService,
         private gameService: GameService,
@@ -94,22 +98,55 @@ export class gameGateway implements OnGatewayDisconnect {
         if (Data.mode !== "watch")
         {
             const token = String(socket.handshake.headers.token)
-            const user = await this.connectionService.getUserFromToken(token)
-            //if (user === -1)
-            Data.id = user.id;
+            const { id } = await this.connectionService.getUserFromToken(token)
+            console.log(id);
+            
+            if (id === -1)
+            {
+                socket.emit("inGame", 2);
+                return
+            }
+            Data.id = id;
             // get id from token
             // check invalid token
+
+            const connectionStatus = this.connectionService.getUserConectionStatus(id);
+            console.log(connectionStatus);
+            
+            if (connectionStatus === undefined || connectionStatus === "offline")
+            {
+                this.connectionService.saveUserSocketConnection(socket.id, id, ConnectionStatus.INGAME);
+            }
+            else
+            {
+                socket.emit("inGame", 1);
+                return ;
+            }
+        }
+        else
+        {
+            const token = String(socket.handshake.headers.token)
+            const { id } = await this.connectionService.getUserFromToken(token)
+            console.log(id);
+            
+            if (id === -1)
+            {
+                socket.emit("inGame", 2);
+                return
+            }
         }
         Data.socket = socket.id;
         playerID[socket.id] = Data;
-        socketFromId[Data.id] = socket;
-        console.log(Data);
+        if (Data.mode !== "watch")
+            socketFromId[Data.id] = socket;
+        console.log(Data.id + "     " + socket.id);
         
         // await this.gameService.saveGameScore(winner, loser, swinner, sloser);
+        socket.emit("start_connection", "");
     }
     
     @SubscribeMessage('update_mouse')
-    afficher(socket: Socket, Data: any) {
+    updateMouse(socket: Socket, Data: any) {
         //console.log(playerID[socket.id]);
         
         if (Data.room !== "" && Data.pos != 0 && ball_room[Data.room] !== undefined && ball_room[Data.room] !== "")
@@ -117,6 +154,10 @@ export class gameGateway implements OnGatewayDisconnect {
             if (playerID[socket.id] !== undefined && playerID[socket.id].room === Data.room && playerID[socket.id].pos === Data.pos)
             {
                 this.server.to(Data.room).volatile.emit('mouse', Data);
+                if (Data.mousepos < 41)
+                    Data.mousepos = 41;
+                else if (Data.mousepos > windh - 41)
+                    Data.mousepos = windh - 41;
                 if (Data.pos === 1)
                     ball_room[Data.room].p1 = Data.mousepos - 41;
                 else if (Data.pos === 2)
@@ -128,7 +169,7 @@ export class gameGateway implements OnGatewayDisconnect {
 
     @SubscribeMessage('disc')
     disc(socket: Socket, Data: any) {
-        socket.emit("fin", Data);
+        socket.emit("fin", "");
     }
 
     // @SubscribeMessage('gamedone')
@@ -187,6 +228,7 @@ export class gameGateway implements OnGatewayDisconnect {
                     }
                     else
                     {
+                        server.to(socketleft.id).emit('done', "");
                         socketleft.emit('lost', "");
                         socketright.emit('won', "");
                         players[socketleft.id] = "";
@@ -274,6 +316,7 @@ export class gameGateway implements OnGatewayDisconnect {
                     }
                     else
                     {
+                        server.to(socketleft.id).emit('done', "");
                         socketleft.emit('lost', "");
                         socketright.emit('won', "");
                         players[socketleft.id] = "";
@@ -346,10 +389,12 @@ export class gameGateway implements OnGatewayDisconnect {
             console.log(playerID[socket.id].mode);
             if (playerID[socket.id].mode === "classic")
             {
+                console.log("##################################################");
+                
                 i = waiting.length;
                 if (i % 2 != 0)//someone is waiting
                 {
-                    f_player = waiting.at(0);
+                    f_player = waiting.at(i - 1);
                     socket.join(f_player.id);
                     waiting.pop();
                     playerID[f_player.id].room = f_player.id;
@@ -385,7 +430,7 @@ export class gameGateway implements OnGatewayDisconnect {
                 i = waitingmodern.length;
                 if (i % 2 != 0)//someone is waiting
                 {
-                    f_player = waitingmodern.at(0);
+                    f_player = waitingmodern.at(i - 1);
                     socket.join(f_player.id);
                     // const sockets = await this.server.in(f_player.id).fetchSockets();
                     // console.log(sockets.length + "   ..............");
@@ -423,9 +468,12 @@ export class gameGateway implements OnGatewayDisconnect {
                 let getID = playerID[socket.id].id;
                 if (getID !== undefined)
                 {
+                    console.log(getID);
                     f_player = socketFromId[getID];
+                    console.log("########## " + f_player);
                     if (f_player !== undefined && playerID[f_player.id] !== undefined)
                     {
+                        console.log("eeeeeeeeeeeeee");
                         if (playerID[f_player.id].room != undefined && playerID[f_player.id].room != "")
                         {
                             socket.join(playerID[f_player.id].room);
@@ -438,8 +486,10 @@ export class gameGateway implements OnGatewayDisconnect {
                             socket.join(f_player.id);
                             socket.emit('watch_wait', "");
                         }
+                        return ;
                     }
                 }
+                socket.emit("inGame", 3);
             }
             else if (playerID[socket.id].mode === "private")
             {
@@ -513,36 +563,55 @@ export class gameGateway implements OnGatewayDisconnect {
     }
     
     async handleDisconnect(socket: Socket){
-        if (players[socket.id] !== undefined && players[socket.id] !== "")
+        //if mode not watch
+        if (playerID[socket.id] !== undefined && playerID[socket.id].mode !== "watch")
         {
-            let swinner:number = 0;
-            let sloser:number = 0;
-            let tmp:Socket;
+            if (players[socket.id] !== undefined && players[socket.id] !== "")
+            {
+                let swinner:number = 0;
+                let sloser:number = 0;
+                let tmp:Socket;
 
-            tmp = players[socket.id];
-            clearInterval(Intervals[tmp.id]);
-            // tmp.emit("done", "");
-            tmp.emit("won", "");
-            if (ball_room[socket.id] !== undefined && ball_room[socket.id] !== "")
-            {
-                sloser = ball_room[socket.id].score2;
-                swinner = ball_room[socket.id].score1;
-                delete ball_room[socket.id];
+                tmp = players[socket.id];
+                clearInterval(Intervals[tmp.id]);
+                // tmp.emit("done", "");
+                tmp.emit("won", "");
+                if (ball_room[socket.id] !== undefined && ball_room[socket.id] !== "")
+                {
+                    this.server.to(socket.id).emit('done', "");
+                    sloser = ball_room[socket.id].score2;
+                    swinner = ball_room[socket.id].score1;
+                    delete ball_room[socket.id];
+                }
+                else if (ball_room[tmp.id] !== undefined && ball_room[tmp.id] !== "")
+                {
+                    this.server.to(tmp.id).emit('done', "");
+                    swinner = ball_room[tmp.id].score2;
+                    sloser = ball_room[tmp.id].score1;
+                    delete ball_room[tmp.id];
+                }
+                console.log(swinner + " " + sloser);
+                await this.gameService.saveGameScore(playerID[tmp.id].id, playerID[socket.id].id, swinner, sloser);
+                
+                players[tmp.id] = "";
+                console.log("salina");
             }
-            else if (ball_room[tmp.id] !== undefined && ball_room[tmp.id] !== "")
+            else
             {
-                swinner = ball_room[tmp.id].score2;
-                sloser = ball_room[tmp.id].score1;
-                delete ball_room[tmp.id];
+                this.server.to(socket.id).emit('inGame', 3);
+                // send to room match doesn't exist
             }
-            console.log(swinner + " " + sloser);
-            await this.gameService.saveGameScore(playerID[tmp.id].id, playerID[socket.id].id, swinner, sloser);
-            
-            players[tmp.id] = "";
-            console.log("salina");
         }
-        delete players[socket.id]
-        if (waiting.length && waiting.at(0).id === socket.id)
+        if (playerID[socket.id] !== undefined)
+        {
+            this.connectionService.removeUserConnection(playerID[socket.id].id);
+            delete playerID[socket.id];
+        }
+        if (players[socket.id] !== undefined)
+        {
+            delete players[socket.id]
+        }
+        if (waiting.length && waiting.at(0).id === socket.id)//to be checked
             waiting.pop();
         else if (waitingmodern.length && waitingmodern.at(0).id === socket.id)
             waitingmodern.pop();

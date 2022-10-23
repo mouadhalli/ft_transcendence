@@ -38,7 +38,7 @@ export class GatewayConnectionService {
 		return userConnection ? userConnection.status : ConnectionStatus.OFFLINE
 	}
 
-	saveUserSocketConnection(socketId: string, userId: number) {
+	saveUserSocketConnection(socketId: string, userId: number, init: ConnectionStatus = ConnectionStatus.ONLINE) {
 
 		if (!socketId || !userId)
 			return
@@ -47,7 +47,7 @@ export class GatewayConnectionService {
 		if (!userConnection) {
 			userConnection = {
 				sockets: [socketId],
-				status: ConnectionStatus.ONLINE
+				status: init
 			}
 		}
 		else
