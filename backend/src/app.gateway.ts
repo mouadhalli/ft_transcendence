@@ -42,7 +42,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			this.logger.log(socket.id + ' connected')
 
 			const { id } = await this.connectionService.authenticateSocket(socket)
-
+	
 			this.connectionService.saveUserSocketConnection(socket.id, id)
 
 			// grouping user sockets in a room so i can ping all user Tabs easily
@@ -50,7 +50,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 
 			const channels = await this.channelService.findJoinedChannels(id)
 			const dms = await this.channelService.findUserDmChannels(id)
-			channels.forEach(channel => socket.join(channel.name))
+			channels.forEach(channel => socket.join(channel.id))
 			dms.forEach(channel => socket.join(channel.id))
 
 		} catch(error) {
@@ -96,9 +96,10 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 		try {
 			const { id } = await this.connectionService.authenticateSocket(socket)
 	
-			const userStatus = this.connectionService.getUserConectionStatus(userId)
-	
-			socket.emit('user-status', userStatus)
+			const status = this.connectionService.getUserConectionStatus(userId)
+
+			// socket.emit('user-status', userStatus)
+			return { success: true, status }
 
 		} catch (error) {
 			return { success: false, error: error.error }

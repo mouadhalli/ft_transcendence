@@ -488,9 +488,9 @@ export class ChannelService {
 
     async findDmChannel(channelId: string) {
         return await this.dmRepository.findOne({
-            // relations: {
-            //     relationship: { sender: true, receiver: true }
-            // },
+            relations: {
+                relationship: { sender: true, receiver: true }
+            },
             where: {id: channelId}
         })
     }

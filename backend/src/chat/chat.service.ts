@@ -11,13 +11,13 @@ import { ChannelDto, MembershipDto } from './dtos/channel.dto';
 import { UserDto } from 'src/dto/User.dto';
 import { DirectMessageDto, MessageDto } from './dtos/message.dto';
 import { ChannelEntity } from "./entities/channel.entity"
+import { Socket } from 'socket.io'
 
  
 @Injectable()
 export class ChatService {
 
     constructor(
-        private authService: AuthService,
         private userService: UserService,
         private channelService: ChannelService,
         private messageService: MessageService,
@@ -45,7 +45,6 @@ export class ChatService {
 			    throw new WsException('incorrect password')
         }
         await this.channelService.createMembership(member, channel, Channel_Member_Role.MEMBER)
-        return channel.name
     }
 
     async leaveChannel(userId: number, channelId: string) {
@@ -61,7 +60,6 @@ export class ChatService {
         if (membership.role === 'owner')
             await this.channelService.changeChannelOwner(channel.id)
 
-        return channel.name
     }
 
     async sendMessage(userId: number, channelId: string, msgContent: string) {
@@ -73,11 +71,12 @@ export class ChatService {
 			throw new WsException('ressources not found')
 
         if (!membership)
-            return { success: false, error: "kicked", channelName: channel.name }
+            return { success: false, error: "you are kicked from this channel", channelName: channel.name }
 
         if (membership.state !== 'active') {
-            if (membership.restricitonEnd.getTime() > Date.now())
-                throw new WsException(membership.state + ' for ' + String(membership.restricitonEnd.getTime() - Date.now()) + ' ms')
+            const time = membership.restricitonEnd.getTime() - Date.now()
+            if (time > 0)
+                return {success: false, cause: membership.state , error : (membership.state + ' for ' + String(Math.floor(time / 1000)) + ' seconds')}
             this.channelService.removeRestrictionOnChannelMember(channelId, userId)
         }
 
@@ -87,7 +86,7 @@ export class ChatService {
             msgContent
         )
 
-        return {success: true, channelName: channel.name, message}
+        return {success: true, message}
 
     }
 
@@ -95,17 +94,17 @@ export class ChatService {
         const author: UserDto = await this.userService.findUser(userId)
         const channel = await this.channelService.findDmChannel(channelId)
 
+        
         if (!author || !channel)
-			throw new WsException('ressources not found')
+            throw new WsException('ressources not found')
+        
+        const { relationship } = channel
 
-        // const { relationship } = channel
+        const receiver = userId === relationship.sender.id ? relationship.receiver :
+                                relationship.sender     
 
-        // const receiverId = userId === relationship.sender.id ? relationship.receiver.id :
-        //                                 relationship.sender.id        
-        // const relationship = await this.userService.findRelationship(userId, receiverId)
-
-        // if (!relationship || relationship.state !== 'friends')
-		// 	throw new WsException('you can only dm your friends"')
+        if (!relationship || relationship.state !== 'friends')
+			throw new WsException(`you can't send a message to ${receiver.displayName}`)
 
         const message = await this.messageService.saveDirectMessage(
             author,
@@ -115,4 +114,33 @@ export class ChatService {
 
         return message
     }
+
+    async filterRoomMembers(roomSockets: any[], senderId: number, channelId: string) {
+
+        for (let i = 0; i < roomSockets.length; i++) {
+            const memberToken = String(roomSockets[i].handshake.headers?.token)
+            const { id: memberId } = await this.connectionService.getUserFromToken(memberToken)
+
+            if (!memberId || memberId === senderId)
+                continue
+
+            const isBlockingMe = await this.userService.isUserBlockingMe(senderId, memberId)
+            const membership = await this.channelService.findMembershipByIds(memberId, channelId)
+    
+            if ( membership && membership.state === 'banned') {
+                const time = membership.restricitonEnd.getTime() - Date.now()
+                console.log(memberId, "banned for: ", time)
+                if (time > 0) {
+                    roomSockets[i].join('exceptionRoom')
+                    continue
+                }
+                this.channelService.removeRestrictionOnChannelMember(channelId, memberId)
+            }
+    
+            if (isBlockingMe === true) {
+                roomSockets[i].join('exceptionRoom')
+            }
+        }        
+    }
+
 }
