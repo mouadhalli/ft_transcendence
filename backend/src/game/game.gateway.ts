@@ -5,8 +5,7 @@ import { GatewayConnectionService } from "src/connection.service";
 import { GameService } from "./game.service";
 import { ScoreEntity } from "./entities/score.entity";
 import { ConnectionStatus } from "../connection.service"
-import { Inject } from "@nestjs/common";
-import { emit } from "process";
+// import { emit } from "process";
 
 let players: any = {}
 let waiting: any[] = [];
@@ -24,44 +23,44 @@ let Intervals: any = {};
 
 function getRandomDY() {
     let value:number = (Math.random() * 100000) % 24 - 12;
-    value =  (value < 1 && value > -1) ? 2: value;
+    value =  (value < 2 && value > -2) ? 2: value;
     return value;
 }
 
-const ball = {
-    x:windw/2,
-    y:windh/2,
-    r:15,
-    dx:8,
-    dy:getRandomDY(),
-    p1:0,
-    p2:0,
-    score1:0,
-    score2:0,
-    playerleft:"",
-    playerright:"",
-    middleY:0,
-    counter:0,
-    mDY:0,
-  }
+// const ball = {
+//     x:windw/2,
+//     y:windh/2,
+//     r:15,
+//     dx:8,
+//     dy:getRandomDY(),
+//     p1:0,
+//     p2:0,
+//     score1:0,
+//     score2:0,
+//     playerleft:"",
+//     playerright:"",
+//     middleY:0,
+//     counter:0,
+//     mDY:0,
+//   }
 
 function init_data() {
-    let Data = ball;
-    // Data = ball;
-    Data.x = windw/2;
-    Data.y = windh/2;
-    Data.r = 15;
-    Data.dx = 8;
-    Data.dy = getRandomDY();
-    Data.p1 = 0;
-    Data.p2 = 0;
-    Data.score1 = 0;
-    Data.score2 = 0;
-    Data.playerleft = "";
-    Data.playerright = "";
-    Data.middleY = 0;
-    Data.counter = 0;
-    Data.mDY = 0;
+    let Data = {
+        x : windw/2,
+        y : windh/2,
+        r : 15,
+        dx : 8,
+        dy : getRandomDY(),
+        p1 : 0,
+        p2 : 0,
+        score1 : 0,
+        score2 : 0,
+        playerleft : "",
+        playerright : "",
+        middleY : 0,
+        counter : 0,
+        mDY : 0,
+    };
     return Data;
 }
 
@@ -81,6 +80,17 @@ export class gameGateway implements OnGatewayDisconnect {
 
     @WebSocketServer()
     server: Server;
+
+    @SubscribeMessage('game-status')
+    async getStatus(socket: Socket, id: number){
+        const connectionStatus = this.connectionService.getUserConectionStatus(id);
+        //console.log(connectionStatus);
+        if (connectionStatus == ConnectionStatus.INGAME)
+            return {status: "in-game"}
+        else
+            return {status: "offline"}
+    }
+    
 
     @SubscribeMessage('getIDS')
     async getID(socket: Socket, Data: any){
@@ -195,7 +205,7 @@ export class gameGateway implements OnGatewayDisconnect {
         
         if (socketleft.id !== '' && ball_room[socketleft.id] !== undefined)
         {
-            if (ball_room[socketleft.id].x - ball_room[socketleft.id].r < 0 && ball_room[socketleft.id].dx < 0)
+            if (ball_room[socketleft.id].x - ball_room[socketleft.id].r <= 0 && ball_room[socketleft.id].dx < 0)
             {
                 if (ball_room[socketleft.id].y >= ball_room[socketleft.id].p1 && ball_room[socketleft.id].y <= ball_room[socketleft.id].p1 + (windw / 14)) {
                     ball_room[socketleft.id].dx = -ball_room[socketleft.id].dx + 0.5;
@@ -207,10 +217,9 @@ export class gameGateway implements OnGatewayDisconnect {
                 else
                 {
                     ball_room[socketleft.id].score1 += 1;
-                    // console.log("hi   a wili");
                     
                     server.to(socketleft.id).emit('reset', {score1:ball_room[socketleft.id].score1, score2:ball_room[socketleft.id].score2});
-                    console.log(ball_room[socketleft.id].score1);
+                    console.log(ball_room[socketleft.id].score1 + " : " + ball_room[socketleft.id].score2);
                     ball_room[socketleft.id].x = windw / 2;
                     ball_room[socketleft.id].y = windh / 2;
                     ball_room[socketleft.id].dx = 0;
@@ -243,15 +252,50 @@ export class gameGateway implements OnGatewayDisconnect {
             }
             ball_room[socketleft.id].x = ball_room[socketleft.id].x + ball_room[socketleft.id].dx;
             ball_room[socketleft.id].y = ball_room[socketleft.id].y + ball_room[socketleft.id].dy;
-            if(ball_room[socketleft.id].x + ball_room[socketleft.id].r >= windw){
-                // if (ball_room[socketleft.id].dx > 0)
-                ball_room[socketleft.id].dx = -ball_room[socketleft.id].dx - 0.5;
-                // else
-                //     ball_room[socketleft.id].dx = -ball_room[socketleft.id].dx + 0.5;
-                if (ball_room[socketleft.id].dy > 0)
-                    ball_room[socketleft.id].dy = ball_room[socketleft.id].dy + 0.25;
-                else
-                    ball_room[socketleft.id].dy = ball_room[socketleft.id].dy - 0.25; 
+
+            if(ball_room[socketleft.id].x + ball_room[socketleft.id].r >= windw && ball_room[socketleft.id].dx > 0){
+                //if (ball_room[socketleft.id].y >= ball_room[socketleft.id].p2 && ball_room[socketleft.id].y <= ball_room[socketleft.id].p2 + (windw / 14))
+                {
+                    ball_room[socketleft.id].dx = -ball_room[socketleft.id].dx - 0.5;
+                    if (ball_room[socketleft.id].dy > 0)
+                        ball_room[socketleft.id].dy = ball_room[socketleft.id].dy + 0.25;
+                    else
+                        ball_room[socketleft.id].dy = ball_room[socketleft.id].dy - 0.25;
+                }
+                /*else //! *****************************************************************
+                {
+                    ball_room[socketleft.id].score2 += 1;
+                    server.to(socketleft.id).emit('reset', {score1:ball_room[socketleft.id].score1, score2:ball_room[socketleft.id].score2});
+                    console.log(ball_room[socketleft.id].score1 + " : " + ball_room[socketleft.id].score2);
+                    ball_room[socketleft.id].x = windw / 2;
+                    ball_room[socketleft.id].y = windh / 2;
+                    ball_room[socketleft.id].dx = 0;
+                    ball_room[socketleft.id].dy = 0;
+                    if (ball_room[socketleft.id].score2 < 5)
+                    {
+                        setTimeout(() => {
+                            if (ball_room[socketleft.id] !== undefined)
+                            {
+                                ball_room[socketleft.id].dx = -8;
+                                ball_room[socketleft.id].dy = getRandomDY();
+                                server.to(socketleft.id).emit('restart', ball_room[socketleft.id]);
+                            }
+                        }, 1000);
+                    }
+                    else
+                    {
+                        server.to(socketleft.id).emit('done', "");
+                        socketright.emit('lost', "");
+                        socketleft.emit('won', "");
+                        players[socketleft.id] = "";
+                        players[socketright.id] = "";
+                        console.log(ball_room[socketleft.id].score1 + " " + ball_room[socketleft.id].score2);
+                        // await func(62741, 62742, 5, 2);
+                        // await func(playerID[socketright.id].id, playerID[socketleft.id].id, ball_room[socketleft.id].score1, ball_room[socketleft.id].score2);
+                        await func(ball_room[socketleft.id].playerleft, ball_room[socketleft.id].playerright, ball_room[socketleft.id].score2, ball_room[socketleft.id].score1);
+                        clearInterval(Intervals[socketleft.id]);
+                    }
+                }*/ //! -----------------------------------------------------------------
             }
             if(ball_room[socketleft.id].y + ball_room[socketleft.id].r > windh || ball_room[socketleft.id].y-ball_room[socketleft.id].r < 0){
                 ball_room[socketleft.id].dy=- ball_room[socketleft.id].dy * 1.01;
@@ -265,7 +309,7 @@ export class gameGateway implements OnGatewayDisconnect {
     }
 
 
-//******************************************************************************************* */
+//**************************************************************************************************************************************** */
     
     async gameLoopModern(server: Server, socketleft: Socket, socketright: Socket, func: (winnerId: number, opponentId: number, winnerScore: number, opponentScore: number) => Promise<ScoreEntity>) {
         if (socketleft.id !== '' && ball_room[socketleft.id] !== undefined)
@@ -333,13 +377,55 @@ export class gameGateway implements OnGatewayDisconnect {
             }
             ball_room[socketleft.id].x = ball_room[socketleft.id].x + ball_room[socketleft.id].dx;
             ball_room[socketleft.id].y = ball_room[socketleft.id].y + ball_room[socketleft.id].dy;
-            if(ball_room[socketleft.id].x + ball_room[socketleft.id].r >= windw){
-                ball_room[socketleft.id].dx = -ball_room[socketleft.id].dx - 0.5;
-                if (ball_room[socketleft.id].dy > 0)
-                    ball_room[socketleft.id].dy = ball_room[socketleft.id].dy + 0.25;
-                else
-                    ball_room[socketleft.id].dy = ball_room[socketleft.id].dy - 0.25; 
+
+            if(ball_room[socketleft.id].x + ball_room[socketleft.id].r >= windw && ball_room[socketleft.id].dx > 0)
+            {
+                // if (ball_room[socketleft.id].y >= ball_room[socketleft.id].p2 && ball_room[socketleft.id].y <= ball_room[socketleft.id].p2 + (windw / 14))
+                {
+                    ball_room[socketleft.id].dx = -ball_room[socketleft.id].dx - 0.5;
+                    if (ball_room[socketleft.id].dy > 0)
+                        ball_room[socketleft.id].dy = ball_room[socketleft.id].dy + 0.25;
+                    else
+                        ball_room[socketleft.id].dy = ball_room[socketleft.id].dy - 0.25;
+                }
+                /*else //! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                {
+                    ball_room[socketleft.id].score2 += 1;
+
+                    server.to(socketleft.id).emit('reset', {score1:ball_room[socketleft.id].score1, score2:ball_room[socketleft.id].score2});
+                    // console.log(ball_room[socketleft.id].score1);
+                    ball_room[socketleft.id].x = windw / 2;
+                    ball_room[socketleft.id].y = windh / 2;
+                    ball_room[socketleft.id].dx = 0;
+                    ball_room[socketleft.id].dy = 0;
+                    ball_room[socketleft.id].middleY = 0;
+                    if (ball_room[socketleft.id].score2 < 7)
+                    {
+                        setTimeout(() => {
+                            if (ball_room[socketleft.id] !== undefined)
+                            {
+                                ball_room[socketleft.id].dx = -8;
+                                ball_room[socketleft.id].dy = getRandomDY();
+                                ball_room[socketleft.id].middleY = 0;
+                                server.to(socketleft.id).emit('restart', ball_room[socketleft.id]);
+                            }
+                       }, 1000);
+                    }
+                    else
+                    {
+                        server.to(socketleft.id).emit('done', "");
+                        socketright.emit('lost', "");
+                        socketleft.emit('won', "");
+                        players[socketleft.id] = "";
+                        players[socketright.id] = "";
+                        console.log(ball_room[socketleft.id].score1 + " " + ball_room[socketleft.id].score2);
+                        
+                        await func(ball_room[socketleft.id].playerleft, ball_room[socketleft.id].playerright, ball_room[socketleft.id].score2, ball_room[socketleft.id].score1);
+                        clearInterval(Intervals[socketleft.id]);
+                    }
+                }*/ //! ..................................................................
             }
+
             if(ball_room[socketleft.id].y + ball_room[socketleft.id].r > windh || ball_room[socketleft.id].y-ball_room[socketleft.id].r < 0){
                 ball_room[socketleft.id].dy=- ball_room[socketleft.id].dy * 1.01;
             }
@@ -349,8 +435,8 @@ export class gameGateway implements OnGatewayDisconnect {
                 ball_room[socketleft.id].dx = -22;
             
                 
-            if (((oldBallX > windw / 2 && ball_room[socketleft.id].x < windw / 2)
-                || (oldBallX < windw / 2 && ball_room[socketleft.id].x > windw / 2)) 
+            if (((oldBallX >= windw / 2 && ball_room[socketleft.id].x <= windw / 2)
+                || (oldBallX <= windw / 2 && ball_room[socketleft.id].x >= windw / 2)) 
                 && ball_room[socketleft.id].y >= ball_room[socketleft.id].middleY
                 && ball_room[socketleft.id].y <= ball_room[socketleft.id].middleY + (windw / 9))
             {
