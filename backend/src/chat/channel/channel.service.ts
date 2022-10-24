@@ -54,31 +54,28 @@ export class ChannelService {
     }
 
     async createChannel(creator: UserDto, data: ChannelDto) {
-        try {
 
-            if (await this.channelRepository.findOneBy({name: data.name}))
-                throw new BadRequestException("channel name already in use")
+        if (await this.channelRepository.findOneBy({name: data.name}))
+            throw new BadRequestException("channel name already in use")
             
             
-            let newChannel: ChannelEntity = this.channelRepository.create({
-                name: data.name,
-                type: data.type
-            })
+        let newChannel: ChannelEntity = this.channelRepository.create({
+            name: data.name,
+            type: data.type
+        })
 
-            if (data.type === 'protected') {
-                if (!data.password)
-                    throw new BadRequestException("protected channels require a password")
-                newChannel.password = await bcrypt.hash(data.password, 10)
-            }
-
-            newChannel = await this.channelRepository.save(newChannel)
-    
-            await this.createMembership(creator, newChannel, Channel_Member_Role.OWNER)
-            return newChannel.id
-
-        } catch (error) {
-            throw new InternalServerErrorException(error)
+        if (data.type === 'protected') {
+            if (!data.password)
+                throw new BadRequestException("protected channels require a password")
+            newChannel.password = await bcrypt.hash(data.password, 10)
         }
+
+        newChannel = await this.channelRepository.save(newChannel).catch(error => {
+            throw new InternalServerErrorException(error)
+        })
+    
+        await this.createMembership(creator, newChannel, Channel_Member_Role.OWNER)
+        return newChannel.id
     }
 
     async findOneChannel(channelId: string): Promise<ChannelEntity> {
