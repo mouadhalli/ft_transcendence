@@ -3,14 +3,14 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Not, Repository } from "typeorm";
 import { ChannelEntity, Channel_Type } from "../entities/channel.entity"
 import { ChannelMembershipEntity, Channel_Member_Role, Channel_Member_State } from "../entities/channelMember.entity";
-import { ChannelDto, MembershipDto, UpdateChannelDto } from "../dtos/channel.dto";
+import { ChannelDto, directChannelDto, MembershipDto, UpdateChannelDto } from "../dtos/channel.dto";
 import { MessageService } from "../message/message.service"
 import * as bcrypt from "bcryptjs";
 import { UserService } from "src/user/user.service";
 import { UserEntity } from "src/user/entities/user.entity";
 import { WsException } from "@nestjs/websockets";
 import { UserDto } from "src/dto/User.dto";
-import { Relationship_State } from "src/user/entities/relationship.entity";
+import { RelationshipEntity, Relationship_State } from "src/user/entities/relationship.entity";
 import { DirectChannelEntity } from "../entities/directChannel.entity";
 
 @Injectable()
@@ -496,13 +496,13 @@ export class ChannelService {
     }
 
     async findUserDmChannels(userId: number) {
-        const dms = await this.dmRepository.find({
+        const dms: DirectChannelEntity[] = await this.dmRepository.find({
             relations: {
                 relationship: { sender: true, receiver: true }
             },
             where: [
-                { relationship: { sender: { id: userId } } },
-                { relationship: { receiver: { id: userId } } }
+                { relationship: { sender: { id: userId }, state: Relationship_State.FRIENDS } },
+                { relationship: { receiver: { id: userId }, state: Relationship_State.FRIENDS } }
             ]
         })
 
@@ -539,17 +539,16 @@ export class ChannelService {
         if (!await this.userService.findUser(memberB))
 			throw new WsException('user not found')
 
-        const relationship = await this.userService.findRelationship(memberA, memberB)
+        const relationship: RelationshipEntity = await this.userService.findRelationship(memberA, memberB)
         if (!relationship)
 			throw new WsException('relationship not found')
 
-        const dmChannel = await this.findDmchannelByMembers(memberA, memberB)
+        const dmChannel: DirectChannelEntity = await this.findDmchannelByMembers(memberA, memberB)
         if (!dmChannel)
 			throw new WsException('dm channel not found')
     
         await this.dmRepository.remove(dmChannel)
         await this.userService.removeRelationShip(relationship)
-        // return { sucess: true }
     }
 
 }

@@ -8,7 +8,7 @@ import {
 
 import { Server, Socket } from 'socket.io';
 import { ChannelService } from './chat/channel/channel.service';
-import { directChannelDto } from './chat/dtos/channel.dto';
+import { ChannelDto, directChannelDto } from './chat/dtos/channel.dto';
 import { GatewayConnectionService, ConnectionStatus } from './connection.service';
 import { HttpExceptionFilter } from './gateway.filter';
 import { Relationship_State } from './user/entities/relationship.entity';
@@ -118,8 +118,8 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			
 			await this.userService.addFriend(id, targetId)
 	
-			const channel = await this.channelService.createDmChannel(id, targetId)
-			socket.join(channel.id)
+			const { id: channelId }: directChannelDto = await this.channelService.createDmChannel(id, targetId)
+			socket.join(channelId)
 	
 			socket.to(String(targetId)).emit('update-friends')
 	
@@ -140,9 +140,9 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			
 			await this.userService.acceptFriendship(id, targetId)
 		
-			const channel = await this.channelService.findDmchannelByMembers(id, targetId)
+			const { id: channelId }: directChannelDto = await this.channelService.findDmchannelByMembers(id, targetId)
 			
-			socket.join(channel.id)
+			socket.join(channelId)
 			socket.to(String(targetId)).emit('update-friends')
 	
 			return { success: true }

@@ -115,7 +115,7 @@ export class UserService {
 		return result.map(relationship => {
 			const {sender, receiver, dm} = relationship
 			const friend: UserDto = sender.id !== userId ? sender : receiver
-			return { friend, dmId: dm.id}
+			return {...friend, channelId: dm.id}
 		})
 	}
 

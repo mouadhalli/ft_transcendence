@@ -76,7 +76,8 @@ export class MessageService {
             where: [
                 { channel: { id: directChannelId, relationship: { sender: {id: userId} } }},
                 { channel: { id: directChannelId, relationship: { receiver: {id: userId} } }}
-            ]
+            ],
+            relations: ['author']
         })
     }
 
