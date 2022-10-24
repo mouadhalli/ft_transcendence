@@ -1,4 +1,6 @@
 import { Module } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { JwtModule } from "@nestjs/jwt";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AuthModule } from "src/auth/auth.module";
 import { GatewayConnectionService } from "src/connection.service";
@@ -9,11 +11,22 @@ import { GameController } from "./game.controller";
 import { gameGateway } from "./game.gateway";
 import { GameService } from "./game.service";
 
+const jwtFactory = {
+  useFactory: async (configService: ConfigService) => ({
+    secret: configService.get('JWT_SECRET2'),
+    signOptions: {
+      expiresIn: configService.get('JWT_EXP_Game'),
+    },
+  }),
+  inject: [ConfigService],
+};
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([GameEntity, ScoreEntity]),
     UsersModule,
-    AuthModule
+    AuthModule,
+    JwtModule.registerAsync(jwtFactory)
   ],
   controllers: [GameController],
   providers: [gameGateway, GameService, GatewayConnectionService],

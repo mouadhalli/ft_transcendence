@@ -5,6 +5,9 @@ import { GatewayConnectionService } from "src/connection.service";
 import { GameService } from "./game.service";
 import { ScoreEntity } from "./entities/score.entity";
 import { ConnectionStatus } from "../connection.service"
+import { JwtService } from "@nestjs/jwt";
+import { jwtPayload } from "src/dto/jwt.dto";
+import { ConfigService } from "@nestjs/config";
 // import { emit } from "process";
 
 let players: any = {}
@@ -75,11 +78,30 @@ export class gameGateway implements OnGatewayDisconnect {
     constructor(
         // private userService: UserService,
         private gameService: GameService,
+        private jwtService: JwtService,
+        private configService: ConfigService,
         private connectionService: GatewayConnectionService
     ) {}
 
     @WebSocketServer()
     server: Server;
+
+    issueJwtToken(Data: number) {
+        const payload:any  = {
+            id:Data
+        }
+        return this.jwtService.sign(payload)
+    }
+
+    @SubscribeMessage('generateGameLink')
+    async generateGameLink(socket: Socket){
+        const token = String(socket.handshake.headers.token)
+        const { id } = await this.connectionService.getUserFromToken(token)
+        if (id === -1)
+            return { success: false };
+        const gameToken: string = this.issueJwtToken(id);
+        return { success: true, Token: gameToken }
+    }
 
     @SubscribeMessage('game-status')
     async getStatus(socket: Socket, id: number){
@@ -98,6 +120,22 @@ export class gameGateway implements OnGatewayDisconnect {
         Data.pos = 0;
         if (Data.mode === "private")
         {
+            try
+            {
+                const { id }: jwtPayload = this.jwtService.verify(
+                    String(Data.id),
+                    {secret: this.configService.get('JWT_SECRET2')}
+                )
+                if (!id)
+                {
+                    socket.emit("inGame", 4);
+                    return ;
+                }
+            }catch (error){
+                socket.emit("inGame", 4);
+                return ;
+            }
+
             if (privateroomsID[Data.id] === undefined)
             {
                 privateroomsID[Data.id] = socket.id;
