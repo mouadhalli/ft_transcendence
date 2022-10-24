@@ -38,8 +38,8 @@ export class ChatGateway {
 	) {
 		try {
 			const { id } = await this.connectionService.authenticateSocket(socket)
-			const channelName: string = await this.chatService.joinChannel(id, channelId, password)
-			socket.join(channelName)
+			 await this.chatService.joinChannel(id, channelId, password)
+			socket.join(channelId)
 			return { success: true }
 
 		} catch (error) {
@@ -55,8 +55,8 @@ export class ChatGateway {
 
 		try {
 			const { id } = await this.connectionService.authenticateSocket(socket)
-			const channelName: string = await this.chatService.leaveChannel(id, channelId)
-			socket.leave(channelName)
+			await this.chatService.leaveChannel(id, channelId)
+			socket.leave(channelId)
 			return { success: true }
 
 
@@ -73,32 +73,22 @@ export class ChatGateway {
 		
 		try {
 			const { id } = await this.connectionService.authenticateSocket(socket)
-		 
-			const {success, error, channelName, message} = await this.chatService.sendMessage(id, channelId, content)
+
+			const {success, error, cause, message} = await this.chatService.sendMessage(id, channelId, content)
+
 			if (success === false) {
-				this.server.to(String(id)).socketsLeave(channelName)
+				if (cause !== 'muted')
+					this.server.to(String(id)).socketsLeave(channelId)
 				throw new WsException(error)
 			}
-		
-			// Users who blocked current user should not receive his messages
-			const roomSockets = await this.server.in(channelName).fetchSockets()
-		
-			for (let i = 0; i < roomSockets.length; i++) {
-				const memberToken = String(roomSockets[i].handshake.headers?.Token)
-				const { id: memberId } = await this.connectionService.getUserFromToken(memberToken)
-				if (!id)
-					continue
-					
-				const isBlockingMe = await this.userService.isUserBlockingMe(id, memberId)
-				const membership = await this.channelService.findMembershipByIds(memberId, channelId)
-		
-				if (isBlockingMe === true || (membership && membership.state === 'banned')) {
-					roomSockets[i].join('exceptionRoom')
-				}
-			}
-			// sending the event to all room sockets except those in axceptionRoom
-			socket.to(channelName).except('exceptionRoom').emit('receive_message', message)
-			this.server.socketsLeave('exceptionRoom')
+
+			const roomSockets = await this.server.in(channelId).fetchSockets()
+
+			await this.chatService.filterRoomMembers(roomSockets, id, channelId)
+
+			socket.to(channelId).except('exceptionRoom').emit('receive_message', message)
+
+			this.server.to(channelId).socketsLeave('exceptionRoom')
 				
 			return { success: true } 
 

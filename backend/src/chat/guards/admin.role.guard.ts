@@ -12,7 +12,7 @@ export class IsAdminGuard implements CanActivate {
 	  context: ExecutionContext,
 	): Promise<boolean> {
 
-		const request = context.switchToHttp().getRequest();
+		const request = context.switchToHttp().getRequest()
 
 		const { id } = request.user
 		const channelId: string = request.params.channel_id

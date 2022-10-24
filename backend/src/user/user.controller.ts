@@ -25,71 +25,11 @@ export class UserController {
 		return await this.userService.findUsersByDisplayNameLike(userId, q)
 	}
 
-	// @Post('add-friend')
-	// @UseGuards(JwtAuthGuard)
-	// @HttpCode(201)
-	// async sendFriendRequest(
-	// 	@User() user: UserDto,
-	// 	@Body('target_id', ParseIntPipe) friendId: number ) {
-	// 		if (!friendId || user.id === friendId)
-	// 			throw new BadRequestException("invalid target id")
-	// 		await this.userService.addFriend(user, friendId)
-	// 		return "friend request sent"
-	// }
-
-	// @Post('accept-friend')
-	// @UseGuards(JwtAuthGuard)
-	// @HttpCode(201)
-	// async acceptFriendRequest(
-	// 	@User('id') userId: number,
-	// 	@Body('target_id', ParseIntPipe) friendId: number ) {
-	// 		if (!friendId || userId === friendId)
-	// 			throw new BadRequestException("invalid friend id")
-	// 		await this.userService.acceptFriendship(userId, friendId)
-	// 		return "friend Request accepted"
-	// }
-
-	// @Post('remove-friend')
-	// @UseGuards(JwtAuthGuard)
-	// @HttpCode(201)
-	// async removeFromFriends(
-	// 	@User('id') userId: number,
-	// 	@Body('target_id', ParseIntPipe) friendId: number ) {
-	// 		if (userId === friendId)
-	// 			throw new BadRequestException("invalid friend id")
-	// 		await this.userService.removeRelationship(userId, friendId)
-	// 		return "friendship removed"
-	// }
-
-	// @Post('block-user')
-	// @UseGuards(JwtAuthGuard)
-	// @HttpCode(201)
-	// async BlockUser(
-	// 	@User('id') userId: number,
-	// 	@Body('target_id', ParseIntPipe) friendId: number ) {
-	// 		if (userId === friendId)
-	// 			throw new BadRequestException("invalid friend id")
-	// 		await this.userService.blockUser(userId, friendId)
-	// 		return "user blocked"
-	// }
-
-	// @Post('unblock-user')
-	// @UseGuards(JwtAuthGuard)
-	// @HttpCode(201)
-	// async unblock(
-	// 	@User('id') userId: number,
-	// 	@Body('target_id', ParseIntPipe) friendId: number ) {
-	// 		if (userId === friendId)
-	// 			throw new BadRequestException("invalid friend id")
-	// 		await this.userService.removeRelationship(userId, friendId)
-	// 		return "user unblocked"
-	// }
-
 	@Get('friends')
 	@UseGuards(JwtAuthGuard)
 	@HttpCode(200)
 	async getFriends(
-		@User('id') userId,
+		@User('id') userId: number,
 		@Query('index') index: number,
 		@Query('amount') amount: number
 	) {
@@ -100,7 +40,7 @@ export class UserController {
 	@UseGuards(JwtAuthGuard)
 	@HttpCode(200)
 	async getBlockList(
-		@User('id') userId,
+		@User('id') userId: number,
 		@Query('index') index: number,
 		@Query('amount') amount: number) {
 			return await this.userService.findUserRelationships(userId, index, amount, Relationship_State.BLOCKED)
@@ -110,7 +50,7 @@ export class UserController {
 	@UseGuards(JwtAuthGuard)
 	@HttpCode(200)
 	async getPendingList(
-		@User('id') userId,
+		@User('id') userId: number,
 		@Query('index') index: number,
 		@Query('amount') amount: number) {
 			return await this.userService.findUserRelationships(userId, index, amount, Relationship_State.PENDING)

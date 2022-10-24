@@ -8,7 +8,7 @@ import {
 
 import { Server, Socket } from 'socket.io';
 import { ChannelService } from './chat/channel/channel.service';
-import { directChannelDto } from './chat/dtos/channel.dto';
+import { ChannelDto, directChannelDto } from './chat/dtos/channel.dto';
 import { GatewayConnectionService, ConnectionStatus } from './connection.service';
 import { HttpExceptionFilter } from './gateway.filter';
 import { Relationship_State } from './user/entities/relationship.entity';
@@ -42,7 +42,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			this.logger.log(socket.id + ' connected')
 
 			const { id } = await this.connectionService.authenticateSocket(socket)
-
+	
 			this.connectionService.saveUserSocketConnection(socket.id, id)
 
 			// grouping user sockets in a room so i can ping all user Tabs easily
@@ -50,7 +50,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 
 			const channels = await this.channelService.findJoinedChannels(id)
 			const dms = await this.channelService.findUserDmChannels(id)
-			channels.forEach(channel => socket.join(channel.name))
+			channels.forEach(channel => socket.join(channel.id))
 			dms.forEach(channel => socket.join(channel.id))
 
 		} catch(error) {
@@ -96,9 +96,10 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 		try {
 			const { id } = await this.connectionService.authenticateSocket(socket)
 	
-			const userStatus = this.connectionService.getUserConectionStatus(userId)
-	
-			socket.emit('user-status', userStatus)
+			const status = this.connectionService.getUserConectionStatus(userId)
+
+			// socket.emit('user-status', userStatus)
+			return { success: true, status }
 
 		} catch (error) {
 			return { success: false, error: error.error }
@@ -118,8 +119,8 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			
 			await this.userService.addFriend(id, targetId)
 	
-			const channel = await this.channelService.createDmChannel(id, targetId)
-			socket.join(channel.id)
+			const { id: channelId }: directChannelDto = await this.channelService.createDmChannel(id, targetId)
+			socket.join(channelId)
 	
 			socket.to(String(targetId)).emit('update-friends')
 	
@@ -140,9 +141,9 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			
 			await this.userService.acceptFriendship(id, targetId)
 		
-			const channel = await this.channelService.findDmchannelByMembers(id, targetId)
+			const { id: channelId }: directChannelDto = await this.channelService.findDmchannelByMembers(id, targetId)
 			
-			socket.join(channel.id)
+			socket.join(channelId)
 			socket.to(String(targetId)).emit('update-friends')
 	
 			return { success: true }

@@ -4,6 +4,7 @@ import { Channel_Type } from '../entities/channel.entity'
 import { Channel_Member_Role, Channel_Member_State } from '../entities/channelMember.entity'
 
 import {PartialType} from '@nestjs/swagger'
+import { RelationshipEntity } from 'src/user/entities/relationship.entity'
 
 
 export class ChannelDto {
@@ -65,6 +66,8 @@ export class UpdateChannelDto {
 export class directChannelDto {
 
     @IsUUID()
-    id: number
+    id: string
+
+    relationship: RelationshipEntity
 
 }

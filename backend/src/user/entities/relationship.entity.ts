@@ -1,4 +1,5 @@
-import { Entity, CreateDateColumn, Column, PrimaryGeneratedColumn, ManyToOne, UpdateDateColumn, JoinColumn } from 'typeorm'
+import { DirectChannelEntity } from 'src/chat/entities/directChannel.entity';
+import { Entity, CreateDateColumn, Column, PrimaryGeneratedColumn, ManyToOne, UpdateDateColumn, JoinColumn, OneToOne } from 'typeorm'
 import { UserEntity } from './user.entity'
 
 export enum Relationship_State {
@@ -27,6 +28,13 @@ export class RelationshipEntity {
     @ManyToOne(() => UserEntity, (user) => user.id, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: "receiver_id" })
     receiver: UserEntity;
+
+    @OneToOne(() => DirectChannelEntity, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+    })
+    @JoinColumn({name: 'dmId'})
+    dm: DirectChannelEntity
 
     @CreateDateColumn()
     created_at: Date;
