@@ -41,6 +41,8 @@ export class MembershipDto {
 
     restricitonEnd: Date
 
+    isJoined: boolean
+
 }
 
 // Makes a copy of the ChannelDto with all fields Optional, Useful when updating

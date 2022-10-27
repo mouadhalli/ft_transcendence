@@ -34,7 +34,7 @@ export class GatewayConnectionService {
 	async authenticateSocket(socket: Socket) {
 		const userToken: string = String(socket.handshake.headers.token)
 		const user = await this.getUserFromToken(userToken)
-		if (!user.id)
+		if (user.id == -1)
 			throw new WsException('unAuthorized')
 		return user
 	}

@@ -15,7 +15,6 @@ export class MessageEntity {
     content: string
 
     @ManyToOne(() => UserEntity, {
-        // eager: true,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
     })
@@ -23,7 +22,6 @@ export class MessageEntity {
     author: UserEntity
 
     @ManyToOne(() => ChannelEntity, {
-        // eager: true,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
     })

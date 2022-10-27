@@ -35,7 +35,7 @@ export class AuthController {
             email: displayName + '@gmail.com',
             displayName: 'ooO' + displayName + 'Ooo',
             imgPath: displayName,
-            // is2faEnabled: false
+            is2faEnabled: false
         }
         return await this.authService.fakeLogIn(fakeUser)
     }

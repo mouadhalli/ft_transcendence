@@ -6,11 +6,12 @@ import { UserService } from './user.service';
 import { multerOptions } from '../config/mutler.conf'
 import { Relationship_State } from './entities/relationship.entity';
 import { UserDto } from 'src/dto/User.dto';
-import { FindQueryString } from 'src/dto/validation.dto';
+import { validateQueryString, ValidateDisplayName } from 'src/dto/validation.dto';
 
 type File = Express.Multer.File
 
 @Controller('user')
+// @UseGuards(JwtAuthGuard)
 export class UserController {
 
 	constructor( private userService: UserService ) {}
@@ -20,7 +21,7 @@ export class UserController {
 	@HttpCode(201)
 	async searchUsers(
 		@User('id') userId: number,
-		@Query() { q }: FindQueryString
+		@Query() { q }: validateQueryString
 	) {
 		return await this.userService.findUsersByDisplayNameLike(userId, q)
 	}
@@ -112,7 +113,7 @@ export class UserController {
 	@UseInterceptors(FileInterceptor('file', multerOptions))
 	async updateProfile(
 		@User('id') userId: number,
-		@Body('displayName') displayName: string,
+		@Body('displayName') { displayName }: ValidateDisplayName,
 		@UploadedFile() file: File) {
 			let imgPath = ''
 	    	if (file)

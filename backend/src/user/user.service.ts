@@ -54,7 +54,7 @@ export class UserService {
 
 	async isUserBlockingMe(myId: number, userId: number) {
 
-		const membership: RelationshipEntity = await this.relationshipRepository.findOne({
+		const relationship: RelationshipEntity = await this.relationshipRepository.findOne({
 			where: {
 				receiver: { id: myId },
 				sender: { id: userId },
@@ -62,7 +62,7 @@ export class UserService {
 			}
 		})
 
-		return membership ? true : false
+		return relationship ? true : false
 	}
 
 	async findUsersByDisplayNameLike(userId: number, displayname: string) {
@@ -332,7 +332,7 @@ export class UserService {
 		if (displayName) {
 			const duplicate: UserDto = await this.usersRepository.findOneBy({displayName: displayName})
 			if (duplicate && duplicate.id != id)
-				throw new BadRequestException('displayName already in user')
+				throw new BadRequestException("this Display Name is taken")
 			user.displayName = displayName
 		}
 		if (imgPath)
@@ -377,6 +377,17 @@ export class UserService {
 			},
 		})
 		return requests.map(request => request.sender)
+	}
+
+	async getUsersSortedWithXp() {
+		const users = await this.usersRepository.find({
+			order: { lvl: 'DESC' }
+		})
+
+		// return users.map(user => {
+		// 	user.xp = user.xp === -1 ? 0 : user.xp
+		// 	return user
+		// })
 	}
 
 }

@@ -33,7 +33,7 @@ export class UserEntity {
     @Column({ default: '' })
     imgPath: string;
 
-    @Column({ default: false, select: false })
+    @Column({ default: false })
     is2faEnabled: boolean;
 
 /* in typescript:
