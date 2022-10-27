@@ -1,41 +1,32 @@
 import { UserEntity } from "src/user/entities/user.entity"
-import { AfterUpdate, BeforeUpdate, Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm"
+import { AfterUpdate, BeforeUpdate, Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm"
 import { RelationCountAttribute } from "typeorm/query-builder/relation-count/RelationCountAttribute"
 import { ChannelMembershipEntity } from "./channelMember.entity"
 import { MessageEntity } from "./message.entity"
+import { v4 as uuidv4 } from 'uuid';
 
 export enum Channel_Type {
     PRIVATE = 'private',    // private groupe channel accessible on invite only
     PUBLIC = 'public',      // public  groupe channel without a password
     PROTECTED = 'protected', // public groupe channel protected with a password
-    // DIRECT = 'direct'        // this type of channels isn't done yet
 }
 
 @Entity('channel_table')
 export class ChannelEntity {
 
-    @PrimaryGeneratedColumn('uuid')
-    id: string
+    @PrimaryColumn()
+    id: string = uuidv4()
 
-    @Column({
-        type: 'varchar',
-        unique: true,
-        default: '',
-    })
+    @Column({ unique: true })
     name: string
 
     @Column({
-        type: 'varchar',
         nullable: true,
-        select: false,
+        select: false
     })
     password?: string
 
-    @Column({
-        type: 'varchar',
-        nullable: true
-        // default: ''
-    })
+    @Column({ nullable: true })
     imgPath: string
 
     @Column({

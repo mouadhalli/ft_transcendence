@@ -32,7 +32,7 @@ export class MessageService {
 
         const userMembership: MembershipDto = await this.channelService.findMembership(user, channel)
 
-        if (!userMembership)
+        if (!userMembership || !userMembership.isJoined)
             throw new BadRequestException('user is not a member of this channel')
         
         if (userMembership.state === 'banned') {

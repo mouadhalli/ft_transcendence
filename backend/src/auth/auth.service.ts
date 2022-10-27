@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserDto } from 'src/dto/User.dto';
@@ -56,15 +56,26 @@ export class AuthService {
         try {
             if (!jwtToken)
                 return null
-            const { id }: jwtPayload = this.jwtService.verify(
+
+            const payload: jwtPayload = this.jwtService.verify(
                 jwtToken,
                 {secret: this.configService.get('JWT_SECRET')}
             )
-            if (!id)
+
+            if (!payload || !payload.id || !payload.twofaState) {
                 return null
-            return await this.userService.findUser(id)
+            }
+
+            const user: UserDto = await this.userService.findUser(payload.id)
+        
+            if ( !user || ( user.is2faEnabled
+                && (payload.twofaState === "not_confirmed" || payload.twofaState === "not_active" )) )
+                    return null
+
+            return user
 
         } catch(error) {
+            console.log(3);
             return null
         }
     }

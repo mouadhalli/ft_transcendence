@@ -1,4 +1,4 @@
-import { Logger, ParseIntPipe, UnauthorizedException, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, Logger, ParseIntPipe, UnauthorizedException, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 import {
   SubscribeMessage, WebSocketGateway,
   OnGatewayInit, WebSocketServer,
@@ -8,10 +8,9 @@ import {
 
 import { Server, Socket } from 'socket.io';
 import { ChannelService } from './chat/channel/channel.service';
-import { ChannelDto, directChannelDto } from './chat/dtos/channel.dto';
-import { GatewayConnectionService, ConnectionStatus } from './connection.service';
+import { directChannelDto } from './chat/dtos/channel.dto';
+import { GatewayConnectionService } from './connection.service';
 import { HttpExceptionFilter } from './gateway.filter';
-import { Relationship_State } from './user/entities/relationship.entity';
 import { UserService } from './user/user.service';
 
 @UseFilters(HttpExceptionFilter)
@@ -51,27 +50,22 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			const channels = await this.channelService.findJoinedChannels(id)
 			const dms = await this.channelService.findUserDmChannels(id)
 			channels.forEach(channel => socket.join(channel.id))
-			dms.forEach(channel => socket.join(channel.id))
+			dms.forEach(dm => socket.join(dm.id))
 
 		} catch(error) {
-			socket._error(error)
 			socket.disconnect()
-			throw new WsException(error)
 		}
 	}
 
 	async handleDisconnect(socket: Socket) {
 		try {
-			this.logger.log(socket.id + ' disconnected')
-		
 			const { id } = await this.connectionService.authenticateSocket(socket)
 
 			this.connectionService.removeUserSocketConnection(id, socket.id)
-			socket.leave(String(id))
-			
+
+			this.logger.log(socket.id + ' disconnected')
 		} catch (error) {
-			socket._error(error)
-			throw new WsException(error)
+			this.logger.log(socket.id + ' disconnected')
 		}
 	}
 
@@ -84,9 +78,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			this.server.to(String(id)).disconnectSockets()
 		}
 		catch (error) {
-			socket._error(error)
 			socket.disconnect()
-			throw new WsException(error)
 		}
 	}
 
@@ -94,17 +86,15 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 	async getUserConnectionStatus(@ConnectedSocket() socket: Socket, @MessageBody(ParseIntPipe) userId: number) {
 
 		try {
-			const { id } = await this.connectionService.authenticateSocket(socket)
+			await this.connectionService.authenticateSocket(socket)
 	
 			const status = this.connectionService.getUserConectionStatus(userId)
 
-			// socket.emit('user-status', userStatus)
 			return { success: true, status }
 
 		} catch (error) {
 			return { success: false, error: error.error }
 		}
-
 	}
 
 	@SubscribeMessage('send-friend-request')

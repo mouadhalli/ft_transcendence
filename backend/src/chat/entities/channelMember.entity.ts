@@ -51,6 +51,12 @@ export class ChannelMembershipEntity {
     @Column({nullable: true})
     restricitonEnd: Date
 
+    @Column({
+        type: 'boolean',
+        default: false,
+    })
+    isJoined: boolean
+
     @CreateDateColumn()
     created_at: Date
 }

@@ -8,8 +8,7 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, //filter out Properties
-      transform: true, //transform payloads to be objects typed according to their DTO classes
-      disableErrorMessages: false //it is false by default i put it here just to remember its existence lool
+      transform: true //transform payloads to be objects typed according to their DTO classes
     })
   );
   app.enableCors({
