@@ -2,7 +2,7 @@ import { IsAlphanumeric, IsNotEmpty, IsOptional, MaxLength } from 'class-validat
 
 export class validateQueryString {
 
-    @IsOptional()   
+    @IsOptional()
     @IsAlphanumeric()
     @MaxLength(10)
     q: string;
@@ -10,7 +10,8 @@ export class validateQueryString {
 
 export class ValidateDisplayName {
 
-    @IsNotEmpty()
+    // @IsNotEmpty()
+    @IsOptional()
     @IsAlphanumeric()
     @MaxLength(10)
     displayName: string

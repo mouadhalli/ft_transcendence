@@ -6,7 +6,7 @@ import { Channel_Member_Role, Channel_Member_State } from "../entities/channelMe
 import { ChannelDto, UpdateChannelDto } from "../dtos/channel.dto";
 import { ChannelService } from "./channel.service";
 import { FileInterceptor } from '@nestjs/platform-express';
-import { multerOptions } from '../../config/mutler.conf'
+import { multerOptions } from '../../config/mutler.config'
 import { RolesGuard } from "../guards/roles.guard";
 import { Roles } from "../decorators/roles.decorator";
 type File = Express.Multer.File

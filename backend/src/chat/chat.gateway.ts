@@ -121,6 +121,7 @@ export class ChatGateway {
 			await this.chatService.addUserToChannel(userId, targetId, channelId)
 
 			this.server.to(String(targetId)).socketsJoin(channelId)
+			this.server.to(channelId).emit('update')
 			return { success: true }
 
 		} catch (error) {
