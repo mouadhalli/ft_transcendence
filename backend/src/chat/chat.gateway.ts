@@ -6,18 +6,11 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { GatewayConnectionService } from 'src/connection.service';
-import { HttpExceptionFilter } from 'src/gateway.filter';
-import { UserService } from 'src/user/user.service';
-import { ChannelService } from './channel/channel.service';
+import { ExceptionFilter } from 'src/gateway.filter';
 import { ChatService } from './chat.service'
 import { joinChannelPayload, sendDmPayload, sendMsgPayload } from './dtos/chat.dto';
 
-export class roomMember {
-	memberId: number
-	memberSocket: Socket
-}
-
-@UseFilters(HttpExceptionFilter)
+@UseFilters(ExceptionFilter)
 @UsePipes( new ValidationPipe({ whitelist: true, transform: true }))
 @WebSocketGateway()
 export class ChatGateway {
@@ -36,6 +29,7 @@ export class ChatGateway {
 		@MessageBody() { channelId, password }: joinChannelPayload
 	) {
 		try {
+
 			const { id } = await this.connectionService.authenticateSocket(socket)
 			await this.chatService.joinChannel(id, channelId, password)
 			socket.join(channelId)
@@ -53,11 +47,11 @@ export class ChatGateway {
 	) {
 
 		try {
+
 			const { id } = await this.connectionService.authenticateSocket(socket)
 			await this.chatService.leaveChannel(id, channelId)
 			socket.leave(channelId)
 			return { success: true }
-
 
 		} catch (error) {
 			return { success: false, error: error?.error }
@@ -71,6 +65,7 @@ export class ChatGateway {
 	) {
 		
 		try {
+
 			const { id } = await this.connectionService.authenticateSocket(socket)
 
 			const {success, error, cause, message} = await this.chatService.sendMessage(id, channelId, content)
@@ -103,6 +98,7 @@ export class ChatGateway {
 		@MessageBody() {channelId, content, type }: sendDmPayload
 	) {
 		try {
+			
 			const { id } = await this.connectionService.authenticateSocket(socket)
 			const message = await this.chatService.sendDirectMessage(id, channelId, content, type)
 			socket.to(channelId).emit('receive_direct_message', message)

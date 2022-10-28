@@ -33,7 +33,7 @@ export const multerOptions: MulterOptions = {
         // File modification details
         filename: (req: any, file: any, cb: any) => {
             //TO DO: remove existing user file
-
+            
             // Naming file with user id
             cb(null, `${req.user.id}${extname(file.originalname)}`)
         }

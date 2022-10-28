@@ -10,7 +10,7 @@ import { ScoreEntity } from "src/game/entities/score.entity";
 import { DirectMessageEntity } from "src/chat/entities/directMessage.entity";
 import { DirectChannelEntity } from "src/chat/entities/directChannel.entity";
 
-export const typeormConfig :TypeOrmModuleAsyncOptions = {
+export const typeormConfig: TypeOrmModuleAsyncOptions = {
     imports: [ConfigModule],
     useFactory: (configService: ConfigService) => ({
       type: 'postgres',

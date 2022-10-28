@@ -115,8 +115,6 @@ export class UserController {
 		@User('id') userId: number,
 		@Body() { displayName }: ValidateDisplayName,
 		@UploadedFile() file: File) {
-			console.log(displayName);
-			
 			let imgPath = ''
 	    	if (file)
 				imgPath = `http://localhost:3000/${file.path}`
