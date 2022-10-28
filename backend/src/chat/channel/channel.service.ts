@@ -298,7 +298,7 @@ export class ChannelService {
         channel: ChannelDto,
         member_role: Channel_Member_Role
     ) {
-        await this.membershipsRepository.save({
+        return await this.membershipsRepository.save({
             member: user,
             channel: channel,
             role: member_role,

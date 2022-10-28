@@ -29,16 +29,24 @@ export class ChannelController {
         return  this.channelService.findOneChannel(channelId)
     }
 
-    @Get("find/:channel_id")
+    @Get("channel-role/:channel_id")
 	@HttpCode(200)
-    async getChannel(
+    async getChannelRole(
         @User('id') userId: number,
-        @Param('channel_id') channelId: string
+        @Param('channel_id', ParseUUIDPipe) channelId: string
     ) {
         const { id, name, imgPath, type, membersCount } = await this.channelService.findOneChannel(channelId)
         const role = await this.channelService.findUserChannelRole(userId, channelId)
 
         return { id, name, imgPath, type, membersCount, role }
+    }
+
+    @Get("find/:channel_id")
+	@HttpCode(200)
+    async getChannel(
+        @Param('channel_id', ParseUUIDPipe) channelId: string
+    ) {
+        return await this.channelService.findOneChannel(channelId)
     }
 
     @Get('role/:channel_id')
@@ -72,6 +80,12 @@ export class ChannelController {
     async getDirectChannels(@User('id') userId: number) {
         return await this.channelService.findUserDmChannels(userId)
     }
+
+    // @Get('dms')
+	// @HttpCode(200)
+    // async getDirectChannels(@User('id') userId: number) {
+    //     return await this.channelService.findUserDmChannels(userId)
+    // }
 
     @Get('non-joined')
 	@HttpCode(200)

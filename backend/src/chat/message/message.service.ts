@@ -7,7 +7,7 @@ import { Repository } from "typeorm";
 import { ChannelDto, MembershipDto } from "../dtos/channel.dto";
 import { ChannelService } from "../channel/channel.service";
 import { ChannelEntity } from "../entities/channel.entity";
-import { DirectMessageEntity } from "../entities/directMessage.entity";
+import { DirectMessageEntity, Message_Type } from "../entities/directMessage.entity";
 import { MessageEntity } from "../entities/message.entity";
 import { MessageDto } from "../dtos/message.dto";
 
@@ -59,12 +59,16 @@ export class MessageService {
         })
     }
 
-    async saveMessage(author: UserDto, channel: ChannelDto, content: string): Promise<MessageEntity> {
+    async saveMessage(
+        author: UserDto,
+        channel: ChannelDto,
+        content: string,
+    ): Promise<MessageEntity> {
         try {
             return await this.messageRepository.save({
                 content: content,
                 author: author,
-                channel: channel
+                channel: channel,
             })
         } catch(error) {
             throw new WsException("internal server error")
@@ -81,12 +85,18 @@ export class MessageService {
         })
     }
 
-    async saveDirectMessage(author: UserDto, channelId: string, content: string) {
+    async saveDirectMessage(
+        author: UserDto,
+        channelId: string,
+        content: string,
+        msgType: Message_Type
+    ) {
         try {
             return await this.directMessageRepository.save({
                 content: content,
                 author: author,
-                channel: { id: channelId }
+                channel: { id: channelId },
+                type: msgType
             })
 
         } catch(error) {

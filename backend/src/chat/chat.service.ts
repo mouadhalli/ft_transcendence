@@ -9,6 +9,7 @@ import * as bcrypt from "bcryptjs";
 import { ChannelDto, MembershipDto } from './dtos/channel.dto';
 import { UserDto } from 'src/dto/User.dto';
 import { MessageDto } from './dtos/message.dto';
+import { Message_Type } from './entities/directMessage.entity';
  
 @Injectable()
 export class ChatService {
@@ -39,10 +40,10 @@ export class ChatService {
 			    throw new WsException('incorrect password')
         }
 
-        const membership: MembershipDto = await this.channelService.findMembership(member, channel)
+        let membership: MembershipDto = await this.channelService.findMembership(member, channel)
 
         if (!membership)
-            await this.channelService.createMembership(member, channel, Channel_Member_Role.MEMBER)
+            membership = await this.channelService.createMembership(member, channel, Channel_Member_Role.MEMBER)
 
         if (membership.isJoined)
 			throw new WsException('you are already a member of this channel')
@@ -113,7 +114,12 @@ export class ChatService {
 
     }
 
-    async sendDirectMessage(userId: number, channelId: string, content: string) {
+    async sendDirectMessage(
+        userId: number,
+        channelId: string,
+        content: string,
+        msgType: Message_Type
+    ) {
         const author: UserDto = await this.userService.findUser(userId)
         if (!author)
             throw new WsException("couldn't find user")
@@ -133,7 +139,8 @@ export class ChatService {
         const message = await this.messageService.saveDirectMessage(
             author,
             channel.id,
-            content
+            content,
+            msgType
         )
 
         return message

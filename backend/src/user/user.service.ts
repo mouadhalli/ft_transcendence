@@ -380,14 +380,11 @@ export class UserService {
 	}
 
 	async getUsersSortedWithXp() {
-		const users = await this.usersRepository.find({
+		const users: UserDto[] = await this.usersRepository.find({
 			order: { lvl: 'DESC' }
 		})
 
-		// return users.map(user => {
-		// 	user.xp = user.xp === -1 ? 0 : user.xp
-		// 	return user
-		// })
+		return users
 	}
 
 }

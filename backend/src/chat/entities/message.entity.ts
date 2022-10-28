@@ -10,7 +10,6 @@ export class MessageEntity {
 
     @Column({
         type: "varchar",
-        default: ''
     })
     content: string
 

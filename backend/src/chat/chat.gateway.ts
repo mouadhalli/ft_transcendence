@@ -10,7 +10,7 @@ import { HttpExceptionFilter } from 'src/gateway.filter';
 import { UserService } from 'src/user/user.service';
 import { ChannelService } from './channel/channel.service';
 import { ChatService } from './chat.service'
-import { joinChannelPayload, sendMsgPayload } from './dtos/chat.dto';
+import { joinChannelPayload, sendDmPayload, sendMsgPayload } from './dtos/chat.dto';
 
 export class roomMember {
 	memberId: number
@@ -100,11 +100,11 @@ export class ChatGateway {
 	@SubscribeMessage('send_direct_message')
 	async sendDirectMessageEvent(
 		@ConnectedSocket() socket: Socket,
-		@MessageBody() {channelId, content }: sendMsgPayload
+		@MessageBody() {channelId, content, type }: sendDmPayload
 	) {
 		try {
 			const { id } = await this.connectionService.authenticateSocket(socket)
-			const message = await this.chatService.sendDirectMessage(id, channelId, content)
+			const message = await this.chatService.sendDirectMessage(id, channelId, content, type)
 			socket.to(channelId).emit('receive_direct_message', message)
 			return { success: true }
 

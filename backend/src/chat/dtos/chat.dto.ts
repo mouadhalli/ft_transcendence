@@ -1,4 +1,5 @@
-import { IsAlphanumeric, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsAlphanumeric, IsEnum, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { Message_Type } from '../entities/directMessage.entity';
 
 export class joinChannelPayload {
 
@@ -17,4 +18,16 @@ export class sendMsgPayload {
 
 	@IsString()
 	content: string
+}
+
+export class sendDmPayload {
+
+	@IsUUID()
+	channelId: string
+
+	@IsString()
+	content: string
+
+	@IsEnum(Message_Type)
+	type: Message_Type
 }
