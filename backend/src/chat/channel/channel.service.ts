@@ -164,12 +164,15 @@ export class ChannelService {
 
     async updateChannel(channelId: string, data: UpdateChannelDto, imgPath: string) {
 
+        if (!data)
+            return
+
         if (data.type === 'private')
             await this.turnChannelPrivate(channelId)
-        else if (data.type === 'protected' && data.password)
-            await this.turnChannelProtected(channelId, data.password)
         else if (data.type === 'public')
             await this.turnChannelPublic(channelId)
+        else if (data.password)
+            await this.turnChannelProtected(channelId, data.password)
         
         if (data.name)
             await this.channelRepository.update(channelId, {name: data.name})

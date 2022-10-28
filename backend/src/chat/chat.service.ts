@@ -182,4 +182,10 @@ export class ChatService {
         }        
     }
 
+    async addUserToChannel(user: any, targetId: number, channelId: string) {
+        if (user.id === targetId)
+            throw new WsException('invalid id')
+        await this.channelService.addUserToChannel(user, targetId, channelId)
+    }
+
 }

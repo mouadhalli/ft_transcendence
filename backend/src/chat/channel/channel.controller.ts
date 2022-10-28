@@ -114,18 +114,18 @@ export class ChannelController {
         return await this.channelService.deleteAllChannels()
     }
 
-    @Patch('add-member/:channel_id')
-	@HttpCode(201)
-    async addFriendToChannel(
-        @User() user: UserDto,
-        @Param('channel_id', ParseUUIDPipe) channelId: string,
-        @Query('target_id', ParseIntPipe) targetId: number
-    ) {
-        if (user.id === targetId)
-            throw new BadRequestException('user cannot add himseld')
-        await this.channelService.addUserToChannel(user, targetId, channelId)
-        return 'target added successfully'
-    }
+    // @Patch('add-member/:channel_id')
+	// @HttpCode(201)
+    // async addFriendToChannel(
+    //     @User() user: UserDto,
+    //     @Param('channel_id', ParseUUIDPipe) channelId: string,
+    //     @Query('target_id', ParseIntPipe) targetId: number
+    // ) {
+    //     if (user.id === targetId)
+    //         throw new BadRequestException('user cannot add himseld')
+    //     await this.channelService.addUserToChannel(user, targetId, channelId)
+    //     return 'target added successfully'
+    // }
 
     @Patch('add-admin/:channel_id')
     @Roles('owner')

@@ -6,9 +6,10 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { GatewayConnectionService } from 'src/connection.service';
+import { UserDto } from 'src/dto/User.dto';
 import { ExceptionFilter } from 'src/gateway.filter';
 import { ChatService } from './chat.service'
-import { joinChannelPayload, sendDmPayload, sendMsgPayload } from './dtos/chat.dto';
+import { addMemberPayload, joinChannelPayload, sendDmPayload, sendMsgPayload } from './dtos/chat.dto';
 
 @UseFilters(ExceptionFilter)
 @UsePipes( new ValidationPipe({ whitelist: true, transform: true }))
@@ -102,6 +103,24 @@ export class ChatGateway {
 			const { id } = await this.connectionService.authenticateSocket(socket)
 			const message = await this.chatService.sendDirectMessage(id, channelId, content, type)
 			socket.to(channelId).emit('receive_direct_message', message)
+			return { success: true }
+
+		} catch (error) {
+			return { success: false, error: error?.error }
+		}
+	}
+	
+
+	@SubscribeMessage('add-member')
+	async addUserToChannel(
+		@ConnectedSocket() socket: Socket,
+		@MessageBody() { channelId, targetId }: addMemberPayload
+	) {
+		try {
+			const user = await this.connectionService.authenticateSocket(socket)
+			await this.chatService.addUserToChannel(user, targetId, channelId)
+
+			this.server.to(String(targetId)).socketsJoin(channelId)
 			return { success: true }
 
 		} catch (error) {
