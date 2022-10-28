@@ -113,14 +113,13 @@ export class UserController {
 	@UseInterceptors(FileInterceptor('file', multerOptions))
 	async updateProfile(
 		@User('id') userId: number,
-		// @Body('displayName') { displayName }: ValidateDisplayName,
-		@Body('displayName') displayName: string,
+		@Body() { displayName }: ValidateDisplayName,
 		@UploadedFile() file: File) {
 			console.log(displayName);
 			
 			let imgPath = ''
 	    	if (file)
 				imgPath = `http://localhost:3000/${file.path}`
-			return await this.userService.updateProfile(userId, String(displayName), imgPath)
+			return await this.userService.updateProfile(userId, displayName, imgPath)
 	}
 }
