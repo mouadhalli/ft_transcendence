@@ -110,6 +110,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 			await this.userService.addFriend(id, targetId)
 	
 			const { id: channelId }: directChannelDto = await this.channelService.createDmChannel(id, targetId)
+			
 			socket.join(channelId)
 	
 			socket.to(String(targetId)).emit('update-friends')

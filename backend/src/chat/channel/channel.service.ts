@@ -514,10 +514,12 @@ export class ChannelService {
 
         // if (!friendship || friendship.state === 'pending')
         //     throw new BadRequestException('users are not friends')
-
-        return await this.dmRepository.save({
+        const dm = this.dmRepository.create({
             relationship: friendship
         })
+
+        return await this.dmRepository.save(dm)
+        .catch(error => {throw new InternalServerErrorException(error)})
     }
 
     async findDmChannel(channelId: string) {

@@ -1,4 +1,4 @@
-import { IsAlphanumeric, IsOptional, Max, MaxLength, Min } from 'class-validator';
+import { IsAlphanumeric, IsNotEmpty, IsOptional, MaxLength } from 'class-validator';
 
 export class validateQueryString {
 
@@ -9,7 +9,10 @@ export class validateQueryString {
 }
 
 export class ValidateDisplayName {
+
+    @IsNotEmpty()
     @IsAlphanumeric()
     @MaxLength(10)
     displayName: string
+
 }

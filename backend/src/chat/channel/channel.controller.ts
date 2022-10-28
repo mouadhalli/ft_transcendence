@@ -24,6 +24,8 @@ export class ChannelController {
         @Body() channelData: ChannelDto,
     ) {
         const channelId: string = await this.channelService.createChannel(creator, channelData)
+        console.log(channelId);
+        
         return  this.channelService.findOneChannel(channelId)
     }
 
