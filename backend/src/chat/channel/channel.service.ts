@@ -26,24 +26,25 @@ export class ChannelService {
         private userService: UserService
     ) {}
 
-    async addUserToChannel(user: UserDto, targetId: number, channelId: string) {
+    async addUserToChannel(userId: number, targetId: number, channelId: string) {
 
         const channel: ChannelDto = await this.findOneChannel(channelId)
         if (!channel)
             throw new BadRequestException('channel not found')
 
-        if (!await this.findMembership(user, channel))
-            throw new BadRequestException(`${user.displayName} is not a member of this channel`)
+        const usermembership = await this.findMembershipByIds(userId, channelId)
+        if (!usermembership || !usermembership.isJoined)
+            throw new BadRequestException(`you are not a member of this channel`)
 
         const target: UserEntity = await this.userService.findUser(targetId)
         if (!target)
             throw new BadRequestException('target not found')
         
-        const isFriends: Relationship_State = (await this.userService.findRelationship(user.id, targetId)).state
+        const isFriends: Relationship_State = (await this.userService.findRelationship(userId, targetId)).state
         if (isFriends !== 'friends')
             throw new BadRequestException(`${target.displayName} is not on your friends list`)
 
-        const targetMembership = await this.findMembership(target, channel)
+        const targetMembership = await this.findMembershipByIds(targetId, channelId)
 
         if (targetMembership) {
             if (targetMembership.isJoined)

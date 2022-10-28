@@ -117,8 +117,8 @@ export class ChatGateway {
 		@MessageBody() { channelId, targetId }: addMemberPayload
 	) {
 		try {
-			const user = await this.connectionService.authenticateSocket(socket)
-			await this.chatService.addUserToChannel(user, targetId, channelId)
+			const { id:userId } = await this.connectionService.authenticateSocket(socket)
+			await this.chatService.addUserToChannel(userId, targetId, channelId)
 
 			this.server.to(String(targetId)).socketsJoin(channelId)
 			return { success: true }
