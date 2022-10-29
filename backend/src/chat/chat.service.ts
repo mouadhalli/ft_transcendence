@@ -33,9 +33,10 @@ export class ChatService {
 
         let membership: MembershipDto = await this.channelService.findMembership(member, channel)
 
-        if (channel.type === 'private')
-			throw new WsException("you can't join a private channel")
-        if (membership && membership.role === 'member' && channel.type === 'protected') {
+        if (channel.type === 'private' && membership && membership.role != 'owner')
+            throw new WsException("you can't join a private channel")
+        
+        if (channel.type === 'protected' && membership && membership.role === 'member') {
             if (!password)
 			    throw new WsException('password is required')
             if (!await bcrypt.compare(password, channel.password))
