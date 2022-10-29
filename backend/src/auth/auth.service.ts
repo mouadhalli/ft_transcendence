@@ -5,6 +5,7 @@ import { UserDto } from 'src/dto/User.dto';
 import { twoFactorState, jwtPayload } from '../dto/jwt.dto'
 import { ConfigService } from '@nestjs/config';
 import { UserEntity } from 'src/user/entities/user.entity';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class AuthService {
@@ -31,6 +32,8 @@ export class AuthService {
         const FRONT_END = `http://${this.configService.get('APP_NAME')}:${this.configService.get('FRONT_END_PORT')}`
         user = await this.userService.findUserWithAuthData(userData.id)
         if (!user) { // first auth -> save user then redirect him to chose a displayName && 2fa state
+            const UUID = uuidv4().replace('-', '')
+            userData.displayName = Buffer.from(UUID, 'hex').toString('base64')
             user = await this.userService.saveUser(userData)
             redirectUrl = `${FRONT_END}/register`
         }
