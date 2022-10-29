@@ -15,7 +15,7 @@ import { UserService } from './user/user.service';
 
 @UseFilters(ExceptionFilter)
 @WebSocketGateway({
-	cors: '*',
+	cors: `http://${process.env.APP_NAME}:${process.env.FRONT_END_PORT}`,
 	// Credential: true
 })
 export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
