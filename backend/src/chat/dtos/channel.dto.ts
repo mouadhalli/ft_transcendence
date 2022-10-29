@@ -20,9 +20,8 @@ export class ChannelDto {
     @IsOptional()
     @IsNotEmpty()
     @IsString()
-    @MinLength(6)
+    @MinLength(3)
     @MaxLength(20)
-    // @IsAlphanumeric()
     password?: string
 
     @IsNotEmpty()
