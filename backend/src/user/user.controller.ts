@@ -7,6 +7,7 @@ import { multerOptions } from '../config/mutler.config'
 import { Relationship_State } from './entities/relationship.entity';
 import { UserDto } from 'src/dto/User.dto';
 import { validateQueryString, ValidateDisplayName } from 'src/dto/validation.dto';
+import { ConfigService } from '@nestjs/config';
 
 type File = Express.Multer.File
 
@@ -14,7 +15,10 @@ type File = Express.Multer.File
 // @UseGuards(JwtAuthGuard)
 export class UserController {
 
-	constructor( private userService: UserService ) {}
+	constructor(
+		private userService: UserService,
+		private configService: ConfigService
+	) {}
 
 	@Get('search')
 	@UseGuards(JwtAuthGuard)
@@ -117,7 +121,7 @@ export class UserController {
 		@UploadedFile() file: File) {
 			let imgPath = ''
 	    	if (file)
-				imgPath = `http://localhost:3000/${file.path}`
+				imgPath = `http://${this.configService.get('APP_NAME')}:${this.configService.get('HOST_PORT')}/${file.path}`
 			return await this.userService.updateProfile(userId, displayName, imgPath)
 	}
 }

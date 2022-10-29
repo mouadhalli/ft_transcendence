@@ -9,13 +9,17 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { multerOptions } from '../../config/mutler.config'
 import { RolesGuard } from "../guards/roles.guard";
 import { Roles } from "../decorators/roles.decorator";
+import { ConfigService } from "@nestjs/config";
 type File = Express.Multer.File
 
 @Controller('channel')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ChannelController {
 
-    constructor( private channelService: ChannelService ) {}
+    constructor(
+        private channelService: ChannelService,
+        private configService: ConfigService
+    ) {}
 
     @Post('create')
 	@HttpCode(201)
@@ -204,7 +208,7 @@ export class ChannelController {
     ) {
         let imgPath = ''
         if (file)
-            imgPath = `http://localhost:3000/${file.path}`
+			imgPath = `http://${this.configService.get('APP_NAME')}:${this.configService.get('HOST_PORT')}/${file.path}`
         await this.channelService.updateChannel(channelId, data, imgPath)
         return await this.channelService.findOneChannel(channelId)
     }

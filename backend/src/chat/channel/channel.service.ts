@@ -53,7 +53,7 @@ export class ChannelService {
                 const time = targetMembership.restricitonEnd.getTime() - Date.now()
                 if (time > 0)
                     throw new ForbiddenException(
-                        `${target.displayName} is banned for + ${String(Math.floor(time / 1000))} seconds`
+                        `${target.displayName} is banned for ${String(Math.floor(time / 1000))} seconds`
                     )
                 this.removeRestrictionOnChannelMember(channelId, targetId)
             }

@@ -12,8 +12,9 @@ async function bootstrap() {
     })
   );
   app.enableCors({
-    origin: 'http://localhost:8080'
+    // origin: 'http://localhost:8080'
+    origin: `http://${process.env.APP_NAME}:${process.env.HOST_PORT}`
   })
-  await app.listen(3000);
+  await app.listen(process.env.HOST_PORT);
 }
 bootstrap();

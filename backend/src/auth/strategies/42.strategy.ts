@@ -9,9 +9,9 @@ export class FortyTwoStrategy extends PassportStrategy(Strategy) {
         super({
             clientID: configService.get('FORTYTWO_APP_ID'),
             clientSecret: configService.get('FORTYTWO_APP_SECRET'),
-            callbackURL: "http://localhost:3000/auth/42/redirect",
+            callbackURL: `http://${configService.get('APP_NAME')}:${configService.get('HOST_PORT')}/auth/42/redirect`,
             profileFields: {
-                'id': function (obj) { return String(obj.id); },
+                'id': function(obj) { return String(obj.id); },
                 'username': 'login',
                 'displayName': 'displayname',
                 'imgPath': 'image_url',

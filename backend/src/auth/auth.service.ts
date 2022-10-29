@@ -28,17 +28,18 @@ export class AuthService {
         let user: UserEntity
         let redirectUrl: string
         let twofaStatus: twoFactorState = twoFactorState.NOT_ACTIVE
+        const FRONT_END = `http://${this.configService.get('APP_NAME')}:${this.configService.get('FRONT_END_PORT')}`
         user = await this.userService.findUserWithAuthData(userData.id)
         if (!user) { // first auth -> save user then redirect him to chose a displayName && 2fa state
             user = await this.userService.saveUser(userData)
-            redirectUrl = "http://localhost:8080/register"
+            redirectUrl = `${FRONT_END}/register`
         }
         else if (user && user.is2faEnabled) { // user already have an account and an active 2fa
-            redirectUrl = "http://localhost:8080/2fa-verification"
+            redirectUrl = `${FRONT_END}/2fa-verification`
             twofaStatus = twoFactorState.NOT_CONFIRMED
         }
         else// user already have an account and an unactive 2fa
-            redirectUrl = "http://localhost:8080/"
+            redirectUrl = FRONT_END
         return {
             redirectUrl: redirectUrl,
             jwtToken: this.issueJwtToken(user, twofaStatus)
