@@ -172,8 +172,11 @@ export class ChannelService {
             await this.turnChannelPrivate(channelId)
         else if (data.type === 'public')
             await this.turnChannelPublic(channelId)
-        else if (data.password)
+        else if (data.type === 'protected') {
+            if (!data.password)
+                throw new BadRequestException('Password cannot be empty')
             await this.turnChannelProtected(channelId, data.password)
+        }
         
         if (data.name)
             await this.channelRepository.update(channelId, {name: data.name})
