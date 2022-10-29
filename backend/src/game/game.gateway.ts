@@ -101,6 +101,14 @@ export class gameGateway implements OnGatewayDisconnect {
         const { id } = await this.connectionService.getUserFromToken(token)
         if (id === -1)
             return { success: false };
+        const connectionStatus = this.connectionService.getUserConectionStatus(id);
+        console.log(connectionStatus);
+            
+        if (connectionStatus !== undefined && connectionStatus !== "offline")
+        {
+            console.log("can't generate");
+            return { success: false };
+        }
         const gameToken: string = this.issueJwtToken(id);
         return { success: true, Token: gameToken }
     }
