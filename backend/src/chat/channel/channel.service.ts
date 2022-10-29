@@ -40,8 +40,8 @@ export class ChannelService {
         if (!target)
             throw new BadRequestException('target not found')
         
-        const isFriends: Relationship_State = (await this.userService.findRelationship(userId, targetId)).state
-        if (isFriends !== 'friends')
+        const friendship: RelationshipEntity = await this.userService.findRelationship(userId, targetId)
+        if (!friendship || friendship.state != 'friends')
             throw new BadRequestException(`${target.displayName} is not on your friends list`)
 
         let targetMembership = await this.findMembershipByIds(targetId, channelId)

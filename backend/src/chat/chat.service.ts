@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
 import { ChannelService } from './channel/channel.service';
 import { GatewayConnectionService } from 'src/connection.service';
@@ -183,9 +183,13 @@ export class ChatService {
     }
 
     async addUserToChannel(userId: number, targetId: number, channelId: string) {
-        if (userId === targetId)
-            throw new WsException('invalid id')
-        await this.channelService.addUserToChannel(userId, targetId, channelId)
+        try {
+            if (userId === targetId)
+                throw new BadRequestException('invalid id')
+            await this.channelService.addUserToChannel(userId, targetId, channelId)
+        } catch (error) {
+            throw new WsException(error.message)
+        }
     }
 
 }
