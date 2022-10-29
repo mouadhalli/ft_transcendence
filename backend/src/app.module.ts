@@ -1,8 +1,8 @@
-import { Module,  } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { AuthModule } from './auth/auth.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './user/user.module';
 import { typeormConfig } from './config/typeorm.config';
 import { gameModule } from './game/game.module';

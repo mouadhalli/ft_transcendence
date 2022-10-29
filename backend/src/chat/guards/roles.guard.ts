@@ -19,22 +19,17 @@ export class RolesGuard implements CanActivate {
 
         if (!roles)
             return true;
-        // if (context.getType() === 'http') {
-            const request = context.switchToHttp().getRequest()
-            const { id }: UserDto = request.user
-            const channelId: string = request.params.channel_id
-            if (!isUUID(String(channelId)))
-                throw new BadRequestException("invalid id format: exprecting uuid")
-            const userRole: string = await this.channelService.findUserChannelRole(id, channelId)
-            if (roles.indexOf(userRole) === -1)
-                throw new ForbiddenException("you don't have the right privelege to do this actions")
-            return true
-            
-        // }
-        // else if (context.getType() === 'ws')
-            // const handlerData = context.switchToWs().getData()
 
+        const request = context.switchToHttp().getRequest()
+        const { id }: UserDto = request.user
+        const channelId: string = request.params.channel_id
+    
+        if (!isUUID(channelId))
+            throw new BadRequestException("invalid id format: expecting uuid")
 
-
+        const userRole: string = await this.channelService.findUserChannelRole(id, channelId)
+        if (roles.indexOf(userRole) === -1)
+            throw new ForbiddenException("you don't have the right privelege to do this actions")
+        return true
     }
 }

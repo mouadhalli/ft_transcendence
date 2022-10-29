@@ -1,4 +1,4 @@
-import { Logger, ParseIntPipe, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
+import { UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 import {
 	SubscribeMessage, WebSocketGateway,
 	WebSocketServer, MessageBody,
@@ -6,7 +6,6 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { GatewayConnectionService } from 'src/connection.service';
-import { UserDto } from 'src/dto/User.dto';
 import { ExceptionFilter } from 'src/gateway.filter';
 import { ChatService } from './chat.service'
 import { addMemberPayload, joinChannelPayload, sendDmPayload, sendMsgPayload } from './dtos/chat.dto';
@@ -121,7 +120,7 @@ export class ChatGateway {
 			await this.chatService.addUserToChannel(userId, targetId, channelId)
 
 			this.server.to(String(targetId)).socketsJoin(channelId)
-			this.server.to(channelId).emit('update')
+			this.server.to(String(targetId)).emit('update_joined')
 			return { success: true }
 
 		} catch (error) {

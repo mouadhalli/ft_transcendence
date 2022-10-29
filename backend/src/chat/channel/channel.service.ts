@@ -44,7 +44,7 @@ export class ChannelService {
         if (isFriends !== 'friends')
             throw new BadRequestException(`${target.displayName} is not on your friends list`)
 
-        const targetMembership = await this.findMembershipByIds(targetId, channelId)
+        let targetMembership = await this.findMembershipByIds(targetId, channelId)
 
         if (targetMembership) {
             if (targetMembership.isJoined)
@@ -57,10 +57,10 @@ export class ChannelService {
                     )
                 this.removeRestrictionOnChannelMember(channelId, targetId)
             }
-            await this.updateMembershipJoinState(targetMembership, true)
         }
         else
-            await this.createMembership(target, channel, Channel_Member_Role.MEMBER)
+            targetMembership = await this.createMembership(target, channel, Channel_Member_Role.MEMBER)
+        await this.updateMembershipJoinState(targetMembership, true)
         await this.incrementChannelMembersCounter(channelId)
 
     }
