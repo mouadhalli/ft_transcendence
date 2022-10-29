@@ -33,7 +33,7 @@ export class AuthService {
         user = await this.userService.findUserWithAuthData(userData.id)
         if (!user) { // first auth -> save user then redirect him to chose a displayName && 2fa state
             const UUID = uuidv4().replace('-', '')
-            userData.displayName = Buffer.from(UUID, 'hex').toString('base64')
+            userData.displayName += Buffer.from(UUID, 'hex').toString('base64').replace('/+', 'e')
             user = await this.userService.saveUser(userData)
             redirectUrl = `${FRONT_END}/register`
         }
