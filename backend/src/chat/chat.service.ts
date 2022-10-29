@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
 import { ChannelService } from './channel/channel.service';
 import { GatewayConnectionService } from 'src/connection.service';
@@ -10,7 +10,7 @@ import { ChannelDto, MembershipDto } from './dtos/channel.dto';
 import { UserDto } from 'src/dto/User.dto';
 import { MessageDto } from './dtos/message.dto';
 import { Message_Type } from './entities/directMessage.entity';
- 
+
 @Injectable()
 export class ChatService {
 
@@ -31,16 +31,16 @@ export class ChatService {
         if (!channel)
 			throw new WsException("couldn't find channel")
 
+        let membership: MembershipDto = await this.channelService.findMembership(member, channel)
+
         if (channel.type === 'private')
 			throw new WsException("you can't join a private channel")
-        if (channel.type === 'protected') {
+        if (membership && membership.role === 'member' && channel.type === 'protected') {
             if (!password)
 			    throw new WsException('password is required')
             if (!await bcrypt.compare(password, channel.password))
 			    throw new WsException('incorrect password')
         }
-
-        let membership: MembershipDto = await this.channelService.findMembership(member, channel)
 
         if (!membership)
             membership = await this.channelService.createMembership(member, channel, Channel_Member_Role.MEMBER)
@@ -169,7 +169,6 @@ export class ChatService {
                 const time = membership.restricitonEnd.getTime() - Date.now()
                 if (time > 0) {
                     roomSockets[i].leave(channelId)
-                    // roomSockets[i].join('exceptionRoom')
                     continue
                 }
                 this.channelService.removeRestrictionOnChannelMember(channelId, memberId)
@@ -181,6 +180,16 @@ export class ChatService {
                 roomSockets[i].join('exceptionRoom')
             }
         }        
+    }
+
+    async addUserToChannel(userId: number, targetId: number, channelId: string) {
+        try {
+            if (userId === targetId)
+                throw new BadRequestException('invalid id')
+            await this.channelService.addUserToChannel(userId, targetId, channelId)
+        } catch (error) {
+            throw new WsException(error.message)
+        }
     }
 
 }

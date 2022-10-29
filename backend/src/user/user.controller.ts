@@ -3,7 +3,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { User } from './decorators/user.decorator';
 import { UserService } from './user.service';
-import { multerOptions } from '../config/mutler.conf'
+import { multerOptions } from '../config/mutler.config'
 import { Relationship_State } from './entities/relationship.entity';
 import { UserDto } from 'src/dto/User.dto';
 import { validateQueryString, ValidateDisplayName } from 'src/dto/validation.dto';
@@ -115,8 +115,6 @@ export class UserController {
 		@User('id') userId: number,
 		@Body() { displayName }: ValidateDisplayName,
 		@UploadedFile() file: File) {
-			console.log(displayName);
-			
 			let imgPath = ''
 	    	if (file)
 				imgPath = `http://localhost:3000/${file.path}`

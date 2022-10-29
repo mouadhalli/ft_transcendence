@@ -3,7 +3,7 @@ import { BaseWsExceptionFilter, WsException } from '@nestjs/websockets'
 import { Socket } from 'socket.io'
 
 @Catch(HttpException, WsException)
-export class HttpExceptionFilter extends BaseWsExceptionFilter {
+export class ExceptionFilter extends BaseWsExceptionFilter {
 	catch(exception: HttpException | WsException, host: ArgumentsHost) {
 
 		const error = exception instanceof WsException ? exception.getError() : exception.getResponse()

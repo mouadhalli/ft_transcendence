@@ -1,11 +1,8 @@
-import { Controller, UseGuards, Post, Body, Req, HttpException, HttpStatus, Get, Res, BadRequestException } from '@nestjs/common';
+import { Controller, UseGuards, Post, Body, Get, Res, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
-// import { LocalAuthGuard } from './guards/local-auth.guard';
 import { FortyTwoAuthGuard } from './guards/42.auth.guard';
-// import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { UserDto } from 'src/dto/User.dto';
 import { User } from '../user/decorators/user.decorator'
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {

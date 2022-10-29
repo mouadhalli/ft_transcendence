@@ -10,10 +10,10 @@ import { Server, Socket } from 'socket.io';
 import { ChannelService } from './chat/channel/channel.service';
 import { directChannelDto } from './chat/dtos/channel.dto';
 import { GatewayConnectionService } from './connection.service';
-import { HttpExceptionFilter } from './gateway.filter';
+import { ExceptionFilter } from './gateway.filter';
 import { UserService } from './user/user.service';
 
-@UseFilters(HttpExceptionFilter)
+@UseFilters(ExceptionFilter)
 @WebSocketGateway({
 	cors: '*',
 	// Credential: true

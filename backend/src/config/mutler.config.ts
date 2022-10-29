@@ -1,7 +1,7 @@
 import { diskStorage } from "multer"
 import { HttpException, HttpStatus } from "@nestjs/common"
 import { extname } from 'path'
-import { existsSync, mkdirSync } from 'fs'
+import { existsSync, mkdirSync, readdir, readdirSync, unlink, unlinkSync } from 'fs'
 import { MulterOptions } from "@nestjs/platform-express/multer/interfaces/multer-options.interface"
 
 export const multerOptions: MulterOptions = {
@@ -32,10 +32,21 @@ export const multerOptions: MulterOptions = {
         },
         // File modification details
         filename: (req: any, file: any, cb: any) => {
-            //TO DO: remove existing user file
 
-            // Naming file with user id
-            cb(null, `${req.user.id}${extname(file.originalname)}`)
+            let uploadedFile: string = `${req.user.id}${extname(file.originalname)}`
+            const uploadLocation: string = process.env.UPLOAD_LOCATION
+
+            if (req.route.path === '/channel/update/:channel_id')
+                uploadedFile = `${req.params.channel_id}${extname(file.originalname)}`
+
+            readdirSync(uploadLocation)
+            .forEach((fileName: string) => {
+                if (fileName === uploadedFile) {
+                    unlinkSync(uploadLocation + '/' + uploadedFile)
+                }
+            })
+
+            cb(null, uploadedFile)
         }
     })
 }

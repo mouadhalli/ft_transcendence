@@ -26,24 +26,25 @@ export class ChannelService {
         private userService: UserService
     ) {}
 
-    async addUserToChannel(user: UserDto, targetId: number, channelId: string) {
+    async addUserToChannel(userId: number, targetId: number, channelId: string) {
 
         const channel: ChannelDto = await this.findOneChannel(channelId)
         if (!channel)
             throw new BadRequestException('channel not found')
 
-        if (!await this.findMembership(user, channel))
-            throw new BadRequestException(`${user.displayName} is not a member of this channel`)
+        const usermembership = await this.findMembershipByIds(userId, channelId)
+        if (!usermembership || !usermembership.isJoined)
+            throw new BadRequestException(`you are not a member of this channel`)
 
         const target: UserEntity = await this.userService.findUser(targetId)
         if (!target)
             throw new BadRequestException('target not found')
         
-        const isFriends: Relationship_State = (await this.userService.findRelationship(user.id, targetId)).state
-        if (isFriends !== 'friends')
+        const friendship: RelationshipEntity = await this.userService.findRelationship(userId, targetId)
+        if (!friendship || friendship.state != 'friends')
             throw new BadRequestException(`${target.displayName} is not on your friends list`)
 
-        const targetMembership = await this.findMembership(target, channel)
+        let targetMembership = await this.findMembershipByIds(targetId, channelId)
 
         if (targetMembership) {
             if (targetMembership.isJoined)
@@ -56,10 +57,10 @@ export class ChannelService {
                     )
                 this.removeRestrictionOnChannelMember(channelId, targetId)
             }
-            await this.updateMembershipJoinState(targetMembership, true)
         }
         else
-            await this.createMembership(target, channel, Channel_Member_Role.MEMBER)
+            targetMembership = await this.createMembership(target, channel, Channel_Member_Role.MEMBER)
+        await this.updateMembershipJoinState(targetMembership, true)
         await this.incrementChannelMembersCounter(channelId)
 
     }
@@ -164,12 +165,15 @@ export class ChannelService {
 
     async updateChannel(channelId: string, data: UpdateChannelDto, imgPath: string) {
 
+        if (!data)
+            return
+
         if (data.type === 'private')
             await this.turnChannelPrivate(channelId)
-        else if (data.type === 'protected' && data.password)
-            await this.turnChannelProtected(channelId, data.password)
         else if (data.type === 'public')
             await this.turnChannelPublic(channelId)
+        else if (data.password)
+            await this.turnChannelProtected(channelId, data.password)
         
         if (data.name)
             await this.channelRepository.update(channelId, {name: data.name})
