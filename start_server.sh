@@ -17,6 +17,7 @@
 # docker-compose down
 
 # eval $(docker-machine env default1)
+# docker volume rm data
 
 # start based on changes
 docker-compose up --build -d

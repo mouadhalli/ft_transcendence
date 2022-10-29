@@ -13,4 +13,6 @@ RUN npm install
 # Bundle app source
 COPY . .
 
+expose 3000
+
 CMD [ "sh", "-c", "npm run start:dev"]

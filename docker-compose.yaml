@@ -1,12 +1,6 @@
 version: '2.9'
 
 services:
-  # server:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: 'Dockerfile'
-  #   ports:
-  #     - '3000:3000'
   database:
     image: 'postgres'
     ports:
@@ -16,8 +10,34 @@ services:
       - POSTGRES_PASSWORD=123
     volumes:
       - data:/var/lib/postgresql/data
-    ports:
-      - '5432:5432'
+    networks:
+      - transcendence
+  # server:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: 'Dockerfile'
+  #   ports:
+  #     - '3000:3000'
+  #   depends_on:
+  #     - database
+  #   networks:
+  #     - transcendence
+  # front:
+  #   build:
+  #     context: ../v_production
+  #     dockerfile: 'Dockerfile'
+  #   ports:
+  #     - '8080:8080'
+  #   networks:
+  #     - transcendence
+  
+networks:
+  transcendence:
 
 volumes:
-  data:
+   data:
+    # driver: local
+    # driver_opts:
+    #   type: none
+    #   device: /goinfre/hhoummad/data
+    #   o: bind
