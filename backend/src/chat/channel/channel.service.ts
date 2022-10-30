@@ -391,6 +391,9 @@ export class ChannelService {
 
         if (!membership)
             throw new BadRequestException('user is not a member of this channel')
+
+        if (role === 'admin' && membership.state !== 'active')
+            throw new BadRequestException(`this user is ${membership.state}`)
         
         membership.role = role
         return await this.membershipsRepository.save(membership)
