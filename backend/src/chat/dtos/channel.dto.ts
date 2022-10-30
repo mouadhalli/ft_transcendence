@@ -1,4 +1,4 @@
-import {IsNumber, IsString, IsNotEmpty, IsAlphanumeric, IsEmail, IsUrl, IsOptional, IsUUID, IsEnum, MaxLength, MinLength} from 'class-validator'
+import { IsString, IsNotEmpty, IsAlphanumeric, IsOptional, IsUUID, IsEnum, MaxLength, MinLength} from 'class-validator'
 import { UserDto } from 'src/dto/User.dto'
 import { Channel_Type } from '../entities/channel.entity'
 import { Channel_Member_Role, Channel_Member_State } from '../entities/channelMember.entity'
@@ -9,7 +9,6 @@ import { RelationshipEntity } from 'src/user/entities/relationship.entity'
 
 export class ChannelDto {
 
-    // @IsUUID()
     id: string
 
     @IsNotEmpty()
@@ -26,7 +25,6 @@ export class ChannelDto {
 
     @IsNotEmpty()
     @IsEnum(Channel_Type)
-    // @IsString()
     type: Channel_Type
 
 }
@@ -51,23 +49,6 @@ export class MembershipDto {
 
 // Makes a copy of the ChannelDto with all fields Optional, Useful for updating data
 export class UpdateChannelDto extends PartialType(ChannelDto) {}
-
-// export class UpdateChannelDto {
-//     @IsOptional()
-//     @IsNotEmpty()
-//     @IsAlphanumeric()
-//     name: string
-
-//     @IsOptional()
-//     @IsNotEmpty()
-//     @IsAlphanumeric()
-//     password?: string
-
-//     @IsOptional()
-//     @IsNotEmpty()
-//     @IsString()
-//     type: Channel_Type
-// }
 
 export class directChannelDto {
 

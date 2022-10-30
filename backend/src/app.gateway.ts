@@ -1,4 +1,4 @@
-import { BadRequestException, Logger, ParseIntPipe, UnauthorizedException, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Logger, ParseIntPipe, UseFilters } from '@nestjs/common';
 import {
   SubscribeMessage, WebSocketGateway,
   OnGatewayInit, WebSocketServer,

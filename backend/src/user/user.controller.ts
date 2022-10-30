@@ -1,4 +1,4 @@
-import { Controller, Get, Delete, UseGuards, Patch, UseInterceptors, UploadedFile, HttpCode, Body, Param, Res, HttpException, HttpStatus, Post, BadRequestException, Query, NotFoundException, ParseIntPipe, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, UseGuards, Patch, UseInterceptors, UploadedFile, HttpCode, Body, Param, BadRequestException, Query, NotFoundException, ParseIntPipe } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { User } from './decorators/user.decorator';

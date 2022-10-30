@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserDto } from 'src/dto/User.dto';
@@ -51,13 +51,6 @@ export class AuthService {
             redirectUrl: redirectUrl,
             jwtToken: this.issueJwtToken(user, twofaStatus)
         }
-    }
-
-    async fakeLogIn(fakeUser: UserDto) {
-        const user = await this.userService.findUser(fakeUser.id)
-        if (!user)
-            fakeUser = await this.userService.saveUser(fakeUser)
-        return this.issueJwtToken(fakeUser, twoFactorState.NOT_ACTIVE)
     }
 
     async verifyTokenAndExtractUser(jwtToken: string): Promise<UserDto> {

@@ -6,10 +6,6 @@ import { UserDto } from 'src/dto/User.dto';
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
 
-    constructor() {
-        super()
-    }
-
     handleRequest<UserDto>(err: any, data: any, info: any, context: ExecutionContext, status?: any): UserDto {
 
         if (err)

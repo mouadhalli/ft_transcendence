@@ -27,7 +27,6 @@ export class DirectMessageEntity {
     type: string
 
     @ManyToOne(() => UserEntity, {
-        // eager: true,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
     })

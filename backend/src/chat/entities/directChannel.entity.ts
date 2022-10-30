@@ -1,4 +1,4 @@
-import { Entity, OneToOne, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm"
+import { Entity, OneToOne, PrimaryColumn } from "typeorm"
 import { RelationshipEntity } from '../../user/entities/relationship.entity'
 import { v4 as uuidv4 } from 'uuid';
 

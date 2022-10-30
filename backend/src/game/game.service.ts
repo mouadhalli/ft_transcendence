@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserDto } from "src/dto/User.dto";
-import { UserEntity } from "src/user/entities/user.entity";
 import { UserService } from "src/user/user.service";
 import { Repository } from "typeorm";
 import { GameEntity } from "./entities/game.entity";
@@ -16,18 +15,6 @@ export class GameService {
             private scoreRepository: Repository<ScoreEntity>,
         private userService: UserService
     ) {}
-
-    async getPlayers(playerA_id: number, playerB_id) {
-
-        const playerA: UserDto = await this.userService.findUser(playerA_id)
-        const playerB: UserDto = await this.userService.findUser(playerB_id)
-
-        if (!playerA || !playerB)
-            return { success: false, error: "couldn't find player" }
-        
-        return { success: true,  playerA, playerB}
-
-    }
 
     async saveGameScore(
         winnerId: number,

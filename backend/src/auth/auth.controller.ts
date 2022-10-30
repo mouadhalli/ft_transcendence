@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Post, Body, Get, Res, BadRequestException } from '@nestjs/common';
+import { Controller, UseGuards, Get, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { FortyTwoAuthGuard } from './guards/42.auth.guard';
 import { UserDto } from 'src/dto/User.dto';
@@ -10,9 +10,7 @@ export class AuthController {
 
     @Get('42')
     @UseGuards(FortyTwoAuthGuard)
-    FortyTwoAuth() {
-        console.log('dkhal1');
-    }
+    FortyTwoAuth() {}
 
     @Get('42/redirect')
     @UseGuards(FortyTwoAuthGuard)
@@ -20,25 +18,7 @@ export class AuthController {
         const {redirectUrl, jwtToken} = await this.authService.logUserIn(user)
         if (!jwtToken)
             return res.redirect(redirectUrl)
-        return res.cookie('accessToken', jwtToken).redirect(redirectUrl)
-    }
-
-    @Post('fake-login')
-    async fakeUserLogin(
-        @Body('id') fakeId: number,
-        @Body('displayName') displayName: string,
-    ) {
-        if (!fakeId || !displayName)
-            throw new BadRequestException('missing credentials')
-        const fakeUser: UserDto = {
-            id: fakeId,
-            username: displayName,
-            email: displayName + '@gmail.com',
-            displayName: 'ooO' + displayName + 'Ooo',
-            imgPath: displayName,
-            is2faEnabled: false
-        }
-        return await this.authService.fakeLogIn(fakeUser)
+        return res.cookie('accessToken', jwtToken, { httpOnly: true }).redirect(redirectUrl)
     }
 
 }

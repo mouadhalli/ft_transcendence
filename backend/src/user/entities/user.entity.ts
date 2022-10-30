@@ -1,7 +1,4 @@
-import { ChannelMembershipEntity } from 'src/chat/entities/channelMember.entity';
-import { DirectChannelEntity } from 'src/chat/entities/directChannel.entity';
-import { Entity, PrimaryColumn, Column, OneToMany, ManyToMany } from 'typeorm'
-import { RelationshipEntity } from './relationship.entity';
+import { Entity, PrimaryColumn, Column } from 'typeorm'
 
 @Entity('users_table')
 export class UserEntity {
@@ -36,9 +33,6 @@ export class UserEntity {
     @Column({ default: false })
     is2faEnabled: boolean;
 
-/* in typescript:
-    ? = optional = we can create a user without the optional collumn = allowed to be undefined
-    ! = telling Typescript to not warn you that you didn't initialize it */
     @Column({ nullable: true, select: false })
     twoFactorSecret: string;
 
@@ -47,24 +41,4 @@ export class UserEntity {
 
     @Column({type: 'int', default: 1})
     lvl: number
-
-    // @OneToMany(() => RelationshipEntity, (relationship) => relationship.sender, {
-    //     // https://orkhan.gitbook.io/typeorm/docs/eager-and-lazy-relations
-    //     // eager: true, // you don't need to join or specify relations you want to load
-    //     onUpdate: 'CASCADE',
-    //     onDelete: 'CASCADE'
-    // })
-    // sentFriendRequests: RelationshipEntity[]
-
-    // @OneToMany(() => RelationshipEntity, (relationship) => relationship.receiver, {
-    //     onUpdate: 'CASCADE',
-    //     onDelete: 'CASCADE'
-    // })
-    // receivedFriendRequests: RelationshipEntity[]
-
-    // @OneToMany(() => ChannelMembershipEntity, (membership) => membership.member, {
-    //     onUpdate: 'CASCADE',
-    //     onDelete: 'CASCADE'
-    // })
-    // channel_memberships: ChannelMembershipEntity[]
 }

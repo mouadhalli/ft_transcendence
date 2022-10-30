@@ -95,9 +95,6 @@ export class ChatService {
         if (!membership || !membership.isJoined)
 			throw new WsException('you are not a member of this channel')
 
-        // if (!membership)
-        //     return { success: false, error: "you are kicked from this channel", channelName: channel.name }
-
         if (membership.state !== 'active') {
             const time = membership.restricitonEnd.getTime() - Date.now()
             if (time > 0)

@@ -1,10 +1,9 @@
 import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Not, Repository } from "typeorm";
+import { Repository } from "typeorm";
 import { ChannelEntity, Channel_Type } from "../entities/channel.entity"
 import { ChannelMembershipEntity, Channel_Member_Role, Channel_Member_State } from "../entities/channelMember.entity";
-import { ChannelDto, directChannelDto, MembershipDto, UpdateChannelDto } from "../dtos/channel.dto";
-import { MessageService } from "../message/message.service"
+import { ChannelDto, MembershipDto, UpdateChannelDto } from "../dtos/channel.dto";
 import * as bcrypt from "bcryptjs";
 import { UserService } from "src/user/user.service";
 import { UserEntity } from "src/user/entities/user.entity";
@@ -82,7 +81,6 @@ export class ChannelService {
         }
 
         newChannel = await this.channelRepository.save(newChannel).catch(error => {
-            console.log('nari')
             throw new InternalServerErrorException(error)
         })
     
@@ -498,8 +496,6 @@ export class ChannelService {
 
         const friendship = await this.userService.findRelationship(userA, userB)
 
-        // if (!friendship || friendship.state === 'pending')
-        //     throw new BadRequestException('users are not friends')
         const dm = this.dmRepository.create({
             relationship: friendship
         })

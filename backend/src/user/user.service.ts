@@ -1,10 +1,9 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { UserEntity } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Like, Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { UserDto } from 'src/dto/User.dto';
 import { RelationshipEntity, Relationship_State } from './entities/relationship.entity';
-import { ChannelService } from 'src/chat/channel/channel.service';
 import { WsException } from '@nestjs/websockets';
 
 @Injectable()
@@ -26,8 +25,6 @@ export class UserService {
 			select: {
 				sender: {
 					id: true,
-					// displayName: true,
-					// imgPath: true
 				}
 			}
 		})
@@ -44,8 +41,6 @@ export class UserService {
 			select: {
 				receiver: {
 					id: true,
-					// displayName: true,
-					// imgPath: true
 				}
 			}
 		})
@@ -210,10 +205,6 @@ export class UserService {
 		await this.relationshipRepository.save(relationship).catch(error => {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
 		})
-	}
-
-	async findAll(): Promise<UserEntity[]> {
-		return await this.usersRepository.find();
 	}
 
 	async findUser(id: number): Promise<UserEntity> {

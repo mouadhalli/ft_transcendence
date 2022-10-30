@@ -1,6 +1,4 @@
-import { UserEntity } from "src/user/entities/user.entity"
-import { AfterUpdate, BeforeUpdate, Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm"
-import { RelationCountAttribute } from "typeorm/query-builder/relation-count/RelationCountAttribute"
+import { Column, Entity, OneToMany, PrimaryColumn } from "typeorm"
 import { ChannelMembershipEntity } from "./channelMember.entity"
 import { MessageEntity } from "./message.entity"
 import { v4 as uuidv4 } from 'uuid';

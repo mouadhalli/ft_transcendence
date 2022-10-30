@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, Param, ParseIntPipe, ParseUUIDPipe, UseGuards } from "@nestjs/common";
+import { Controller, Get, HttpCode, Param, ParseUUIDPipe, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { UserDto } from "src/dto/User.dto";
 import { User } from "src/user/decorators/user.decorator";
