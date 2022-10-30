@@ -130,44 +130,6 @@ export class UserService {
 		return relationship
 	}
 
-	// async updateRelationship(userId: number, friendId: number, state: Relationship_State) {
-	// 	let Relationship = await this.findRelationship(userId, friendId)
-
-	// 	if (!Relationship && state === Relationship_State.FRIENDS)
-	// 		throw new BadRequestException("Relationship not found")
-	// 	if (state === 'friends' && Relationship.sender.id === userId)
-	// 		throw new BadRequestException("only the receiver can accept the friendship")
-	// 	if (Relationship.state === state)
-	// 		return Relationship
-	// 	Relationship.state = state
-	// 	Relationship = await this.relationshipRepository.save(Relationship).catch(error => {
-	// 		throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
-	// 	})
-	// 	return Relationship
-	// }
-
-	// async acceptFriendship(userId: number, friendId: number) {
-
-	// 	if (!await this.findUser(friendId))
-	// 		throw new BadRequestException('cannot find user')
-
-	// 	let Relationship = await this.findRelationship(userId, friendId)
-
-	// 	if (!Relationship)
-	// 		throw new BadRequestException("users are not friends")
-	// 	if (Relationship.sender.id === userId)
-	// 		throw new BadRequestException("only the receiver can accept the friendship")
-	// 	if (Relationship.state === 'friends')
-	// 		return Relationship
-
-	// 	Relationship.state = Relationship_State.FRIENDS
-	// 	Relationship = await this.relationshipRepository.save(Relationship).catch(error => {
-	// 		throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
-	// 	})
-
-	// 	return Relationship
-	// }
-
 	async acceptFriendship(userId: number, friendId: number) {
 
 		if (!await this.findUser(friendId))
@@ -187,50 +149,14 @@ export class UserService {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
 		})
 
-		// return { success: true }
-		// return Relationship
+		return Relationship
 	}
-
-	// async removeRelationship(userId: number, targetId: number) {
-
-	// 	let Relationship = await this.findRelationship(userId, targetId)
-
-	// 	if (!Relationship)
-	// 		return { success: false, error: "users are not friends" }
-	// 		// throw new BadRequestException("relationship not found")
-		
-	// 	await this.relationshipRepository.remove(Relationship).catch((error) => {
-	// 		throw new InternalServerErrorException(error.message)
-	// 	})
-
-	// 	return { success: true }
-	// }
 
 	async removeRelationShip(relationship: RelationshipEntity) {
 		await this.relationshipRepository.remove(relationship).catch((error) => {
 			throw new InternalServerErrorException(error.message)
 		})
 	}
-
-	// async addFriend(user: UserDto, targetId: number) {
-	// 	let Friendship = await this.findRelationship(user.id, targetId)
-
-	// 	if (Friendship)
-	// 		throw new BadRequestException("User already Friend")
-		
-	// 	const receiver = await this.findUser(targetId)
-
-	// 	if (!receiver)
-	// 		throw new BadRequestException("User not found")
-
-	// 	Friendship = this.relationshipRepository.create({sender: user, receiver: receiver})
-		
-	// 	Friendship = await this.relationshipRepository.save(Friendship).catch(error => {
-	// 		throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
-	// 	})
-		
-	// 	return Friendship
-	// }
 
 	async addFriend(userId: number, targetId: number) {
 		const user: UserDto = await this.findUser(userId)
@@ -253,8 +179,7 @@ export class UserService {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
 		})
 
-		// return { success: true, user}
-		// return Friendship
+		return Friendship
 	}
 
 	async blockUser(senderId: number, targetId: number) {
@@ -285,18 +210,10 @@ export class UserService {
 		await this.relationshipRepository.save(relationship).catch(error => {
 			throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
 		})
-		// return { success: true }
 	}
 
 	async findAll(): Promise<UserEntity[]> {
 		return await this.usersRepository.find();
-	}
-
-	async DeleteAll() {
-		const allUsers = await this.usersRepository.find()
-		allUsers.forEach( async (User) => {
-			await this.usersRepository.remove(User)
-		})
 	}
 
 	async findUser(id: number): Promise<UserEntity> {

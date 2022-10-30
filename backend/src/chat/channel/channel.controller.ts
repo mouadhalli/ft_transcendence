@@ -106,12 +106,6 @@ export class ChannelController {
         return await this.channelService.deleteChannel(channelId)
     }
 
-    @Delete("all")
-	@HttpCode(202)
-    async deleteAllChannels() {
-        return await this.channelService.deleteAllChannels()
-    }
-
     @Patch('add-admin/:channel_id')
     @Roles('owner')
     async addAdmin(

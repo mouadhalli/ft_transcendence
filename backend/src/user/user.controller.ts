@@ -12,7 +12,7 @@ import { ConfigService } from '@nestjs/config';
 type File = Express.Multer.File
 
 @Controller('user')
-// @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 export class UserController {
 
 	constructor(
@@ -21,7 +21,6 @@ export class UserController {
 	) {}
 
 	@Get('search')
-	@UseGuards(JwtAuthGuard)
 	@HttpCode(201)
 	async searchUsers(
 		@User('id') userId: number,
@@ -31,7 +30,6 @@ export class UserController {
 	}
 
 	@Get('friends')
-	@UseGuards(JwtAuthGuard)
 	@HttpCode(200)
 	async getFriends(
 		@User('id') userId: number,
@@ -42,7 +40,6 @@ export class UserController {
 	}
 
 	@Get('block-list')
-	@UseGuards(JwtAuthGuard)
 	@HttpCode(200)
 	async getBlockList(
 		@User('id') userId: number,
@@ -52,7 +49,6 @@ export class UserController {
 	}
 
 	@Get('pending-list')
-	@UseGuards(JwtAuthGuard)
 	@HttpCode(200)
 	async getPendingList(
 		@User('id') userId: number,
@@ -62,14 +58,12 @@ export class UserController {
 	}
 
 	@Get('me')
-	@UseGuards(JwtAuthGuard)
 	@HttpCode(200)
     async me(@User('id') userId: number) {
 		return await this.userService.findUser(userId)
     }
 
 	@Get('profile/:id')
-	@UseGuards(JwtAuthGuard)
 	@HttpCode(200)
     async userProfile(
 		@User('id') userId: number,
@@ -90,29 +84,12 @@ export class UserController {
     }
 
 	@Get('received-requests')
-	@UseGuards(JwtAuthGuard)
 	@HttpCode(200)
     async getReceivedFriendRequests(@User('id') userId: number) {
 		return await this.userService.findReceivedFriendRequests(userId)
     }
 
-	@Get('all-users')
-	// @UseGuards(JwtAuthGuard)
-	@HttpCode(200)
-    async getAllUsers() {
-		return await this.userService.findAll()
-    }
-
-    @Delete('all-users')
-	// @UseGuards(JwtAuthGuard)
-	@HttpCode(202)
-	async deleteUsers() {
-		await this.userService.DeleteAll()
-    	return {message: "successfully deleted all Users"}
-    }
-
 	@Patch('update')
-	@UseGuards(JwtAuthGuard)
 	@HttpCode(201)
 	@UseInterceptors(FileInterceptor('file', multerOptions))
 	async updateProfile(

@@ -320,23 +320,6 @@ export class ChannelService {
         })
     }
 
-    // async deleteMembership(member: UserDto, channel: ChannelDto) {
-    //     let membership: ChannelMembershipEntity = await this.findMembership(
-    //         member,
-    //         channel
-    //     )
-
-    //     if (!membership)
-    //         throw new BadRequestException('membership not found')
-
-    //     await this.membershipsRepository.remove(membership)
-    //     return await this.channelRepository.decrement(
-    //         {id: channel.id},
-    //         "membersCount",
-    //         1
-    //     )
-    // }
-
     async findChannelAdminMembership(channelId: string): Promise<ChannelMembershipEntity> {
         return await this.membershipsRepository.findOne({
             where: {
@@ -509,13 +492,6 @@ export class ChannelService {
         this.membershipsRepository.save(membership).catch((error) => {
             throw new InternalServerErrorException(error)
         })
-    }
-
-    async deleteAllChannels() {
-        const allChannels = await this.channelRepository.find()
-        allChannels.forEach( async (channel) => {
-            await this.channelRepository.remove(channel)
-        } )
     }
 
     async createDmChannel(userA: number, userB: number) {
