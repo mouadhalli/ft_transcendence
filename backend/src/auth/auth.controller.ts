@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Get, Res } from '@nestjs/common';
+import { Controller, UseGuards, Get, Res, Headers, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { FortyTwoAuthGuard } from './guards/42.auth.guard';
 import { UserDto } from 'src/dto/User.dto';
@@ -21,4 +21,13 @@ export class AuthController {
         return res.cookie('accessToken', jwtToken).redirect(redirectUrl)
     }
 
+    @Get('2fa-state')
+    async put(@Headers('Authorization') token: string ) {
+
+        if (!token)
+            throw new UnauthorizedException('token not found')
+
+        const accessToken: string = token.split(' ')[1]
+        return await this.authService.verifyTokenAndExtract2faState(accessToken)
+    }
 }

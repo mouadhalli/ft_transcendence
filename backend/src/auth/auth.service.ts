@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserDto } from 'src/dto/User.dto';
@@ -77,6 +77,24 @@ export class AuthService {
 
         } catch(error) {
             return null
+        }
+    }
+
+    async verifyTokenAndExtract2faState(jwtToken: string) {
+        try {
+            const payload: jwtPayload = this.jwtService.verify(
+                jwtToken,
+                {secret: this.configService.get('JWT_SECRET')}
+            )
+
+            if (!payload || !payload.id || !await this.userService.findUser(payload.id))
+                throw new BadRequestException("cannot find user")
+
+            if (payload.twofaState)
+                return payload.twofaState
+
+        } catch (error) {
+            throw new UnauthorizedException(error.error)
         }
     }
 }
