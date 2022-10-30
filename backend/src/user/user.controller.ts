@@ -31,30 +31,20 @@ export class UserController {
 
 	@Get('friends')
 	@HttpCode(200)
-	async getFriends(
-		@User('id') userId: number,
-		@Query('index') index: number,
-		@Query('amount') amount: number
-	) {
-		return await this.userService.findUserRelationships(userId, index, amount, Relationship_State.FRIENDS)
+	async getFriends( @User('id') userId: number ) {
+		return await this.userService.findUserRelationships(userId, Relationship_State.FRIENDS)
 	}
 
 	@Get('block-list')
 	@HttpCode(200)
-	async getBlockList(
-		@User('id') userId: number,
-		@Query('index') index: number,
-		@Query('amount') amount: number) {
-			return await this.userService.findUserRelationships(userId, index, amount, Relationship_State.BLOCKED)
+	async getBlockList( @User('id') userId: number ) {
+			return await this.userService.findUserRelationships(userId, Relationship_State.BLOCKED)
 	}
 
 	@Get('pending-list')
 	@HttpCode(200)
-	async getPendingList(
-		@User('id') userId: number,
-		@Query('index') index: number,
-		@Query('amount') amount: number) {
-			return await this.userService.findUserRelationships(userId, index, amount, Relationship_State.PENDING)
+	async getPendingList( @User('id') userId: number ) {
+			return await this.userService.findUserRelationships(userId, Relationship_State.PENDING)
 	}
 
 	@Get('me')

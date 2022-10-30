@@ -88,22 +88,13 @@ export class UserService {
 
 	}
 
-	async findUserRelationships(
-		userId: number,
-		index: number,
-		amount: number,
-		type: Relationship_State
-	) {
-		const skip: number = index | 0
-		const take : number = amount | 10
+	async findUserRelationships( userId: number, type: Relationship_State ) {
 		const result = await this.relationshipRepository.find(
 			{
 				where: [
 					{sender: {id: userId,}, state: type},
 					{receiver: {id: userId}, state: type}
 				],
-				skip: skip,
-				take: take,
 				relations: ['sender', 'receiver', 'dm'],
 			}
 		)
