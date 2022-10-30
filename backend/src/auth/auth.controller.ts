@@ -18,7 +18,7 @@ export class AuthController {
         const {redirectUrl, jwtToken} = await this.authService.logUserIn(user)
         if (!jwtToken)
             return res.redirect(redirectUrl)
-        return res.cookie('accessToken', jwtToken, { httpOnly: true }).redirect(redirectUrl)
+        return res.cookie('accessToken', jwtToken).redirect(redirectUrl)
     }
 
 }
