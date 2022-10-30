@@ -10,12 +10,16 @@ export class AuthController {
 
     @Get('42')
     @UseGuards(FortyTwoAuthGuard)
-    FortyTwoAuth() {}
+    FortyTwoAuth() {
+        console.log('dkhal1');
+    }
 
     @Get('42/redirect')
     @UseGuards(FortyTwoAuthGuard)
     async FortyTwoAuthRedirect(@User() user: UserDto, @Res() res: any) {
         const {redirectUrl, jwtToken} = await this.authService.logUserIn(user)
+        if (!jwtToken)
+            return res.redirect(redirectUrl)
         return res.cookie('accessToken', jwtToken).redirect(redirectUrl)
     }
 

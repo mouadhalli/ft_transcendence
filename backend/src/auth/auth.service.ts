@@ -30,6 +30,10 @@ export class AuthService {
         let redirectUrl: string
         let twofaStatus: twoFactorState = twoFactorState.NOT_ACTIVE
         const FRONT_END = `http://${this.configService.get('APP_NAME')}:${this.configService.get('FRONT_END_PORT')}`
+
+        if (!userData)
+            return {redirectUrl: `${FRONT_END}/login`}
+
         user = await this.userService.findUserWithAuthData(userData.id)
         if (!user) { // first auth -> save user then redirect him to chose a displayName && 2fa state
             const UUID = uuidv4().replace('-', '')
