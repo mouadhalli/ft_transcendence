@@ -78,8 +78,9 @@ export class ChatService {
         if (!membership || !membership.isJoined)
             throw new WsException("you are not a member of this channel")
 
-        if (membership.role === 'owner') {  
-            await this.channelService.findNewOwner(channel.id)
+        if (membership.role !== 'member') {  
+            if (membership.role === 'owner')
+                await this.channelService.findNewOwner(channel.id)
             await this.channelService.updateMembershipRole(membership, Channel_Member_Role.MEMBER)
         }
         await this.channelService.updateMembershipJoinState(membership, false)
