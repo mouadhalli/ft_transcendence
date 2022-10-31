@@ -26,7 +26,6 @@ export class AuthController {
 
         if (!token)
             throw new UnauthorizedException('token not found')
-
         const accessToken: string = token.split(' ')[1]
         return await this.authService.verifyTokenAndExtract2faState(accessToken)
     }

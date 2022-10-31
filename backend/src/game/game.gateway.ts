@@ -9,6 +9,9 @@ import { JwtService } from "@nestjs/jwt";
 import { jwtPayload } from "src/dto/jwt.dto";
 import { ConfigService } from "@nestjs/config";
 import { UserService } from "src/user/user.service";
+import { getIdsData, mouseData } from '../dto/validation.dto'
+import { UseFilters, UsePipes, ValidationPipe } from "@nestjs/common";
+import { ExceptionFilter } from "src/gateway.filter";
 // import { emit } from "process";
 
 let players: any = {}
@@ -70,6 +73,8 @@ function init_data() {
     return Data;
 }
 
+@UseFilters(ExceptionFilter)
+@UsePipes( new ValidationPipe({ whitelist: true, transform: true }))
 @WebSocketGateway({
     //cors: { origin: 'http://localhost:8080/' }
     cors: `http://${process.env.APP_NAME}:${process.env.FRONT_END_PORT}`,
@@ -124,10 +129,9 @@ export class gameGateway implements OnGatewayDisconnect {
         else
             return {status: "offline"}
     }
-    
 
     @SubscribeMessage('getIDS')
-    async getID(socket: Socket, Data: any){
+    async getID(socket: Socket, Data: getIdsData){
         console.log("oooo");
         
         Data.room = "";
@@ -149,7 +153,6 @@ export class gameGateway implements OnGatewayDisconnect {
                 socket.emit("inGame", 4);
                 return ;
             }
-
             if (privateroomsID[Data.id] === undefined)
             {
                 privateroomsID[Data.id] = socket.id;
@@ -189,6 +192,7 @@ export class gameGateway implements OnGatewayDisconnect {
         else
         {
             const token = String(socket.handshake.headers.token)
+            Data.token = token;
             const { id } = await this.connectionService.getUserFromToken(token)
             console.log(id);
             
@@ -209,7 +213,7 @@ export class gameGateway implements OnGatewayDisconnect {
     }
     
     @SubscribeMessage('update_mouse')
-    updateMouse(socket: Socket, Data: any) {
+    updateMouse(socket: Socket, Data: mouseData) {
         //console.log(playerID[socket.id]);
         
         if (Data.room !== "" && Data.pos != 0 && ball_room[Data.room] !== undefined && ball_room[Data.room] !== "")
@@ -232,26 +236,9 @@ export class gameGateway implements OnGatewayDisconnect {
 
     @SubscribeMessage('discn')
     discn(socket: Socket, Data: any) {
-        console.log("bla bla bla");
         socket.emit("fin", "");
     }
 
-    // @SubscribeMessage('gamedone')
-    // async gamedone(socket: Socket, Data: any) {
-    //     console.log(Data);
-    //     if (Data !== "" && ball_room[Data] !== undefined)
-    //     {
-    //         if (ball_room[Data].score1 > ball_room[Data].score2)
-    //         {
-    //             await this.gameService.saveGameScore(ball_room[Data].playerright, ball_room[Data].playerleft, ball_room[Data].score1, ball_room[Data].score2);
-    //         }
-    //         else
-    //         {
-    //             await this.gameService.saveGameScore(ball_room[Data].playerleft, ball_room[Data].playerright, ball_room[Data].score2, ball_room[Data].score1);
-    //         }
-    //     }
-    //     // await this.gameService.saveGameScore(playerID[tmp.id], playerID[socket.id], swinner, sloser);
-    // }
 
     async gameLoop(server: Server, socketleft: Socket, socketright: Socket, func: (winnerId: number, opponentId: number, winnerScore: number, opponentScore: number) => Promise<ScoreEntity>) {
         // console.log(ball_room[socketleft.id]);
@@ -731,7 +718,6 @@ export class gameGateway implements OnGatewayDisconnect {
                                 else
                                 {
                                     // watch
-                                    console.log("pppppppppp");
                                     
                                     if (isGameEnded[f_player.id] !== undefined && isGameEnded[f_player.id] == false)
                                     {

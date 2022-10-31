@@ -78,6 +78,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 
 			this.connectionService.removeUserConnection(id)
 			this.server.to(String(id)).disconnectSockets()
+			this.userService.updateUserLoginState(id, false)
 		}
 		catch (error) {
 			socket.disconnect()

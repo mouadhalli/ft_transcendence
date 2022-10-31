@@ -47,6 +47,7 @@ export class AuthService {
         }
         else// user already have an account and an unactive 2fa
             redirectUrl = FRONT_END
+        await this.userService.updateUserLoginState(user.id, true)
         return {
             redirectUrl: redirectUrl,
             jwtToken: this.issueJwtToken(user, twofaStatus)
@@ -68,6 +69,9 @@ export class AuthService {
             }
 
             const user: UserDto = await this.userService.findUser(payload.id)
+
+            if (user && user.loggedIn === false)
+                return null
         
             if ( !user || ( user.is2faEnabled
                 && (payload.twofaState === "not_confirmed" || payload.twofaState === "not_active" )) )

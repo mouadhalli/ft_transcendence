@@ -228,6 +228,7 @@ export class UserService {
 
 	async updateProfile(id: number, displayName: string, imgPath: string) {
 		let user: UserDto = await this.findUser( id );
+
 		if (displayName) {
 			const duplicate: UserDto = await this.usersRepository.findOneBy({displayName: displayName})
 			if (duplicate && duplicate.id != id)
@@ -284,6 +285,10 @@ export class UserService {
 		})
 
 		return users
+	}
+
+	async updateUserLoginState(userId: number, loginState: boolean) {
+		await this.usersRepository.update(userId, {loggedIn: loginState})
 	}
 
 }

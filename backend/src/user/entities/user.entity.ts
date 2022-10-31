@@ -41,4 +41,7 @@ export class UserEntity {
 
     @Column({type: 'int', default: 1})
     lvl: number
+
+    @Column({ nullable: false, default: false })
+    loggedIn: boolean
 }

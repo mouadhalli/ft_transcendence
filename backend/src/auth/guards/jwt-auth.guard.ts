@@ -11,6 +11,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
         const { user, jwtPayload } = data
 		const path = context.switchToHttp().getRequest().route.path
+
+        if (user && user.loggedIn === false)
+            throw new UnauthorizedException('user is logged out')
     
         if ( !user || ( user.is2faEnabled
             && (jwtPayload.twofaState === "not_confirmed" || jwtPayload.twofaState === "not_active" )) ){
@@ -20,5 +23,4 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         }
         return user
     }
-
 }

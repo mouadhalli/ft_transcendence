@@ -26,4 +26,6 @@ export class UserDto {
     xp?: number
 
     lvl?: number
+
+    loggedIn: boolean
 }
