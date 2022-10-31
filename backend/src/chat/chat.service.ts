@@ -33,28 +33,32 @@ export class ChatService {
 
         let membership: MembershipDto = await this.channelService.findMembership(member, channel)
 
-        if (channel.type === 'private' && membership && membership.role != 'owner')
-            throw new WsException("you can't join a private channel")
-        
-        if (channel.type === 'protected' && membership && membership.role === 'member') {
-            if (!password)
-			    throw new WsException('password is required')
-            if (!await bcrypt.compare(password, channel.password))
-			    throw new WsException('incorrect password')
+        if (membership && membership.isJoined)
+            throw new WsException('you are already a member of this channel')
+
+        if (!membership || ( membership && membership.role !== 'owner')) {
+            console.log('taba9 3lih');
+            
+            if (channel.type === 'private')
+                throw new WsException("you can't join a private channel")
+            if (channel.type === 'protected') {
+                if (!password)
+			        throw new WsException('password is required')
+                if (!await bcrypt.compare(password, channel.password))
+			        throw new WsException('incorrect password')
+            }
         }
 
-        if (!membership)
+        if (membership) {
+            if (membership.state === 'banned') {
+                const time = membership.restricitonEnd.getTime() - Date.now()
+                if (time > 0)
+                    throw new WsException(membership.state + ' for ' + String(Math.floor(time / 1000)) + ' seconds')
+                this.channelService.removeRestrictionOnChannelMember(channelId, userId)
+            }
+        }
+        else
             membership = await this.channelService.createMembership(member, channel, Channel_Member_Role.MEMBER)
-
-        if (membership.isJoined)
-			throw new WsException('you are already a member of this channel')
-
-        if (membership.role === 'member' && membership.state === 'banned') {
-            const time = membership.restricitonEnd.getTime() - Date.now()
-            if (time > 0)
-                throw new WsException(membership.state + ' for ' + String(Math.floor(time / 1000)) + ' seconds')
-            this.channelService.removeRestrictionOnChannelMember(channelId, userId)
-        }
 
         await this.channelService.updateMembershipJoinState(membership, true);
         await this.channelService.incrementChannelMembersCounter(channel.id)

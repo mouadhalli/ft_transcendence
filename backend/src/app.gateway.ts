@@ -39,6 +39,8 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 		try {
 
 			this.logger.log(socket.id + ' connected')
+			console.log('new tab connected');
+			
 
 			const { id } = await this.connectionService.authenticateSocket(socket)
 	
